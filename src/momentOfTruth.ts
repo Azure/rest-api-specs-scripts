@@ -28,7 +28,7 @@ var finalResult: FinalResult = {
 
 // Creates and returns path to the logging directory
 function getLogDir() {
-    let logDir = path.join(__dirname, '../', 'output');
+    let logDir = path.resolve('output');
     if (!fs.existsSync(logDir)) {
         try {
             fs.mkdirSync(logDir);
