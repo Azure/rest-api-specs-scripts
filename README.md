@@ -1,3 +1,4 @@
+[![Build Status](https://dev.azure.com/azure-sdk/public/_apis/build/status/tools/public.rest-api-specs-scripts?branchName=master)](https://dev.azure.com/azure-sdk/public/_build/latest?definitionId=221&branchName=master)
 
 # Contributing
 
