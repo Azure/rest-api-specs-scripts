@@ -11,7 +11,7 @@
   "scripts": {
     "tsc": "tsc",
     "test": "tsc",
-    "pack": "tsc"
+    "pack": "npm install && tsc"
   },
   "repository": {
     "type": "git",
