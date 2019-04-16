@@ -6,8 +6,7 @@
   "main": "dist/index.js",
   "files": [
     "dist/",
-    "src/",
-    "tsconfig.json"
+    "src/"
   ],
   "scripts": {
     "tsc": "tsc",
