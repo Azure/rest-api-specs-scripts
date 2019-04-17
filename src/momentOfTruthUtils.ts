@@ -20,7 +20,7 @@ export type Issue = {
 export type BeforeOrAfter = 'before' | 'after'
 
 export type File = {
-  [key in BeforeOrAfter]?: readonly Issue[]
+  [key in BeforeOrAfter]: readonly Issue[]
 }
 
 export type FinalResult = {

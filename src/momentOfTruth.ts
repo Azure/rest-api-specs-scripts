@@ -99,7 +99,7 @@ async function runTools(swagger: string, beforeOrAfter: momentOfTruthUtils.Befor
 async function updateResult(spec: string, errors: readonly momentOfTruthUtils.Issue[], beforeOrAfter: momentOfTruthUtils.BeforeOrAfter) {
     const files = finalResult['files']
     if (!files[spec]) {
-        files[spec] = {};
+        files[spec] = { before: [], after: [] };
     }
     const filesSpec = tsUtils.asNonUndefined(files[spec])
     filesSpec[beforeOrAfter] = errors;
