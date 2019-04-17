@@ -7,8 +7,9 @@ import { exec } from 'child_process'
 import * as path from 'path'
 import * as utils from './utils'
 import * as fs from 'fs'
+import * as avocado from '@azure/avocado'
 
-let configsToProcess = utils.getConfigFilesChangedInPR();
+
 let pullRequestNumber = utils.getPullRequestNumber();
 let linterCmd = `npx autorest --validation --azure-validator --message-format=json `;
 var filename = `${pullRequestNumber}.json`;
@@ -96,7 +97,11 @@ async function runTools(swagger: string, beforeOrAfter: momentOfTruthUtils.Befor
 };
 
 // Updates final result json to be written to the output file
-async function updateResult(spec: string, errors: readonly momentOfTruthUtils.Issue[], beforeOrAfter: momentOfTruthUtils.BeforeOrAfter) {
+async function updateResult(
+    spec: string,
+    errors: readonly momentOfTruthUtils.Issue[],
+    beforeOrAfter: momentOfTruthUtils.BeforeOrAfter
+) {
     const files = finalResult['files']
     if (!files[spec]) {
         files[spec] = { before: [], after: [] };
@@ -107,6 +112,9 @@ async function updateResult(spec: string, errors: readonly momentOfTruthUtils.Is
 
 //main function
 export async function runScript() {
+    const pr = await avocado.createPullRequestProperties(avocado.defaultConfig())
+    const configsToProcess = await utils.getConfigFilesChangedInPR(pr);
+
     console.log('Processing configs:');
     console.log(configsToProcess);
     createLogFile();

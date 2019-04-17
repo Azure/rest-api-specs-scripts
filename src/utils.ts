@@ -12,6 +12,7 @@ import * as YAML from 'js-yaml'
 import request = require('request')
 import * as util from 'util'
 import { execSync } from 'child_process'
+import * as avocado from '@azure/avocado'
 
 const asyncJsonRequest = (url: string) => new Promise<unknown>((res, rej) => request(
   { url, json: true },
@@ -241,14 +242,11 @@ export const getTimeStamp = function() {
  * Retrieves list of swagger files to be processed for linting
  * @returns {Array} list of files to be processed for linting
  */
-export const getConfigFilesChangedInPR = function() {
-  if (prOnly === 'true') {
-    let targetBranch, cmd, filesChanged;
+export const getConfigFilesChangedInPR = async (pr: avocado.PullRequestProperties | undefined) => {
+  if (pr !== undefined) {
+    let filesChanged;
     try {
-      targetBranch = getTargetBranch();
-      execSync(`git fetch origin ${targetBranch}`);
-      cmd = `git diff --name-only HEAD $(git merge-base HEAD FETCH_HEAD)`;
-      filesChanged = execSync(cmd, { encoding: 'utf8' }).split('\n');
+      filesChanged = (await pr.diff()).map(file => file.path)
       console.log('>>>>> Files changed in this PR are as follows:');
       console.log(filesChanged);
 
