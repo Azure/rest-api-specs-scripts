@@ -88,7 +88,7 @@ async function getLinterResult(swaggerPath: string|null|undefined) {
 };
 
 // Run linter tool
-async function runTools(swagger: string, beforeOrAfter: string) {
+async function runTools(swagger: string, beforeOrAfter: momentOfTruthUtils.BeforeOrAfter) {
     console.log(`Processing "${swagger}":`);
     const linterErrors = await getLinterResult(swagger);
     console.log(linterErrors);
@@ -96,15 +96,12 @@ async function runTools(swagger: string, beforeOrAfter: string) {
 };
 
 // Updates final result json to be written to the output file
-async function updateResult(spec: string, errors: unknown, beforeOrAfter: string) {
+async function updateResult(spec: string, errors: readonly momentOfTruthUtils.Issue[], beforeOrAfter: momentOfTruthUtils.BeforeOrAfter) {
     const files = finalResult['files']
     if (!files[spec]) {
         files[spec] = {};
     }
     const filesSpec = tsUtils.asNonUndefined(files[spec])
-    if (!filesSpec[beforeOrAfter]) {
-        filesSpec[beforeOrAfter] = {};
-    }
     filesSpec[beforeOrAfter] = errors;
 }
 

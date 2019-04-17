@@ -17,22 +17,14 @@ export type Issue = {
   readonly lineNumber: number
 }
 
+export type BeforeOrAfter = 'before' | 'after'
+
 export type File = {
-  readonly before: readonly Issue[]
-  readonly after: readonly Issue[]
+  [key in BeforeOrAfter]?: readonly Issue[]
 }
 
 export type FinalResult = {
   readonly pullRequest: unknown,
   readonly repositoryUrl: unknown,
-  readonly files: stringMap.MutableStringMap<stringMap.MutableStringMap<unknown>>
+  readonly files: stringMap.MutableStringMap<File>
 }
-
-/*
-type JsonData = {
-    readonly files: stringMap.StringMap<{
-        readonly before: readonly Issue[]
-        readonly after: readonly Issue[]
-    }>
-}
-*/
