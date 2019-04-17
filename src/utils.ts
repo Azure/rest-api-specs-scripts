@@ -109,7 +109,7 @@ export const resolveRef = function(ref: unknown) {
 /**
  * Fetch ref for a branch from the origin
  */
-export const fetchBranch = function(branch: unknown) {
+const fetchBranch = function(branch: unknown) {
   let cmds = [
     `git remote -vv`,
     `git branch --all`,
