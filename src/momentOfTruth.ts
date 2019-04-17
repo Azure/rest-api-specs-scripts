@@ -120,12 +120,12 @@ export async function runScript() {
     createLogFile();
     console.log(`The results will be logged here: "${logFilepath}".`)
 
-    if (configsToProcess.length > 0) {
+    if (configsToProcess.length > 0 && pr !== undefined) {
         for (const configFile of configsToProcess) {
             await runTools(configFile, 'after');
         }
 
-        await utils.doOnBranch(utils.getTargetBranch(), async () => {
+        await utils.doOnBranch(pr, pr.targetBranch, async () => {
             for (const configFile of configsToProcess) {
                 await runTools(configFile, 'before');
             }

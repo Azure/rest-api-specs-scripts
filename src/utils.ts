@@ -79,10 +79,9 @@ export const getTargetBranch = function() {
 /**
  * Check out a copy of a branch to a temporary location, execute a function, and then restore the previous state
  */
-export const doOnBranch = async function<T>(branch: unknown, func: () => Promise<T>) {
-  fetchBranch(branch);
-  const branchSha = resolveRef(`origin/${branch}`);
-  const tmpDir = path.join(os.tmpdir(), branchSha);
+export const doOnBranch = async function<T>(pr: avocado.PullRequestProperties, branch: string, func: () => Promise<T>) {
+  pr.checkout(branch)
+  const tmpDir = pr.workingDir
 
   const currentDir = process.cwd();
   checkoutBranch(branch, tmpDir);
@@ -93,7 +92,6 @@ export const doOnBranch = async function<T>(branch: unknown, func: () => Promise
 
   console.log(`Restoring previous directory and deleting secondary working tree...`);
   process.chdir(currentDir);
-  execSync(`rm -rf ${tmpDir}`);
 
   return result;
 }
@@ -105,24 +103,6 @@ export const resolveRef = function(ref: unknown) {
   let cmd = `git rev-parse ${ref}`;
   console.log(`> ${cmd}`);
   return execSync(cmd, { encoding: 'utf8' }).trim();
-}
-
-/**
- * Fetch ref for a branch from the origin
- */
-const fetchBranch = function(branch: unknown) {
-  let cmds = [
-    `git remote -vv`,
-    `git branch --all`,
-    `git remote set-branches origin --add ${branch}`,
-    `git fetch origin ${branch}`
-  ];
-
-  console.log(`Fetching branch ${branch} from origin...`);
-  for (let cmd of cmds) {
-    console.log(`> ${cmd}`);
-    execSync(cmd, { encoding: 'utf8', stdio: 'inherit' });
-  }
 }
 
 /**
@@ -244,9 +224,8 @@ export const getTimeStamp = function() {
  */
 export const getConfigFilesChangedInPR = async (pr: avocado.PullRequestProperties | undefined) => {
   if (pr !== undefined) {
-    let filesChanged;
     try {
-      filesChanged = (await pr.diff()).map(file => file.path)
+      let filesChanged = (await pr.diff()).map(file => file.path)
       console.log('>>>>> Files changed in this PR are as follows:');
       console.log(filesChanged);
 
@@ -284,18 +263,14 @@ export const getConfigFilesChangedInPR = async (pr: avocado.PullRequestPropertie
  * Retrieves list of swagger files to be processed for linting
  * @returns {Array} list of files to be processed for linting
  */
-export const getFilesChangedInPR = function() {
+export const getFilesChangedInPR = async (pr: avocado.PullRequestProperties | undefined) => {
   let result = swaggers;
-  if (prOnly === 'true') {
-    let targetBranch, cmd, filesChanged, swaggerFilesInPR;
+  if (pr !== undefined) {
     try {
-      targetBranch = getTargetBranch();
-      execSync(`git fetch origin ${targetBranch}`);
-      cmd = `git diff --name-only HEAD $(git merge-base HEAD FETCH_HEAD)`;
-      filesChanged = execSync(cmd, { encoding: 'utf8' });
+      let filesChanged = (await pr.diff()).map(file => file.path)
       console.log('>>>>> Files changed in this PR are as follows:')
       console.log(filesChanged);
-      swaggerFilesInPR = filesChanged.split('\n').filter(function (item: string) {
+      let swaggerFilesInPR = filesChanged.filter(function (item: string) {
         if (item.match(/.*(json|yaml)$/ig) == null || item.match(/.*specification.*/ig) == null) {
           return false;
         }
