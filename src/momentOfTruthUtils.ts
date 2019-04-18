@@ -23,6 +23,10 @@ export type File = {
   [key in BeforeOrAfter]: readonly Issue[]
 }
 
+/**
+ * Moment of truth is using this type for defining a format of file which is produced by
+ * `momentOfTruth.ts` script and `momentOfTruthPostProcessing`.
+ */
 export type FinalResult = {
   readonly pullRequest: unknown,
   readonly repositoryUrl: unknown,

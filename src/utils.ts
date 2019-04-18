@@ -11,7 +11,7 @@ import * as YAML from 'js-yaml'
 import request = require('request')
 import * as util from 'util'
 import { execSync } from 'child_process'
-import * as avocado from '@azure/avocado'
+import { devOps } from '@azure/avocado'
 
 const asyncJsonRequest = (url: string) => new Promise<unknown>((res, rej) => request(
   { url, json: true },
@@ -76,14 +76,16 @@ export const getTargetBranch = function() {
 };
 
 /**
- * Check out a copy of a branch to a temporary location, execute a function, and then restore the previous state
+ * Check out a copy of a target branch to a temporary location, execute a function, and then restore the previous state.
  */
-export const doOnBranch = async function<T>(pr: avocado.PullRequestProperties, func: () => Promise<T>) {
+export const doOnTargetBranch = async <T>(pr: devOps.PullRequestProperties, func: () => Promise<T>) => {
   const currentDir = process.cwd();
 
   pr.checkout(pr.targetBranch)
 
   console.log(`Changing directory and executing the function...`);
+  // pr.workingDir is a directory of a cloned Pull Request Git repository. We can't use
+  // the original Git repository to switch branches
   process.chdir(pr.workingDir);
   const result = await func();
 
@@ -219,7 +221,7 @@ export const getTimeStamp = function() {
  * Retrieves list of swagger files to be processed for linting
  * @returns {Array} list of files to be processed for linting
  */
-export const getConfigFilesChangedInPR = async (pr: avocado.PullRequestProperties | undefined) => {
+export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties | undefined) => {
   if (pr !== undefined) {
     try {
       let filesChanged = (await pr.diff()).map(file => file.path)
@@ -260,7 +262,7 @@ export const getConfigFilesChangedInPR = async (pr: avocado.PullRequestPropertie
  * Retrieves list of swagger files to be processed for linting
  * @returns {Array} list of files to be processed for linting
  */
-export const getFilesChangedInPR = async (pr: avocado.PullRequestProperties | undefined) => {
+export const getFilesChangedInPR = async (pr: devOps.PullRequestProperties | undefined) => {
   let result = swaggers;
   if (pr !== undefined) {
     try {

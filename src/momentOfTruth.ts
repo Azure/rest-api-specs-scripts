@@ -7,7 +7,7 @@ import { exec } from 'child_process'
 import * as path from 'path'
 import * as utils from './utils'
 import * as fs from 'fs'
-import * as avocado from '@azure/avocado'
+import { devOps, cli } from '@azure/avocado'
 
 
 let pullRequestNumber = utils.getPullRequestNumber();
@@ -112,7 +112,7 @@ async function updateResult(
 
 //main function
 export async function runScript() {
-    const pr = await avocado.createPullRequestProperties(avocado.defaultConfig())
+    const pr = await devOps.createPullRequestProperties(cli.defaultConfig())
     const configsToProcess = await utils.getConfigFilesChangedInPR(pr);
 
     console.log('Processing configs:');
@@ -125,7 +125,7 @@ export async function runScript() {
             await runTools(configFile, 'after');
         }
 
-        await utils.doOnBranch(pr, async () => {
+        await utils.doOnTargetBranch(pr, async () => {
             for (const configFile of configsToProcess) {
                 await runTools(configFile, 'before');
             }
