@@ -78,15 +78,13 @@ export const getTargetBranch = function() {
 /**
  * Check out a copy of a branch to a temporary location, execute a function, and then restore the previous state
  */
-export const doOnBranch = async function<T>(pr: avocado.PullRequestProperties, branch: string, func: () => Promise<T>) {
-  pr.checkout(branch)
-  const tmpDir = pr.workingDir
-
+export const doOnBranch = async function<T>(pr: avocado.PullRequestProperties, func: () => Promise<T>) {
   const currentDir = process.cwd();
-  checkoutBranch(branch, tmpDir);
+
+  pr.checkout(pr.targetBranch)
 
   console.log(`Changing directory and executing the function...`);
-  process.chdir(tmpDir);
+  process.chdir(pr.workingDir);
   const result = await func();
 
   console.log(`Restoring previous directory and deleting secondary working tree...`);

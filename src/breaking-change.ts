@@ -131,7 +131,7 @@ export async function runScript() {
   console.log('Finding new swaggers...')
   let newSwaggers: unknown[] = [];
   if (isRunningInTravisCI && swaggersToProcess.length > 0 && pr !== undefined) {
-    newSwaggers = await utils.doOnBranch(pr, pr.targetBranch, async () => {
+    newSwaggers = await utils.doOnBranch(pr, async () => {
       return swaggersToProcess.filter((s: string) => !fs.existsSync(s))
     });
   }

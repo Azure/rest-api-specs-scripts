@@ -125,7 +125,7 @@ export async function runScript() {
             await runTools(configFile, 'after');
         }
 
-        await utils.doOnBranch(pr, pr.targetBranch, async () => {
+        await utils.doOnBranch(pr, async () => {
             for (const configFile of configsToProcess) {
                 await runTools(configFile, 'before');
             }
