@@ -32,7 +32,7 @@
     "typescript": "^3.4.3"
   },
   "dependencies": {
-    "@azure/avocado": "Azure/avocado#sergey/modules",
+    "@azure/avocado": "^0.4.1",
     "@azure/oad": "^0.5.1",
     "@ts-common/string-map": "^0.3.0",
     "fs-extra": "^7.0.1",
