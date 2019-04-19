@@ -3,3 +3,9 @@
 
 export { runScript as breakingChange } from './breaking-change'
 export { runScript as momentOfTruth } from './momentOfTruth'
+
+import * as utils from './utils'
+import * as momentOfTruthUtils from './momentOfTruthUtils'
+import * as tsUtils from './ts-utils'
+
+export { utils, momentOfTruthUtils, tsUtils }

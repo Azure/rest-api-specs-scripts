@@ -3,7 +3,6 @@
 
 import * as tsUtils from './ts-utils'
 import * as stringMap from '@ts-common/string-map'
-import * as os from 'os'
 import * as fs from 'fs-extra'
 import * as glob from 'glob'
 import * as path from 'path'
@@ -12,6 +11,7 @@ import * as YAML from 'js-yaml'
 import request = require('request')
 import * as util from 'util'
 import { execSync } from 'child_process'
+import { devOps } from '@azure/avocado'
 
 const asyncJsonRequest = (url: string) => new Promise<unknown>((res, rej) => request(
   { url, json: true },
@@ -76,23 +76,21 @@ export const getTargetBranch = function() {
 };
 
 /**
- * Check out a copy of a branch to a temporary location, execute a function, and then restore the previous state
+ * Check out a copy of a target branch to a temporary location, execute a function, and then restore the previous state.
  */
-export const doOnBranch = async function<T>(branch: unknown, func: () => Promise<T>) {
-  fetchBranch(branch);
-  const branchSha = resolveRef(`origin/${branch}`);
-  const tmpDir = path.join(os.tmpdir(), branchSha);
-
+export const doOnTargetBranch = async <T>(pr: devOps.PullRequestProperties, func: () => Promise<T>) => {
   const currentDir = process.cwd();
-  checkoutBranch(branch, tmpDir);
+
+  pr.checkout(pr.targetBranch)
 
   console.log(`Changing directory and executing the function...`);
-  process.chdir(tmpDir);
+  // pr.workingDir is a directory of a cloned Pull Request Git repository. We can't use
+  // the original Git repository to switch branches
+  process.chdir(pr.workingDir);
   const result = await func();
 
   console.log(`Restoring previous directory and deleting secondary working tree...`);
   process.chdir(currentDir);
-  execSync(`rm -rf ${tmpDir}`);
 
   return result;
 }
@@ -104,24 +102,6 @@ export const resolveRef = function(ref: unknown) {
   let cmd = `git rev-parse ${ref}`;
   console.log(`> ${cmd}`);
   return execSync(cmd, { encoding: 'utf8' }).trim();
-}
-
-/**
- * Fetch ref for a branch from the origin
- */
-export const fetchBranch = function(branch: unknown) {
-  let cmds = [
-    `git remote -vv`,
-    `git branch --all`,
-    `git remote set-branches origin --add ${branch}`,
-    `git fetch origin ${branch}`
-  ];
-
-  console.log(`Fetching branch ${branch} from origin...`);
-  for (let cmd of cmds) {
-    console.log(`> ${cmd}`);
-    execSync(cmd, { encoding: 'utf8', stdio: 'inherit' });
-  }
 }
 
 /**
@@ -241,14 +221,10 @@ export const getTimeStamp = function() {
  * Retrieves list of swagger files to be processed for linting
  * @returns {Array} list of files to be processed for linting
  */
-export const getConfigFilesChangedInPR = function() {
-  if (prOnly === 'true') {
-    let targetBranch, cmd, filesChanged;
+export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties | undefined) => {
+  if (pr !== undefined) {
     try {
-      targetBranch = getTargetBranch();
-      execSync(`git fetch origin ${targetBranch}`);
-      cmd = `git diff --name-only HEAD $(git merge-base HEAD FETCH_HEAD)`;
-      filesChanged = execSync(cmd, { encoding: 'utf8' }).split('\n');
+      let filesChanged = (await pr.diff()).map(file => file.path)
       console.log('>>>>> Files changed in this PR are as follows:');
       console.log(filesChanged);
 
@@ -286,18 +262,14 @@ export const getConfigFilesChangedInPR = function() {
  * Retrieves list of swagger files to be processed for linting
  * @returns {Array} list of files to be processed for linting
  */
-export const getFilesChangedInPR = function() {
+export const getFilesChangedInPR = async (pr: devOps.PullRequestProperties | undefined) => {
   let result = swaggers;
-  if (prOnly === 'true') {
-    let targetBranch, cmd, filesChanged, swaggerFilesInPR;
+  if (pr !== undefined) {
     try {
-      targetBranch = getTargetBranch();
-      execSync(`git fetch origin ${targetBranch}`);
-      cmd = `git diff --name-only HEAD $(git merge-base HEAD FETCH_HEAD)`;
-      filesChanged = execSync(cmd, { encoding: 'utf8' });
+      let filesChanged = (await pr.diff()).map(file => file.path)
       console.log('>>>>> Files changed in this PR are as follows:')
       console.log(filesChanged);
-      swaggerFilesInPR = filesChanged.split('\n').filter(function (item: string) {
+      let swaggerFilesInPR = filesChanged.filter(function (item: string) {
         if (item.match(/.*(json|yaml)$/ig) == null || item.match(/.*specification.*/ig) == null) {
           return false;
         }

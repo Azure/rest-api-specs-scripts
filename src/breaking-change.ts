@@ -10,6 +10,7 @@ import * as os from 'os'
 import * as childProcess from 'child_process'
 import * as oad from '@azure/oad'
 import * as util from 'util'
+import { devOps, cli } from '@azure/avocado'
 
 const exec = util.promisify(childProcess.exec)
 
@@ -116,19 +117,21 @@ async function processViaAutoRest(swaggerPath: string) {
 
 //main function
 export async function runScript() {
+  const pr = await devOps.createPullRequestProperties(cli.defaultConfig())
+
   // See whether script is in Travis CI context
   console.log(`isRunningInTravisCI: ${isRunningInTravisCI}`);
 
   let targetBranch = utils.getTargetBranch();
-  let swaggersToProcess = utils.getFilesChangedInPR();
+  let swaggersToProcess = await utils.getFilesChangedInPR(pr);
 
   console.log('Processing swaggers:');
   console.log(swaggersToProcess);
 
   console.log('Finding new swaggers...')
   let newSwaggers: unknown[] = [];
-  if (isRunningInTravisCI && swaggersToProcess.length > 0) {
-    newSwaggers = await utils.doOnBranch(utils.getTargetBranch(), async () => {
+  if (swaggersToProcess.length > 0 && pr !== undefined) {
+    newSwaggers = await utils.doOnTargetBranch(pr, async () => {
       return swaggersToProcess.filter((s: string) => !fs.existsSync(s))
     });
   }

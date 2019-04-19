@@ -1,26 +1,21 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-import * as stringMap from '@ts-common/string-map'
+import * as momentOfTruthUtils from './momentOfTruthUtils'
 import * as tsUtils from './ts-utils'
 import { exec } from 'child_process'
 import * as path from 'path'
 import * as utils from './utils'
 import * as fs from 'fs'
+import { devOps, cli } from '@azure/avocado'
 
-let configsToProcess = utils.getConfigFilesChangedInPR();
+
 let pullRequestNumber = utils.getPullRequestNumber();
 let linterCmd = `npx autorest --validation --azure-validator --message-format=json `;
 var filename = `${pullRequestNumber}.json`;
 var logFilepath = path.join(getLogDir(), filename);
 
-type FinalResult = {
-    readonly pullRequest: unknown,
-    readonly repositoryUrl: unknown,
-    readonly files: stringMap.MutableStringMap<stringMap.MutableStringMap<unknown>>
-}
-
-var finalResult: FinalResult = {
+var finalResult: momentOfTruthUtils.FinalResult = {
     pullRequest: pullRequestNumber,
     repositoryUrl: utils.getRepoUrl(),
     files: {}
@@ -94,7 +89,7 @@ async function getLinterResult(swaggerPath: string|null|undefined) {
 };
 
 // Run linter tool
-async function runTools(swagger: string, beforeOrAfter: string) {
+async function runTools(swagger: string, beforeOrAfter: momentOfTruthUtils.BeforeOrAfter) {
     console.log(`Processing "${swagger}":`);
     const linterErrors = await getLinterResult(swagger);
     console.log(linterErrors);
@@ -102,31 +97,35 @@ async function runTools(swagger: string, beforeOrAfter: string) {
 };
 
 // Updates final result json to be written to the output file
-async function updateResult(spec: string, errors: unknown, beforeOrAfter: string) {
+async function updateResult(
+    spec: string,
+    errors: readonly momentOfTruthUtils.Issue[],
+    beforeOrAfter: momentOfTruthUtils.BeforeOrAfter
+) {
     const files = finalResult['files']
     if (!files[spec]) {
-        files[spec] = {};
+        files[spec] = { before: [], after: [] };
     }
     const filesSpec = tsUtils.asNonUndefined(files[spec])
-    if (!filesSpec[beforeOrAfter]) {
-        filesSpec[beforeOrAfter] = {};
-    }
     filesSpec[beforeOrAfter] = errors;
 }
 
 //main function
 export async function runScript() {
+    const pr = await devOps.createPullRequestProperties(cli.defaultConfig())
+    const configsToProcess = await utils.getConfigFilesChangedInPR(pr);
+
     console.log('Processing configs:');
     console.log(configsToProcess);
     createLogFile();
     console.log(`The results will be logged here: "${logFilepath}".`)
 
-    if (configsToProcess.length > 0) {
+    if (configsToProcess.length > 0 && pr !== undefined) {
         for (const configFile of configsToProcess) {
             await runTools(configFile, 'after');
         }
 
-        await utils.doOnBranch(utils.getTargetBranch(), async () => {
+        await utils.doOnTargetBranch(pr, async () => {
             for (const configFile of configsToProcess) {
                 await runTools(configFile, 'before');
             }
