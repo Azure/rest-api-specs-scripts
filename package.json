@@ -1,6 +1,6 @@
 {
   "name": "@azure/rest-api-specs-scripts",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "description": "Scripts for the Azure RestAPI specification repository 'azure-rest-api-specs'.",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
@@ -27,13 +27,13 @@
     "@types/fs-extra": "^5.0.5",
     "@types/glob": "^7.1.1",
     "@types/js-yaml": "^3.12.1",
-    "@types/node": "^11.13.4",
+    "@types/node": "^11.13.6",
     "@types/request": "^2.48.1",
-    "typescript": "^3.4.3"
+    "typescript": "^3.4.4"
   },
   "dependencies": {
     "@azure/avocado": "^0.4.1",
-    "@azure/oad": "^0.5.1",
+    "@azure/oad": "^0.5.2",
     "@ts-common/string-map": "^0.3.0",
     "fs-extra": "^7.0.1",
     "glob": "^7.1.3",
