@@ -28,14 +28,14 @@ export const schemaUrl = "http://json-schema.org/draft-04/schema";
 export const exampleSchemaUrl = "https://raw.githubusercontent.com/Azure/autorest/master/schema/example-schema.json";
 export const compositeSchemaUrl = "https://raw.githubusercontent.com/Azure/autorest/master/schema/composite-swagger.json";
 
-export const isWindows = (process.platform.lastIndexOf('win') === 0);
-export const prOnly = undefined !== process.env['PR_ONLY'] ? process.env['PR_ONLY'] : 'false';
+// export const isWindows = (process.platform.lastIndexOf('win') === 0);
+// export const prOnly = undefined !== process.env['PR_ONLY'] ? process.env['PR_ONLY'] : 'false';
 
-export const globPath = path.join(__dirname, '../', '../', '/specification/**/*.json');
-export const swaggers = glob.sync(globPath, { ignore: ['**/examples/**/*.json', '**/quickstart-templates/*.json', '**/schema/*.json'] });
-export const exampleGlobPath = path.join(__dirname, '../', '../', '/specification/**/examples/**/*.json');
-export const examples = glob.sync(exampleGlobPath);
-export const readmes = glob.sync(path.join(__dirname, '../', '../', '/specification/**/readme.md'));
+const getGlobPath = () => path.join(__dirname, '../', '../', '/specification/**/*.json');
+const getSwaggers = () => glob.sync(getGlobPath(), { ignore: ['**/examples/**/*.json', '**/quickstart-templates/*.json', '**/schema/*.json'] });
+// export const exampleGlobPath = path.join(__dirname, '../', '../', '/specification/**/examples/**/*.json');
+// export const examples = glob.sync(exampleGlobPath);
+// export const readmes = glob.sync(path.join(__dirname, '../', '../', '/specification/**/readme.md'));
 
 // Remove byte order marker. This catches EF BB BF (the UTF-8 BOM)
 // because the buffer-to-string conversion in `fs.readFile()`
@@ -257,7 +257,7 @@ export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties
       throw err;
     }
   } else {
-    return swaggers;
+    return getSwaggers();
   }
 };
 
@@ -266,7 +266,7 @@ export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties
  * @returns {Array} list of files to be processed for linting
  */
 export const getFilesChangedInPR = async (pr: devOps.PullRequestProperties | undefined) => {
-  let result = swaggers;
+  let result = getSwaggers();
   if (pr !== undefined) {
     try {
       let filesChanged = (await pr.diff()).map(file => file.path)

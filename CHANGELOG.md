@@ -1,7 +1,8 @@
 # Changelog
 
-## 0.2.14
+## 0.3.0
 
+- remove global variables
 - `modelValidation` from https://github.com/Azure/azure-rest-api-specs
 
 ## 0.2.13
