@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.14
+
+- `modelValidation` from https://github.com/Azure/azure-rest-api-specs
+
 ## 0.2.13
 
 - Correct Swagger 2.0 Schema URL.
