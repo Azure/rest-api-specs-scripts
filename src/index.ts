@@ -7,5 +7,6 @@ export { runScript as momentOfTruth } from './momentOfTruth'
 import * as utils from './utils'
 import * as momentOfTruthUtils from './momentOfTruthUtils'
 import * as tsUtils from './ts-utils'
+import * as modelValidation from './modelValidation'
 
-export { utils, momentOfTruthUtils, tsUtils }
+export { utils, momentOfTruthUtils, tsUtils, modelValidation }
