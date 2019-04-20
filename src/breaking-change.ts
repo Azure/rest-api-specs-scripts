@@ -7,18 +7,8 @@ import * as utils from './utils'
 import * as path from 'path'
 import * as fs from 'fs-extra'
 import * as os from 'os'
-import * as childProcess from 'child_process'
 import * as oad from '@azure/oad'
-import * as util from 'util'
 import { devOps, cli } from '@azure/avocado'
-
-const exec = util.promisify(childProcess.exec)
-
-// This map is used to store the mapping between files resolved and stored location
-var resolvedMapForNewSpecs: stringMap.MutableStringMap<string> = {};
-let outputFolder = path.join(os.tmpdir(), "resolved");
-// Used to enable running script outside TravisCI for debugging
-let isRunningInTravisCI = process.env.TRAVIS === 'true';
 
 const headerText = `
 | | Rule | Location | Message |
@@ -90,33 +80,41 @@ async function runOad(oldSpec: string, newSpec: string) {
   return JSON.parse(result);
 }
 
-/**
- * Processes the given swagger and stores the resolved swagger on to disk
- *
- * @param swaggerPath Path to the swagger specification file.
- */
-async function processViaAutoRest(swaggerPath: string) {
-  if (swaggerPath === null || swaggerPath === undefined || typeof swaggerPath.valueOf() !== 'string' || !swaggerPath.trim().length) {
-    throw new Error('swaggerPath is a required parameter of type "string" and it cannot be an empty string.');
-  }
-
-  const swaggerOutputFolder = path.join(outputFolder, path.dirname(swaggerPath));
-  const swaggerOutputFileNameWithoutExt = path.basename(swaggerPath, '.json');
-  const autoRestCmd = `autorest --input-file=${swaggerPath} --output-artifact=swagger-document.json --output-file=${swaggerOutputFileNameWithoutExt} --output-folder=${swaggerOutputFolder}`;
-
-  console.log(`Executing : ${autoRestCmd}`);
-
-  try {
-    await fs.ensureDir(swaggerOutputFolder);
-    await exec(`${autoRestCmd}`, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 64 });
-    resolvedMapForNewSpecs[swaggerPath] = path.join(swaggerOutputFolder, swaggerOutputFileNameWithoutExt + '.json');
-  } catch (err) {
-    console.log(`Error processing via AutoRest: ${err}`);
-  }
-}
-
 //main function
 export async function runScript() {
+  // Used to enable running script outside TravisCI for debugging
+  const isRunningInTravisCI = process.env.TRAVIS === 'true';
+  const outputFolder = path.join(os.tmpdir(), "resolved");
+
+  // This map is used to store the mapping between files resolved and stored location
+  const resolvedMapForNewSpecs: stringMap.MutableStringMap<string> = {};
+
+  /**
+   * Processes the given swagger and stores the resolved swagger on to disk
+   *
+   * @param swaggerPath Path to the swagger specification file.
+   */
+  async function processViaAutoRest(swaggerPath: string) {
+    if (swaggerPath === null || swaggerPath === undefined || typeof swaggerPath.valueOf() !== 'string' || !swaggerPath.trim().length) {
+      throw new Error('swaggerPath is a required parameter of type "string" and it cannot be an empty string.');
+    }
+
+    const swaggerOutputFolder = path.join(outputFolder, path.dirname(swaggerPath));
+    const swaggerOutputFileNameWithoutExt = path.basename(swaggerPath, '.json');
+    const autoRestCmd = `autorest --input-file=${swaggerPath} --output-artifact=swagger-document.json --output-file=${swaggerOutputFileNameWithoutExt} --output-folder=${swaggerOutputFolder}`;
+
+    console.log(`Executing : ${autoRestCmd}`);
+
+    try {
+      await fs.ensureDir(swaggerOutputFolder);
+      await utils.exec(`${autoRestCmd}`, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 64 });
+      resolvedMapForNewSpecs[swaggerPath] = path.join(swaggerOutputFolder, swaggerOutputFileNameWithoutExt + '.json');
+    } catch (err) {
+      console.log(`Error processing via AutoRest: ${err}`);
+    }
+  }
+
+  // create Azure DevOps PR properties.
   const pr = await devOps.createPullRequestProperties(cli.defaultConfig())
 
   // See whether script is in Travis CI context

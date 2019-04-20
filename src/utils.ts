@@ -12,6 +12,9 @@ import request = require('request')
 import * as util from 'util'
 import { execSync } from 'child_process'
 import { devOps } from '@azure/avocado'
+import * as childProcess from 'child_process'
+
+export const exec = util.promisify(childProcess.exec)
 
 const asyncJsonRequest = (url: string) => new Promise<unknown>((res, rej) => request(
   { url, json: true },
