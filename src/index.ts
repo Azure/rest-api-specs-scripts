@@ -10,5 +10,14 @@ import * as tsUtils from './ts-utils'
 import * as modelValidation from './modelValidation'
 import * as postToGitHub from './postToGitHub'
 import * as momentOfTruthPostProcessing from './momentOfTruthPostProcessing'
+import * as semanticValidation from './semanticValidation'
 
-export { utils, momentOfTruthUtils, tsUtils, modelValidation, postToGitHub, momentOfTruthPostProcessing }
+export {
+  utils,
+  momentOfTruthUtils,
+  tsUtils,
+  modelValidation,
+  postToGitHub,
+  momentOfTruthPostProcessing,
+  semanticValidation
+}
