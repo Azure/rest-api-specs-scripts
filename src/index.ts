@@ -9,5 +9,6 @@ import * as momentOfTruthUtils from './momentOfTruthUtils'
 import * as tsUtils from './ts-utils'
 import * as modelValidation from './modelValidation'
 import * as postToGitHub from './postToGitHub'
+import * as momentOfTruthPostProcessing from './momentOfTruthPostProcessing'
 
-export { utils, momentOfTruthUtils, tsUtils, modelValidation, postToGitHub }
+export { utils, momentOfTruthUtils, tsUtils, modelValidation, postToGitHub, momentOfTruthPostProcessing }
