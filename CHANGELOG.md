@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.19
+## 0.2.20
 
 - Run AutoRest from `node_modules` for `breaking-changes`.
 
