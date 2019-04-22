@@ -102,7 +102,7 @@ async function processViaAutoRest(swaggerPath: string) {
 
   const swaggerOutputFolder = path.join(outputFolder, path.dirname(swaggerPath));
   const swaggerOutputFileNameWithoutExt = path.basename(swaggerPath, '.json');
-  const autoRestCmd = `autorest --input-file=${swaggerPath} --output-artifact=swagger-document.json --output-file=${swaggerOutputFileNameWithoutExt} --output-folder=${swaggerOutputFolder}`;
+  const autoRestCmd = `node_modules/bin/autorest --input-file=${swaggerPath} --output-artifact=swagger-document.json --output-file=${swaggerOutputFileNameWithoutExt} --output-folder=${swaggerOutputFolder}`;
 
   console.log(`Executing : ${autoRestCmd}`);
 
