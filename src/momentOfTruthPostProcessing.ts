@@ -9,11 +9,6 @@ import * as gitHubPost from './postToGitHub'
 import * as fs from 'fs'
 import * as path from 'path'
 
-function getLogDir() {
-  let logDir = path.join(__dirname, '../', 'output');
-  return logDir;
-}
-
 let githubTemplate = (title: unknown, contact_message: unknown, file_summaries: unknown) =>
   `# AutoRest linter results for ${title}\n${contact_message}\n\n${file_summaries}`;
 
@@ -276,7 +271,7 @@ export function postProcessing() {
   const pullRequestNumber = utils.getPullRequestNumber();
   const targetBranch = utils.getTargetBranch();
   const filename = `${pullRequestNumber}.json`;
-  const logFilepath = path.join(getLogDir(), filename);
+  const logFilepath = path.join(momentOfTruthUtils.getLogDir(), filename);
 
   let data = undefined;
   let jsonData: momentOfTruthUtils.FinalResult|undefined = undefined;

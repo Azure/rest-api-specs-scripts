@@ -1,10 +1,11 @@
 # Changelog
 
-## 0.3.8
+## 0.3.9
 
 - remove global variables
 - `modelValidation`, `momentOTruthPostProcessing`, `postToGitHub`, and `semanticValidation` from https://github.com/Azure/azure-rest-api-specs
 - `getSwaggers()` and `getExamples()` functions are added to `utils`
+- relative log output path is fixed.
 
 ## 0.2.21
 

@@ -9,19 +9,6 @@ import * as utils from './utils'
 import * as fs from 'fs'
 import { devOps, cli } from '@azure/avocado'
 
-// Creates and returns path to the logging directory
-function getLogDir() {
-    let logDir = path.resolve('output');
-    if (!fs.existsSync(logDir)) {
-        try {
-            fs.mkdirSync(logDir);
-        } catch (e) {
-            if (e.code !== 'EEXIST') throw e;
-        }
-    }
-    return logDir;
-}
-
 // Executes linter on given swagger path and returns structured JSON of linter output
 async function getLinterResult(swaggerPath: string|null|undefined) {
     if (swaggerPath === null || swaggerPath === undefined || typeof swaggerPath.valueOf() !== 'string' || !swaggerPath.trim().length) {
@@ -70,7 +57,7 @@ const linterCmd = `npx autorest --validation --azure-validator --message-format=
 export async function runScript() {
     const pullRequestNumber = utils.getPullRequestNumber();
     const filename = `${pullRequestNumber}.json`;
-    const logFilepath = path.join(getLogDir(), filename);
+    const logFilepath = path.join(momentOfTruthUtils.getLogDir(), filename);
 
     const finalResult: momentOfTruthUtils.FinalResult = {
         pullRequest: pullRequestNumber,
