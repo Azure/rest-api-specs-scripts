@@ -32,7 +32,7 @@ export const compositeSchemaUrl = "https://raw.githubusercontent.com/Azure/autor
 // export const prOnly = undefined !== process.env['PR_ONLY'] ? process.env['PR_ONLY'] : 'false';
 
 const getGlobPath = () => path.join(__dirname, '../', '../', '/specification/**/*.json');
-const getSwaggers = () => glob.sync(getGlobPath(), { ignore: ['**/examples/**/*.json', '**/quickstart-templates/*.json', '**/schema/*.json'] });
+export const getSwaggers = () => glob.sync(getGlobPath(), { ignore: ['**/examples/**/*.json', '**/quickstart-templates/*.json', '**/schema/*.json'] });
 // export const exampleGlobPath = path.join(__dirname, '../', '../', '/specification/**/examples/**/*.json');
 // export const examples = glob.sync(exampleGlobPath);
 // export const readmes = glob.sync(path.join(__dirname, '../', '../', '/specification/**/readme.md'));
