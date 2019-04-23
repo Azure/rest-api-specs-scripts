@@ -99,9 +99,10 @@ export async function runScript() {
       throw new Error('swaggerPath is a required parameter of type "string" and it cannot be an empty string.');
     }
 
-    const swaggerOutputFolder = path.join(outputFolder, path.dirname(swaggerPath));
-    const swaggerOutputFileNameWithoutExt = path.basename(swaggerPath, '.json');
-    const autoRestCmd = `autorest --input-file=${swaggerPath} --output-artifact=swagger-document.json --output-file=${swaggerOutputFileNameWithoutExt} --output-folder=${swaggerOutputFolder}`;
+  const swaggerOutputFolder = path.join(outputFolder, path.dirname(swaggerPath));
+  const swaggerOutputFileNameWithoutExt = path.basename(swaggerPath, '.json');
+  const autorestPath = path.resolve('node_modules/.bin/autorest')
+  const autoRestCmd = `${autorestPath} --input-file=${swaggerPath} --output-artifact=swagger-document.json --output-file=${swaggerOutputFileNameWithoutExt} --output-folder=${swaggerOutputFolder}`;
 
     console.log(`Executing : ${autoRestCmd}`);
 

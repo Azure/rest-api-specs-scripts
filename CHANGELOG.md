@@ -5,6 +5,10 @@
 - remove global variables
 - `modelValidation` from https://github.com/Azure/azure-rest-api-specs
 
+## 0.2.21
+
+- Run AutoRest from `node_modules` for `breaking-changes`.
+
 ## 0.2.13
 
 - Correct Swagger 2.0 Schema URL.
