@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.7
+## 0.3.8
 
 - remove global variables
 - `modelValidation`, `momentOTruthPostProcessing`, `postToGitHub`, and `semanticValidation` from https://github.com/Azure/azure-rest-api-specs
