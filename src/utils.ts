@@ -31,10 +31,14 @@ export const compositeSchemaUrl = "https://raw.githubusercontent.com/Azure/autor
 // export const isWindows = (process.platform.lastIndexOf('win') === 0);
 // export const prOnly = undefined !== process.env['PR_ONLY'] ? process.env['PR_ONLY'] : 'false';
 
-const getGlobPath = () => path.join(__dirname, '../', '../', '/specification/**/*.json');
-export const getSwaggers = () => glob.sync(getGlobPath(), { ignore: ['**/examples/**/*.json', '**/quickstart-templates/*.json', '**/schema/*.json'] });
-// export const exampleGlobPath = path.join(__dirname, '../', '../', '/specification/**/examples/**/*.json');
-// export const examples = glob.sync(exampleGlobPath);
+export const getSwaggers = () => {
+  const getGlobPath = () => path.join(__dirname, '../', '../', '/specification/**/*.json');
+  glob.sync(getGlobPath(), { ignore: ['**/examples/**/*.json', '**/quickstart-templates/*.json', '**/schema/*.json'] });
+}
+export const getExamples = () => {
+  const exampleGlobPath = path.join(__dirname, '../', '../', '/specification/**/examples/**/*.json');
+  glob.sync(exampleGlobPath);
+}
 // export const readmes = glob.sync(path.join(__dirname, '../', '../', '/specification/**/readme.md'));
 
 // Remove byte order marker. This catches EF BB BF (the UTF-8 BOM)
