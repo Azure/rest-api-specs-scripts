@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
 
+import { devOps, cli } from '@azure/avocado'
 import * as utils from './utils'
 import * as oav from 'oav'
-import { devOps, cli } from '@azure/avocado';
 
 export async function main() {
   const pr = await devOps.createPullRequestProperties(cli.defaultConfig())
