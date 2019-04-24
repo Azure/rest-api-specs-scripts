@@ -9,43 +9,6 @@ import * as utils from './utils'
 import * as fs from 'fs'
 import { devOps, cli } from '@azure/avocado'
 
-
-let pullRequestNumber = utils.getPullRequestNumber();
-let linterCmd = `npx autorest --validation --azure-validator --message-format=json `;
-var filename = `${pullRequestNumber}.json`;
-var logFilepath = path.join(getLogDir(), filename);
-
-var finalResult: momentOfTruthUtils.FinalResult = {
-    pullRequest: pullRequestNumber,
-    repositoryUrl: utils.getRepoUrl(),
-    files: {}
-}
-
-// Creates and returns path to the logging directory
-function getLogDir() {
-    let logDir = path.resolve('output');
-    if (!fs.existsSync(logDir)) {
-        try {
-            fs.mkdirSync(logDir);
-        } catch (e) {
-            if (e.code !== 'EEXIST') throw e;
-        }
-    }
-    return logDir;
-}
-
-//creates the log file if it has not been created
-function createLogFile() {
-    if (!fs.existsSync(logFilepath)) {
-        fs.writeFileSync(logFilepath, '');
-    }
-}
-
-//appends the content to the log file
-function writeContent(content: unknown) {
-    fs.writeFileSync(logFilepath, content);
-}
-
 // Executes linter on given swagger path and returns structured JSON of linter output
 async function getLinterResult(swaggerPath: string|null|undefined) {
     if (swaggerPath === null || swaggerPath === undefined || typeof swaggerPath.valueOf() !== 'string' || !swaggerPath.trim().length) {
@@ -88,30 +51,55 @@ async function getLinterResult(swaggerPath: string|null|undefined) {
     return [];
 };
 
-// Run linter tool
-async function runTools(swagger: string, beforeOrAfter: momentOfTruthUtils.BeforeOrAfter) {
-    console.log(`Processing "${swagger}":`);
-    const linterErrors = await getLinterResult(swagger);
-    console.log(linterErrors);
-    await updateResult(swagger, linterErrors, beforeOrAfter);
-};
-
-// Updates final result json to be written to the output file
-async function updateResult(
-    spec: string,
-    errors: readonly momentOfTruthUtils.Issue[],
-    beforeOrAfter: momentOfTruthUtils.BeforeOrAfter
-) {
-    const files = finalResult['files']
-    if (!files[spec]) {
-        files[spec] = { before: [], after: [] };
-    }
-    const filesSpec = tsUtils.asNonUndefined(files[spec])
-    filesSpec[beforeOrAfter] = errors;
-}
+const linterCmd = `npx autorest --validation --azure-validator --message-format=json `;
 
 //main function
 export async function runScript() {
+    const pullRequestNumber = utils.getPullRequestNumber();
+    const filename = `${pullRequestNumber}.json`;
+    const logFilepath = path.join(momentOfTruthUtils.getLogDir(), filename);
+
+    const finalResult: momentOfTruthUtils.FinalResult = {
+        pullRequest: pullRequestNumber,
+        repositoryUrl: utils.getRepoUrl(),
+        files: {}
+    }
+
+    //creates the log file if it has not been created
+    function createLogFile() {
+        if (!fs.existsSync(logFilepath)) {
+            fs.writeFileSync(logFilepath, '');
+        }
+    }
+
+    //appends the content to the log file
+    function writeContent(content: unknown) {
+        fs.writeFileSync(logFilepath, content);
+    }
+
+    // Updates final result json to be written to the output file
+    async function updateResult(
+        spec: string,
+        errors: readonly momentOfTruthUtils.Issue[],
+        beforeOrAfter: momentOfTruthUtils.BeforeOrAfter
+    ) {
+        const files = finalResult['files']
+        if (!files[spec]) {
+            files[spec] = { before: [], after: [] };
+        }
+        const filesSpec = tsUtils.asNonUndefined(files[spec])
+        filesSpec[beforeOrAfter] = errors;
+    }
+
+    // Run linter tool
+    async function runTools(swagger: string, beforeOrAfter: momentOfTruthUtils.BeforeOrAfter) {
+        console.log(`Processing "${swagger}":`);
+        const linterErrors = await getLinterResult(swagger);
+        console.log(linterErrors);
+        await updateResult(swagger, linterErrors, beforeOrAfter);
+    };
+
+    //
     const pr = await devOps.createPullRequestProperties(cli.defaultConfig())
     const configsToProcess = await utils.getConfigFilesChangedInPR(pr);
 
