@@ -28,12 +28,12 @@
     "@types/glob": "^7.1.1",
     "@types/js-yaml": "^3.12.1",
     "@types/node": "^11.13.6",
-    "@types/request": "^2.48.1",    
+    "@types/request": "^2.48.1",
     "@types/jsonpath": "^0.2.0",
     "typescript": "^3.4.4"
   },
   "dependencies": {
-    "@azure/avocado": "^0.4.1",
+    "@azure/avocado": "^0.4.8",
     "@azure/oad": "^0.6.3",
     "@octokit/rest": "^16.25.0",
     "@ts-common/string-map": "^0.3.0",

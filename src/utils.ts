@@ -273,10 +273,7 @@ export const getFilesChangedInPR = async (pr: devOps.PullRequestProperties | und
   let result = getSwaggers();
   if (pr !== undefined) {
     try {
-      let jsonFilesChanged = new Set<string>(await pr.jsonStructuralDiff().toArray());
-      let filesChanged = (await pr.diff())
-        .map(file => file.path)
-        .filter(path =>  !path.endsWith('.json') || (path.endsWith('.json') && jsonFilesChanged.has(path)))      
+      let filesChanged = await pr.structuralDiff().toArray()
 
       console.log('>>>>> Files changed in this PR are as follows:')
       console.log(filesChanged);
