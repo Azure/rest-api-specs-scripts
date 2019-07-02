@@ -236,7 +236,7 @@ export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties
       console.log(filesChanged);
 
       // traverse up to readme.md files
-      const configFiles = new Set();
+      const configFiles = new Set<string>();
       for (let fileChanged of filesChanged) {
         while (fileChanged.startsWith("specification")) {
           if (fileChanged.toLowerCase().endsWith("readme.md") && fs.existsSync(fileChanged)) {
@@ -273,7 +273,8 @@ export const getFilesChangedInPR = async (pr: devOps.PullRequestProperties | und
   let result = getSwaggers();
   if (pr !== undefined) {
     try {
-      let filesChanged = (await pr.diff()).map(file => file.path)
+      let filesChanged = await pr.structuralDiff().toArray()
+
       console.log('>>>>> Files changed in this PR are as follows:')
       console.log(filesChanged);
       let swaggerFilesInPR = filesChanged.filter(function (item: string) {
