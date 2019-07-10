@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+- fix exec function
+- replace diff with structural diff
+- add package '@types/jsonpath'
+
 ## 0.3.9
 
 - remove global variables
