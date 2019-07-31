@@ -7,12 +7,13 @@ import * as oav from 'oav'
 
 export async function main() {
   const pr = await devOps.createPullRequestProperties(cli.defaultConfig())
-  const swaggersToProcess = await utils.getFilesChangedInPR(pr);
-  // Useful when debugging a test for a particular swagger.
-  // Just update the regex. That will return an array of filtered items.
-  // swaggersToProcess = swaggersToProcess.filter(function(item) {
-  //   return (item.match(/.*Microsoft.Logic.*2016-06-01.*/ig) !== null);
-  // });
+  let swaggersToProcess = await utils.getFilesChangedInPR(pr);
+  swaggersToProcess = swaggersToProcess.filter(function (item) {
+    // Useful when debugging a test for a particular swagger.
+    // Just update the regex. That will return an array of filtered items.
+    //   return (item.match(/.*Microsoft.Logic.*2016-06-01.*/ig) !== null);
+    return (item.match(/.*specification\/.*/ig) !== null);
+  });
   for (const swagger of swaggersToProcess) {
     try {
       await oav.validateSpec(swagger, {consoleLogLevel: 'error', pretty: true});

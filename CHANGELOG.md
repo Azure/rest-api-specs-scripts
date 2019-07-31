@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- Fix semantic validation should only run on specification files
+
 ## 0.4.0
 
 - fix exec function
