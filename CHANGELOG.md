@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1
+
+- Upgrade oav version to 0.19.6
+
 ## 0.4.1
 
 - Fix semantic validation should only run on specification files
