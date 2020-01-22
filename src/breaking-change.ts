@@ -99,10 +99,10 @@ export async function runScript() {
       throw new Error('swaggerPath is a required parameter of type "string" and it cannot be an empty string.');
     }
 
-  const swaggerOutputFolder = path.join(outputFolder, path.dirname(swaggerPath));
-  const swaggerOutputFileNameWithoutExt = path.basename(swaggerPath, '.json');
-  const autorestPath = path.resolve('node_modules/.bin/autorest')
-  const autoRestCmd = `${autorestPath} --input-file=${swaggerPath} --output-artifact=swagger-document.json --output-file=${swaggerOutputFileNameWithoutExt} --output-folder=${swaggerOutputFolder}`;
+    const swaggerOutputFolder = path.join(outputFolder, path.dirname(swaggerPath));
+    const swaggerOutputFileNameWithoutExt = path.basename(swaggerPath, '.json');
+    const autorestPath = path.resolve('node_modules/.bin/autorest')
+    const autoRestCmd = `${autorestPath} --input-file=${swaggerPath} --output-artifact=swagger-document.json --output-file=${swaggerOutputFileNameWithoutExt} --output-folder=${swaggerOutputFolder}`;
 
     console.log(`Executing : ${autoRestCmd}`);
 
@@ -110,6 +110,7 @@ export async function runScript() {
       await fs.ensureDir(swaggerOutputFolder);
       await utils.exec(`${autoRestCmd}`, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 64 });
       resolvedMapForNewSpecs[swaggerPath] = path.join(swaggerOutputFolder, swaggerOutputFileNameWithoutExt + '.json');
+      return true;
     } catch (err) {
       console.log(`Error processing via AutoRest: ${err}`);
     }
@@ -138,7 +139,28 @@ export async function runScript() {
   console.log('Processing via AutoRest...');
   for (const swagger of swaggersToProcess) {
     if (!newSwaggers.includes(swagger)) {
-      await processViaAutoRest(swagger);
+      var isSuccessed = await processViaAutoRest(swagger);
+      if (isSuccessed === true) {
+        continue;
+      }
+      await fs.readJSON(swagger, (err, swaggerInstance) => {
+        if (err) {
+          process.exitCode = 1;
+        }
+        else {
+          // If it's a swagger file ,report the error  
+          try {
+            if (swaggerInstance.swagger === "2.0") {
+              console.log(`Error: the autorest run failed ,the swagger file "${swagger}" maybe has somewhere incorrect , please see the error log ! `);
+              process.exitCode = 2;
+            }
+          }
+          catch (e) {
+            process.exitCode = 3;
+          }
+        }
+      });
+
     }
   }
 
