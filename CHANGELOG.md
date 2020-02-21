@@ -3,6 +3,7 @@
 ## 0.6.1
 
 - Upgrade oav version to 0.20.9
+- Octokit interface change (https://github.com/octokit/rest.js/releases/tag/v16.42.0)
 
 ## 0.5.1
 
