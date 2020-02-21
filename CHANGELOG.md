@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1
+
+- Upgrade oav version to 0.20.9
+
 ## 0.5.1
 
 - Upgrade oav version to 0.19.6
