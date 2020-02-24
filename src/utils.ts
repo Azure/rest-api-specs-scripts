@@ -13,6 +13,7 @@ import * as util from 'util'
 import { execSync } from 'child_process'
 import { devOps } from '@azure/avocado'
 import * as childProcess from 'child_process'
+import * as commonmark from "commonmark";
 
 export const exec = util.promisify(childProcess.exec)
 
@@ -324,3 +325,65 @@ export const initializeValidator = async function() {
   context.validator = validator;
   return context;
 };
+
+/**
+ * Get Openapi Type From readme.md ,If failed then from the path
+ * @returns {string} arm | data-plane | default
+ */
+export const GetOpenapiType = async function(configFile: string):Promise<string> {
+  try {
+    var rawMarkdown = fs.readFileSync(configFile, 'utf8');
+    for (const codeBlock of ParseCodeblocks(rawMarkdown)) {
+      if (codeBlock.info?.trim().toLocaleLowerCase() !== "yaml") {
+         continue;
+      }
+      var lines = codeBlock.literal?.trim().split("\n")
+      if (lines === undefined) {
+        continue;
+      }
+      for (let line of lines) {
+        if (line?.trim().startsWith("openapi-type:")) {
+          var openapiType = line?.trim().split(":")[1].trim();
+          return new Promise((resolve) => {
+            resolve(openapiType);
+          })
+        }
+      }
+    }
+  }
+  catch(err) {
+    console.log("parse failed with msg:" + err);
+  }
+
+  if ( configFile.match(/.+\/specification\/.*\/resource-manager\/.*readme.md$/g)) {
+    return new Promise((resolve) => {
+      resolve("arm");
+    })
+  }
+  else if (configFile.match(/.+\/specification\/.*\/data-plane\/.*readme.md$/g)) {
+    return new Promise((resolve) => {
+      resolve("data-plane");
+    })
+  }
+  else {
+    return new Promise((resolve) => {
+      resolve("default");
+    })
+  }
+
+  function ParseCommonmark(markdown: string): commonmark.Node {
+    return new commonmark.Parser().parse(markdown);
+  }
+  
+  function* ParseCodeblocks(markdown: string): Iterable<commonmark.Node> {
+    const parsed = ParseCommonmark(markdown);
+    const walker = parsed.walker();
+    let event;
+    while ((event = walker.next())) {
+      var node = event.node;
+      if (event.entering && node.type === "code_block") {
+        yield node;
+      }
+    }
+  }
+}
