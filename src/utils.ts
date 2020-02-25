@@ -330,7 +330,7 @@ export const initializeValidator = async function() {
  * Get Openapi Type From readme.md ,If failed then from the path
  * @returns {string} arm | data-plane | default
  */
-export const GetOpenapiType = async function(configFile: string):Promise<string> {
+export const getOpenapiType = async function(configFile: string):Promise<string> {
   try {
     var rawMarkdown = fs.readFileSync(configFile, 'utf8');
     for (const codeBlock of ParseCodeblocks(rawMarkdown)) {

@@ -7,27 +7,27 @@ import {utils as utils} from "../src/index"
 
 @suite class UtilsTest {
     @test async "TestGetOpenapiTypeDataplane" () {
-        let openapiType = await utils.GetOpenapiType("./tests/Resource/openapi-type-data-plane-readme.md")
+        let openapiType = await utils.getOpenapiType("./tests/Resource/openapi-type-data-plane-readme.md")
         assert.equal(openapiType,"data-plane")
     }
 
     @test async "TestGetOpenapiTypeDataplanArm" () {
-        let openapiType = await utils.GetOpenapiType("./tests/Resource/openapi-type-arm-readme.md")
+        let openapiType = await utils.getOpenapiType("./tests/Resource/openapi-type-arm-readme.md")
         assert.equal(openapiType,"arm")
     }
 
     @test async "TestGetOpenapiTypeNoExistFile" () {
-        let openapiType = await utils.GetOpenapiType("C:/code/data-plane/test/readme.md")
+        let openapiType = await utils.getOpenapiType("C:/code/data-plane/test/readme.md")
         assert.equal(openapiType,"default")
     }
 
     @test async "TestGetOpenapiTypeFromPathWithArm" () {
-        let openapiType = await utils.GetOpenapiType("C:/specification/test/resource-manager/test/readme.md")
+        let openapiType = await utils.getOpenapiType("C:/specification/test/resource-manager/test/readme.md")
         assert.equal(openapiType,"arm")
     }
 
     @test async "TestGetOpenapiTypeFromPathWithDataPlane" () {
-        let openapiType = await utils.GetOpenapiType("/home/work/1/spec/specification/test/data-plane/test/readme.md")
+        let openapiType = await utils.getOpenapiType("/home/work/1/spec/specification/test/data-plane/test/readme.md")
         assert.equal(openapiType,"data-plane")
     }
 }
