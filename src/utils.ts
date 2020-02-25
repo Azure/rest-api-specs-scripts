@@ -337,7 +337,7 @@ export const GetOpenapiType = async function(configFile: string):Promise<string>
       if (codeBlock.info?.trim().toLocaleLowerCase() !== "yaml") {
          continue;
       }
-      var lines = codeBlock.literal?.trim().split("\n")
+      let lines = codeBlock.literal?.trim().split("\n")
       if (lines === undefined) {
         continue;
       }
