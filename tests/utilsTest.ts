@@ -5,7 +5,7 @@ import { suite, test, slow, timeout, skip, only } from "mocha-typescript";
 import * as assert from "assert";
 import {utils as utils} from "../src/index"
 
-@suite class TestUtils {
+@suite class UtilsTest {
     @test async "TestGetOpenapiTypeDataplane" () {
         let openapiType = await utils.GetOpenapiType("./tests/Resource/openapi-type-data-plane-readme.md")
         assert.equal(openapiType,"data-plane")

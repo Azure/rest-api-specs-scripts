@@ -20,8 +20,8 @@ async function getLinterResult(swaggerPath: string|null|undefined) {
         return [];
     }
 
-    let openapiType = await utils.GetOpenapiType(swaggerPath).then(result=>{})
-    let openapiTypeCmd = ' --openapi-type=' + openapiType + ' '
+    let openapiType = await utils.GetOpenapiType(swaggerPath);
+    let openapiTypeCmd = ' --openapi-type=' + openapiType + ' ';
     let cmd = "npx autorest --reset && " + linterCmd + openapiTypeCmd + swaggerPath;
     console.log(`Executing: ${cmd}`);
     const { err, stdout, stderr } = await new Promise(res => exec(cmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 64 },
