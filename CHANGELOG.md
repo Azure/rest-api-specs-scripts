@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.2
+
+- Fix breaking-change also green bug.
+
 ## 0.6.1
 
 - Upgrade oav version to 0.20.9
