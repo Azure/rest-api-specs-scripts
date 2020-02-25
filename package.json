@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "tsc": "tsc",
-    "test": "mocha dist/tests/*.js",
+    "test": "tsc && mocha dist/tests/*.js",
     "prepack": "npm install && tsc"
   },
   "repository": {
