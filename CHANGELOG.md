@@ -2,7 +2,7 @@
 
 ## 0.6.2
 
-- Fix breaking-change also green bug.
+- Fix breaking-change always pass bug.
 
 ## 0.6.1
 
