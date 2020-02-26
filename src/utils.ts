@@ -332,7 +332,7 @@ export const initializeValidator = async function() {
  */
 export const getOpenapiType = async function(configFile: string):Promise<string> {
   try {
-    var rawMarkdown = fs.readFileSync(configFile, 'utf8');
+    let rawMarkdown = fs.readFileSync(configFile, 'utf8');
     for (const codeBlock of ParseCodeblocks(rawMarkdown)) {
       if (codeBlock.info?.trim().toLocaleLowerCase() !== "yaml") {
          continue;
@@ -343,7 +343,7 @@ export const getOpenapiType = async function(configFile: string):Promise<string>
       }
       for (let line of lines) {
         if (line?.trim().startsWith("openapi-type:")) {
-          var openapiType = line?.trim().split(":")[1].trim();
+          let openapiType = line?.trim().split(":")[1].trim();
           return new Promise((resolve) => {
             resolve(openapiType);
           })
@@ -380,7 +380,7 @@ export const getOpenapiType = async function(configFile: string):Promise<string>
     const walker = parsed.walker();
     let event;
     while ((event = walker.next())) {
-      var node = event.node;
+      let node = event.node;
       if (event.entering && node.type === "code_block") {
         yield node;
       }
