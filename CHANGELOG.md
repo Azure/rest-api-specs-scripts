@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.3
+
+- seprate the lint rules by type: data-plane | arm .
+
 ## 0.6.2
 
 - Fix breaking-change always pass bug.
