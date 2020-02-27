@@ -159,7 +159,7 @@ export async function runScript() {
 
     const resolved = resolvedMapForNewSpecs[swagger]
     if (resolved) {
-      const diffs = await runOad(swagger, resolved);
+      const diffs = await runOad(path.resolve(pr!.workingDir,swagger), resolved);
       if (diffs) {
         diffFiles[swagger] = diffs;
         for (const diff of diffs) {
