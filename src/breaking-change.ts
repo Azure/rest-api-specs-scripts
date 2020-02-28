@@ -75,7 +75,7 @@ async function runOad(oldSpec: string, newSpec: string) {
   }
 
   // fix up output from OAD, it does not output valid JSON
-  result = '[' + result.replace(/}\s+{/gi,"},{") + ']'
+  result = result.replace(/}\s+{/gi,"},{")
 
   return JSON.parse(result);
 }
