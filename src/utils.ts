@@ -333,20 +333,22 @@ export const initializeValidator = async function() {
 export const getOpenapiType = async function(configFile: string):Promise<string> {
   try {
     let rawMarkdown = fs.readFileSync(configFile, 'utf8');
-    for (const codeBlock of ParseCodeblocks(rawMarkdown)) {
-      if (codeBlock.info?.trim().toLocaleLowerCase() !== "yaml") {
+    for (const codeBlock of parseCodeblocks(rawMarkdown)) {
+      if (!codeBlock.info || codeBlock.info.trim().toLocaleLowerCase() !== "yaml" || !codeBlock.literal) {
          continue;
       }
-      let lines = codeBlock.literal?.trim().split("\n")
-      if (lines === undefined) {
+      let lines = codeBlock.literal.trim().split("\n")
+      if (!lines) {
         continue;
       }
       for (let line of lines) {
-        if (line?.trim().startsWith("openapi-type:")) {
-          let openapiType = line?.trim().split(":")[1].trim();
-          return new Promise((resolve) => {
-            resolve(openapiType);
-          })
+        if (line.trim().startsWith("openapi-type:")) {
+          let openapiType = line.trim().split(":")[1].trim().toLowerCase();
+          if (isValidType(openapiType)) {
+            return new Promise((resolve) => {
+              resolve(openapiType);
+            })
+          }
         }
       }
     }
@@ -371,12 +373,12 @@ export const getOpenapiType = async function(configFile: string):Promise<string>
     })
   }
 
-  function ParseCommonmark(markdown: string): commonmark.Node {
+  function parseCommonmark(markdown: string): commonmark.Node {
     return new commonmark.Parser().parse(markdown);
   }
-  
-  function* ParseCodeblocks(markdown: string): Iterable<commonmark.Node> {
-    const parsed = ParseCommonmark(markdown);
+
+  function* parseCodeblocks(markdown: string): Iterable<commonmark.Node> {
+    const parsed = parseCommonmark(markdown);
     const walker = parsed.walker();
     let event;
     while ((event = walker.next())) {
@@ -386,4 +388,10 @@ export const getOpenapiType = async function(configFile: string):Promise<string>
       }
     }
   }
+
+  function isValidType(type:string):boolean {
+    let types = ["arm","data-plane"];
+    return types.indexOf(type) !== -1 ;
+  }
+  
 }
