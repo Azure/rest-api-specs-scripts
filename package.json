@@ -1,6 +1,6 @@
 {
   "name": "@azure/rest-api-specs-scripts",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Scripts for the Azure RestAPI specification repository 'azure-rest-api-specs'.",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
@@ -47,8 +47,6 @@
     "js-yaml": "^3.13.1",
     "oav": "0.20.9",
     "request": "^2.88.0",
-    "commonmark": "0.27.0",
-    "mocha-cli": "^1.0.1",
-    "mocha-typescript": "1.0.22"
+    "commonmark": "0.27.0"
   }
 }
