@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.4
+
+- Seprate the lint rules by type: data-plane | arm .
+- Compatible with typescript 3.5.3
+
 ## 0.6.2
 
 - Fix breaking-change always pass bug.
