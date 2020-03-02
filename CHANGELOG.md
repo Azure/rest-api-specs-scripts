@@ -2,7 +2,7 @@
 
 ## 0.6.5
 
-- Fix last version don't work issue.
+- Fixed last version could not work issue.
 
 ## 0.6.4
 
