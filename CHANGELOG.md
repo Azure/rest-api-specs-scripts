@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.5
+
+- Fix last version don't work issue.
+
 ## 0.6.4
 
 - Seprate the lint rules by type: data-plane | arm .
