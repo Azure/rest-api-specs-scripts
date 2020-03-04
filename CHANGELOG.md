@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.7
+
+- Fixed breaking change can't find file bug.
+
 ## 0.6.6
 
 - Fixed octokit.issues undefined issue.

@@ -89,7 +89,7 @@ export const getTargetBranch = function() {
 export const doOnTargetBranch = async <T>(pr: devOps.PullRequestProperties, func: () => Promise<T>) => {
   const currentDir = process.cwd();
 
-  pr.checkout(pr.targetBranch)
+  await pr.checkout(pr.targetBranch)
 
   console.log(`Changing directory and executing the function...`);
   // pr.workingDir is a directory of a cloned Pull Request Git repository. We can't use
