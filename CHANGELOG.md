@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.6
+
+- Fixed octokit.issues undefined issue.
+
 ## 0.6.5
 
 - Fixed last version could not work issue.
