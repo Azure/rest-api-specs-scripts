@@ -37,14 +37,34 @@ import * as fs from 'fs-extra'
 
     @test async "TestDoOnTargetBranch" () {
         const cfg = await createDevOpsEnv('devops');
-        console.log(cfg)
+        /** Create a mock pr.
+         * The pr contains two branches.
+         * Master:
+         * ├── license
+         * └── specification
+         *     ├── file1.json
+         *     ├── file2.json
+         *     ├── file3.json
+         *     └── readme.md
+         *
+         * Source:
+         * ├── license
+         * ├── specification
+         * │   ├── file1.json
+         * │   ├── file2.json
+         * │   ├── file3.json
+         * │   └── file4.json (new file)
+         * └── textfile.txt
+         * 
+         * */ 
         const pr = await devOps.createPullRequestProperties(cfg);
+
         const files = ['specification/file1.json', 'specification/file2.json', 'specification/file4.json']
         if(pr!==undefined){
             const newSwaggers = await utils.doOnTargetBranch(pr, async ()=>{
                 return files.filter(s=>!fs.existsSync(s));
             })
-            assert.equal(newSwaggers, ['specification/file4.json'])
+            assert.deepEqual(newSwaggers, ['specification/file4.json'])
         }
     }
 }
