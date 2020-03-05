@@ -1,3 +1,4 @@
+import { cleanUp } from './helper';
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
 
@@ -36,7 +37,9 @@ import * as fs from 'fs-extra'
     }
 
     @test async "TestDoOnTargetBranch" () {
-        const cfg = await createDevOpsEnv('devops');
+        const rootName = 'test-root'
+        const repoName = 'mock-repo'
+        const cfg = await createDevOpsEnv(rootName, repoName);
         /** Create a mock pr.
          * The pr contains two branches.
          * Master:
@@ -57,14 +60,16 @@ import * as fs from 'fs-extra'
          * └── textfile.txt
          * 
          * */ 
-        const pr = await devOps.createPullRequestProperties(cfg);
+        const pr = await devOps.createPullRequestProperties(cfg)
 
         const files = ['specification/file1.json', 'specification/file2.json', 'specification/file3.json', 'specification/file4.json']
         if(pr!==undefined){
             const newSwaggers = await utils.doOnTargetBranch(pr, async ()=>{
-                return files.filter(s=>!fs.existsSync(s));
+                return files.filter(s=>!fs.existsSync(s))
             })
             assert.deepEqual(newSwaggers, ['specification/file4.json'])
         }
+
+        cleanUp(rootName, repoName)
     }
 }

@@ -2,23 +2,28 @@ import * as path from "path";
 import * as pfs from "@ts-common/fs";
 import { git, cli, devOps, avocado } from "@azure/avocado";
 
-export const create = async (name: string) => {
-  const tmpRoot = path.resolve(path.join("..", "avocado-tmp"));
+export const create = async (rootName: string, repoName: string) => {
+  const tmpRoot = path.resolve(path.join("..", rootName));
   if (!(await pfs.exists(tmpRoot))) {
     await pfs.mkdir(tmpRoot);
   }
-  const tmp = path.join(tmpRoot, name);
+  const tmp = path.join(tmpRoot, repoName);
 
-  if (await pfs.exists(tmp)) {
-    await pfs.recursiveRmdir(tmp);
-  }
-
+  cleanUp(rootName, repoName)
   await pfs.mkdir(tmp);
   return tmp;
 };
 
-export const createDevOpsEnv = async (name: string): Promise<cli.Config> => {
-  const tmp = await create(name);
+export const cleanUp = async (rootName: string, repoName: string) => {
+  const tmpRoot = path.resolve(path.join("..", rootName));
+  const tmp = path.join(tmpRoot, repoName);
+  if(await pfs.exists(tmpRoot)){
+    await pfs.recursiveRmdir(tmp);
+  }
+}
+
+export const createDevOpsEnv = async (rootName: string, repoName: string): Promise<cli.Config> => {
+  const tmp = await create(rootName, repoName);
 
   // Create '"${tmp}/remote"' folder.
   const remote = path.join(tmp, "remote");
