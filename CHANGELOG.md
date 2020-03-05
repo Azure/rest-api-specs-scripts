@@ -2,7 +2,7 @@
 
 ## 0.6.7
 
-- Fixed breaking change can't find file bug.
+- Fixed breaking change can't find file bug. doOnTargetBranch execute function until checkout branch finished.
 
 ## 0.6.6
 
