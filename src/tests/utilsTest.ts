@@ -2,8 +2,12 @@
 // Licensed under the MIT License. See License in the project root for license information.
 
 import { suite, test, slow, timeout, skip, only } from "mocha-typescript";
+import { devOps } from '@azure/avocado';
 import * as assert from "assert";
 import {utils as utils} from "../index"
+import {createDevOpsEnv} from "./helper"
+import * as fs from 'fs-extra'
+
 
 @suite class UtilsTest {
     @test async "TestGetOpenapiTypeDataplane" () {
@@ -29,5 +33,18 @@ import {utils as utils} from "../index"
     @test async "TestGetOpenapiTypeFromPathWithDataPlane" () {
         let openapiType = await utils.getOpenapiType("/home/work/1/spec/specification/test/data-plane/test/readme.md")
         assert.equal(openapiType,"data-plane")
+    }
+
+    @test async "TestDoOnTargetBranch" () {
+        const cfg = await createDevOpsEnv('devops');
+        console.log(cfg)
+        const pr = await devOps.createPullRequestProperties(cfg);
+        const files = ['specification/file1.json', 'specification/file2.json', 'specification/file4.json']
+        if(pr!==undefined){
+            const newSwaggers = await utils.doOnTargetBranch(pr, async ()=>{
+                return files.filter(s=>!fs.existsSync(s));
+            })
+            assert.equal(newSwaggers, ['specification/file4.json'])
+        }
     }
 }
