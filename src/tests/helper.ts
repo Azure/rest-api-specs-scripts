@@ -17,8 +17,12 @@ export const create = async (rootName: string, repoName: string) => {
 export const cleanUp = async (rootName: string, repoName: string) => {
   const tmpRoot = path.resolve(path.join("..", rootName));
   const tmp = path.join(tmpRoot, repoName);
-  if(await pfs.exists(tmpRoot)){
-    await pfs.recursiveRmdir(tmp);
+  try {
+    if(await pfs.exists(tmpRoot)){
+      await pfs.recursiveRmdir(tmp);
+    }
+  } catch (error) {
+    //Force rm and ignore rm non-existing file error.
   }
 }
 

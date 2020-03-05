@@ -70,6 +70,6 @@ import * as fs from 'fs-extra'
             assert.deepEqual(newSwaggers, ['specification/file4.json'])
         }
 
-        cleanUp(rootName, repoName)
+        await cleanUp(rootName, repoName)
     }
 }
