@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1-hotfix.1
+
+- Fixed the undefined issue which caused by the wrong use to new version of octokit  
+
 ## 0.6.1
 
 - Upgrade oav version to 0.20.9
