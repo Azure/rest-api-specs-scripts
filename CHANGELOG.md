@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.7
+
+- Fixed breaking change can't find file bug. doOnTargetBranch execute function until checkout branch finished.
+- The root cause is the switch branch function don't use await to pause execution process. The next code block execute directly and doesn't wait switch branch function finished, as a result it actually doesn't run on target branch.
+
 ## 0.6.6
 
 - Fixed octokit.issues undefined issue.
