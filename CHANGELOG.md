@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.8
+
+- breaking change output formatted json
+
 ## 0.6.7
 
 - Fixed breaking change can't find file bug. doOnTargetBranch execute function until checkout branch finished.
