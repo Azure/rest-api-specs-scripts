@@ -68,7 +68,7 @@ async function runOad(oldSpec: string, newSpec: string) {
   console.log(`>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`);
 
   let result = await oad.compare(oldSpec, newSpec, { consoleLogLevel: 'warn' });
-  console.log(result);
+  console.log(JSON.parse(result));
 
   if (!result) {
     return;
@@ -235,7 +235,7 @@ export async function runScript() {
     };
 
     console.log('---output');
-    console.log(JSON.stringify(output));
+    console.log(output);
     console.log('---');
   }
 }
