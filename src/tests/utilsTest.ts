@@ -36,6 +36,11 @@ import * as fs from 'fs-extra'
         assert.equal(openapiType,"data-plane")
     }
 
+    @test async "TestGetOpenapiTypeFromRelativePath" () {
+        let openapiType = await utils.getOpenapiType("specification/test/data-plane/test/readme.md")
+        assert.equal(openapiType,"data-plane")
+    }
+
     @test async "TestDoOnTargetBranch" () {
         const rootName = 'test-root'
         const repoName = 'mock-repo'
@@ -71,5 +76,12 @@ import * as fs from 'fs-extra'
         }
 
         await cleanUp(rootName, repoName)
+    }
+
+    @test "TestGetLintVersion" () {
+        process.env.CLASSIC_LINT_VERSION = "1.1.0"
+        process.env.LINT_VERSION = "1.1.0"
+        let version = utils.getLinterVersion()
+        assert.deepEqual(version, {classic:"1.1.0",present:"1.1.0"})
     }
 }

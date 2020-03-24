@@ -357,12 +357,12 @@ export const getOpenapiType = async function(configFile: string):Promise<string>
     console.log("parse failed with msg:" + err);
   }
 
-  if ( configFile.match(/.+\/specification\/.*\/resource-manager\/.*readme.md$/g)) {
+  if ( configFile.match(/.*specification\/.*\/resource-manager\/.*readme.md$/g)) {
     return new Promise((resolve) => {
       resolve("arm");
     })
   }
-  else if (configFile.match(/.+\/specification\/.*\/data-plane\/.*readme.md$/g)) {
+  else if (configFile.match(/.*specification\/.*\/data-plane\/.*readme.md$/g)) {
     return new Promise((resolve) => {
       resolve("data-plane");
     })
@@ -394,4 +394,26 @@ export const getOpenapiType = async function(configFile: string):Promise<string>
     return types.indexOf(type) !== -1 ;
   }
   
+}
+
+interface LintVersion {
+  classic:string
+  present:string
+}
+
+export const getLinterVersion = function ():LintVersion {
+  let classicLintVersion =  process.env['CLASSIC_LINT_VERSION'] 
+  let lintVersion =  process.env['LINT_VERSION']
+  if (!classicLintVersion || !classicLintVersion.match(/^\d+\.\d+\.\d+$/)) {
+    classicLintVersion = ""
+  }
+
+  if (!lintVersion || !lintVersion.match(/^\d+\.\d+\.\d+$/)) {
+    lintVersion = ""
+  }
+
+  return {
+     classic : classicLintVersion,
+     present :lintVersion
+  }
 }
