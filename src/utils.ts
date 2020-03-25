@@ -382,7 +382,7 @@ export const getOpenapiType = async function(configFile: string):Promise<string>
     const walker = parsed.walker();
     let event;
     while ((event = walker.next())) {
-      let node = event.node;
+      const node = event.node;
       if (event.entering && node.type === "code_block") {
         yield node;
       }
@@ -390,18 +390,18 @@ export const getOpenapiType = async function(configFile: string):Promise<string>
   }
 
   function isValidType(type:string):boolean {
-    let types = ["arm","data-plane"];
+    const types = ["arm","data-plane"];
     return types.indexOf(type) !== -1 ;
   }
   
 }
 
-interface LintVersion {
+type LintVersion = {
   classic:string
   present:string
 }
 
-export const getLinterVersion = function ():LintVersion {
+export const getLinterVersion = ():LintVersion => {
   let classicLintVersion =  process.env['CLASSIC_LINT_VERSION'] 
   let lintVersion =  process.env['LINT_VERSION']
   if (!classicLintVersion || !classicLintVersion.match(/^\d+\.\d+\.\d+$/)) {

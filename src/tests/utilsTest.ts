@@ -41,7 +41,7 @@ import * as fs from 'fs-extra'
         assert.equal(openapiType,"data-plane")
     }
 
-    @test async "TestDoOnTargetBranch" () {
+    @test @timeout(60000) async "TestDoOnTargetBranch" () {
         const rootName = 'test-root'
         const repoName = 'mock-repo'
         const cfg = await createDevOpsEnv(rootName, repoName);

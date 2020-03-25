@@ -14,8 +14,10 @@ import * as assert from "assert";
       
       process.env.CLASSIC_LINT_VERSION = "1.1.0"
       process.env.LINT_VERSION = "1.1.0"
-      let result = await getLinterResult("./src/tests/Resource/swagger/test-lint-result.md");
+      const  result = await getLinterResult("./src/tests/Resource/swagger/test-lint-result.md");
       assert.equal(Object.keys(result).length,3)
+      const resultIds = [result[0].id,result[1].id,result[2].id].sort()
+      assert.deepEqual(resultIds,["D5001","R2054","R3023"])
     }
 
 }

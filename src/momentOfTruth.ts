@@ -24,12 +24,12 @@ export async function getLinterResult(swaggerPath: string|null|undefined) {
     let lintVersion = utils.getLinterVersion()
     let lintVersionCmd = ''
     if (lintVersion.classic) {
-        lintVersionCmd += ' --use=@microsoft.azure/classic-openapi-validator@' + lintVersion.classic + ' '
+        lintVersionCmd += '--use=@microsoft.azure/classic-openapi-validator@' + lintVersion.classic + ' '
     }
     if (lintVersion.present) {
-        lintVersionCmd += ' --use=@microsoft.azure/openapi-validator@' + lintVersion.present + ' '
+        lintVersionCmd += '--use=@microsoft.azure/openapi-validator@' + lintVersion.present + ' '
     }
-    let openapiTypeCmd = ' --openapi-type=' + openapiType + ' ';
+    let openapiTypeCmd = '--openapi-type=' + openapiType + ' ';
     let cmd = "npx autorest --reset && " + linterCmd + openapiTypeCmd + lintVersionCmd + swaggerPath;
     console.log(`Executing: ${cmd}`);
     const { err, stdout, stderr } = await new Promise(res => exec(cmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 64 },
