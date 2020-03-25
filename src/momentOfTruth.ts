@@ -10,7 +10,7 @@ import * as fs from 'fs'
 import { devOps, cli } from '@azure/avocado'
 
 // Executes linter on given swagger path and returns structured JSON of linter output
-async function getLinterResult(swaggerPath: string|null|undefined) {
+export async function getLinterResult(swaggerPath: string|null|undefined) {
     if (swaggerPath === null || swaggerPath === undefined || typeof swaggerPath.valueOf() !== 'string' || !swaggerPath.trim().length) {
         throw new Error('swaggerPath is a required parameter of type "string" and it cannot be an empty string.');
     }
