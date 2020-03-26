@@ -357,12 +357,12 @@ export const getOpenapiType = async function(configFile: string):Promise<string>
     console.log("parse failed with msg:" + err);
   }
 
-  if ( configFile.match(/.+\/specification\/.*\/resource-manager\/.*readme.md$/g)) {
+  if ( configFile.match(/.*specification\/.*\/resource-manager\/.*readme.md$/g)) {
     return new Promise((resolve) => {
       resolve("arm");
     })
   }
-  else if (configFile.match(/.+\/specification\/.*\/data-plane\/.*readme.md$/g)) {
+  else if (configFile.match(/.*specification\/.*\/data-plane\/.*readme.md$/g)) {
     return new Promise((resolve) => {
       resolve("data-plane");
     })
@@ -382,7 +382,7 @@ export const getOpenapiType = async function(configFile: string):Promise<string>
     const walker = parsed.walker();
     let event;
     while ((event = walker.next())) {
-      let node = event.node;
+      const node = event.node;
       if (event.entering && node.type === "code_block") {
         yield node;
       }
@@ -390,8 +390,30 @@ export const getOpenapiType = async function(configFile: string):Promise<string>
   }
 
   function isValidType(type:string):boolean {
-    let types = ["arm","data-plane"];
+    const types = ["arm","data-plane"];
     return types.indexOf(type) !== -1 ;
   }
   
+}
+
+type LintVersion = {
+  classic:string
+  present:string
+}
+
+export const getLinterVersion = ():LintVersion => {
+  let classicLintVersion =  process.env['CLASSIC_LINT_VERSION'] 
+  let lintVersion =  process.env['LINT_VERSION']
+  if (!classicLintVersion || !classicLintVersion.match(/^\d+\.\d+\.\d+$/)) {
+    classicLintVersion = ""
+  }
+
+  if (!lintVersion || !lintVersion.match(/^\d+\.\d+\.\d+$/)) {
+    lintVersion = ""
+  }
+
+  return {
+     classic : classicLintVersion,
+     present :lintVersion
+  }
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0
+
+- Upgrade oav version to 0.21.1.
+- Enable pass the version of lint tool via environment variable.
+
 ## 0.6.8
 
 - breaking change output formatted json
