@@ -68,14 +68,14 @@ async function runOad(oldSpec: string, newSpec: string) {
   console.log(`>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`);
 
   let result = await oad.compare(oldSpec, newSpec, { consoleLogLevel: 'warn' });
-  console.log(result);
+  console.log(JSON.parse(result));
 
   if (!result) {
     return;
   }
 
   // fix up output from OAD, it does not output valid JSON
-  result = '[' + result.replace(/}\s+{/gi,"},{") + ']'
+  result = result.replace(/}\s+{/gi,"},{")
 
   return JSON.parse(result);
 }
@@ -159,7 +159,7 @@ export async function runScript() {
 
     const resolved = resolvedMapForNewSpecs[swagger]
     if (resolved) {
-      const diffs = await runOad(swagger, resolved);
+      const diffs = await runOad(path.resolve(pr!.workingDir,swagger), resolved);
       if (diffs) {
         diffFiles[swagger] = diffs;
         for (const diff of diffs) {
@@ -235,7 +235,7 @@ export async function runScript() {
     };
 
     console.log('---output');
-    console.log(JSON.stringify(output));
+    console.log(output);
     console.log('---');
   }
 }

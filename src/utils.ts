@@ -13,6 +13,7 @@ import * as util from 'util'
 import { execSync } from 'child_process'
 import { devOps } from '@azure/avocado'
 import * as childProcess from 'child_process'
+import * as commonmark from "commonmark";
 
 export const exec = util.promisify(childProcess.exec)
 
@@ -88,7 +89,7 @@ export const getTargetBranch = function() {
 export const doOnTargetBranch = async <T>(pr: devOps.PullRequestProperties, func: () => Promise<T>) => {
   const currentDir = process.cwd();
 
-  pr.checkout(pr.targetBranch)
+  await pr.checkout(pr.targetBranch)
 
   console.log(`Changing directory and executing the function...`);
   // pr.workingDir is a directory of a cloned Pull Request Git repository. We can't use
@@ -324,3 +325,95 @@ export const initializeValidator = async function() {
   context.validator = validator;
   return context;
 };
+
+/**
+ * Get Openapi Type From readme.md ,If failed then from the path
+ * @returns {string} arm | data-plane | default
+ */
+export const getOpenapiType = async function(configFile: string):Promise<string> {
+  try {
+    let rawMarkdown = fs.readFileSync(configFile, 'utf8');
+    for (const codeBlock of parseCodeblocks(rawMarkdown)) {
+      if (!codeBlock.info || codeBlock.info.trim().toLocaleLowerCase() !== "yaml" || !codeBlock.literal) {
+         continue;
+      }
+      let lines = codeBlock.literal.trim().split("\n")
+      if (!lines) {
+        continue;
+      }
+      for (let line of lines) {
+        if (line.trim().startsWith("openapi-type:")) {
+          let openapiType = line.trim().split(":")[1].trim().toLowerCase();
+          if (isValidType(openapiType)) {
+            return new Promise((resolve) => {
+              resolve(openapiType);
+            })
+          }
+        }
+      }
+    }
+  }
+  catch(err) {
+    console.log("parse failed with msg:" + err);
+  }
+
+  if ( configFile.match(/.*specification\/.*\/resource-manager\/.*readme.md$/g)) {
+    return new Promise((resolve) => {
+      resolve("arm");
+    })
+  }
+  else if (configFile.match(/.*specification\/.*\/data-plane\/.*readme.md$/g)) {
+    return new Promise((resolve) => {
+      resolve("data-plane");
+    })
+  }
+  else {
+    return new Promise((resolve) => {
+      resolve("default");
+    })
+  }
+
+  function parseCommonmark(markdown: string): commonmark.Node {
+    return new commonmark.Parser().parse(markdown);
+  }
+
+  function* parseCodeblocks(markdown: string): Iterable<commonmark.Node> {
+    const parsed = parseCommonmark(markdown);
+    const walker = parsed.walker();
+    let event;
+    while ((event = walker.next())) {
+      const node = event.node;
+      if (event.entering && node.type === "code_block") {
+        yield node;
+      }
+    }
+  }
+
+  function isValidType(type:string):boolean {
+    const types = ["arm","data-plane"];
+    return types.indexOf(type) !== -1 ;
+  }
+  
+}
+
+type LintVersion = {
+  classic:string
+  present:string
+}
+
+export const getLinterVersion = ():LintVersion => {
+  let classicLintVersion =  process.env['CLASSIC_LINT_VERSION'] 
+  let lintVersion =  process.env['LINT_VERSION']
+  if (!classicLintVersion || !classicLintVersion.match(/^\d+\.\d+\.\d+$/)) {
+    classicLintVersion = ""
+  }
+
+  if (!lintVersion || !lintVersion.match(/^\d+\.\d+\.\d+$/)) {
+    lintVersion = ""
+  }
+
+  return {
+     classic : classicLintVersion,
+     present :lintVersion
+  }
+}

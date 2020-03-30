@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.7.0
+
+- Upgrade oav version to 0.21.1.
+- Enable pass the version of lint tool via environment variable.
+
+## 0.6.8
+
+- breaking change output formatted json
+
+## 0.6.7
+
+- Fixed breaking change can't find file bug. doOnTargetBranch execute function until checkout branch finished.
+- The root cause is the switch branch function don't use await to pause execution process. The next code block execute directly and doesn't wait switch branch function finished, as a result it actually doesn't run on target branch.
+
+## 0.6.6
+
+- Fixed octokit.issues undefined issue.
+
+## 0.6.5
+
+- Fixed last version could not work issue.
+
+## 0.6.4
+
+- Seprate the lint rules by type: data-plane | arm .
+- Compatible with typescript 3.5.3
+
+## 0.6.2
+
+- Fix breaking-change always pass bug.
+
 ## 0.6.1
 
 - Upgrade oav version to 0.20.9

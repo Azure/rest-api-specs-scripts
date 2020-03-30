@@ -10,7 +10,7 @@ import * as fs from 'fs'
 import { devOps, cli } from '@azure/avocado'
 
 // Executes linter on given swagger path and returns structured JSON of linter output
-async function getLinterResult(swaggerPath: string|null|undefined) {
+export async function getLinterResult(swaggerPath: string|null|undefined) {
     if (swaggerPath === null || swaggerPath === undefined || typeof swaggerPath.valueOf() !== 'string' || !swaggerPath.trim().length) {
         throw new Error('swaggerPath is a required parameter of type "string" and it cannot be an empty string.');
     }
@@ -19,7 +19,18 @@ async function getLinterResult(swaggerPath: string|null|undefined) {
     if (!fs.existsSync(swaggerPath)) {
         return [];
     }
-    let cmd = "npx autorest --reset && " + linterCmd + swaggerPath;
+
+    let openapiType = await utils.getOpenapiType(swaggerPath);
+    let lintVersion = utils.getLinterVersion()
+    let lintVersionCmd = ''
+    if (lintVersion.classic) {
+        lintVersionCmd += '--use=@microsoft.azure/classic-openapi-validator@' + lintVersion.classic + ' '
+    }
+    if (lintVersion.present) {
+        lintVersionCmd += '--use=@microsoft.azure/openapi-validator@' + lintVersion.present + ' '
+    }
+    let openapiTypeCmd = '--openapi-type=' + openapiType + ' ';
+    let cmd = "npx autorest --reset && " + linterCmd + openapiTypeCmd + lintVersionCmd + swaggerPath;
     console.log(`Executing: ${cmd}`);
     const { err, stdout, stderr } = await new Promise(res => exec(cmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 64 },
         (err: unknown, stdout: unknown, stderr: unknown) => res({ err: err, stdout: stdout, stderr: stderr })));
