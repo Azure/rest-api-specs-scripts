@@ -1,45 +1,72 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
 
-import * as stringMap from '@ts-common/string-map'
-import * as tsUtils from './ts-utils'
-import * as utils from './utils'
-import * as path from 'path'
-import * as fs from 'fs-extra'
-import * as os from 'os'
-import * as oad from '@azure/oad'
-import { devOps, cli } from '@azure/avocado'
+import * as stringMap from "@ts-common/string-map";
+import * as tsUtils from "./ts-utils";
+import * as utils from "./utils";
+import * as path from "path";
+import * as fs from "fs-extra";
+import * as os from "os";
+import * as oad from "@azure/oad";
+import { devOps, cli } from "@azure/avocado";
+
+import * as format from "@zhenglaizhang/swagger-validation-common";
 
 const headerText = `
 | | Rule | Location | Message |
 |-|------|----------|---------|
 `;
 
+export type ChangeProperties = {
+  readonly location?: string;
+  readonly path?: string;
+  readonly ref?: string;
+};
+
+export type OadMessage = {
+  readonly id: string;
+  readonly code: string;
+  readonly docUrl: string;
+  readonly message: string;
+  readonly mode: string;
+  readonly type: string;
+  readonly new: ChangeProperties;
+  readonly old: ChangeProperties;
+};
+
 function iconFor(type: unknown) {
-  if (type === 'Error') {
-    return ':x:';
-  } else if (type === 'Warning') {
-    return ':warning:';
-  } else if (type === 'Info') {
-    return ':speech_balloon:';
+  if (type === "Error") {
+    return ":x:";
+  } else if (type === "Warning") {
+    return ":warning:";
+  } else if (type === "Info") {
+    return ":speech_balloon:";
   } else {
-    return '';
+    return "";
   }
 }
 
 function shortName(filePath: string) {
-  return `${path.basename(path.dirname(filePath))}/&#8203;<strong>${path.basename(filePath)}</strong>`;
+  return `${path.basename(
+    path.dirname(filePath)
+  )}/&#8203;<strong>${path.basename(filePath)}</strong>`;
 }
 
 type Diff = {
-  readonly type: unknown
-  readonly id: string
-  readonly code: unknown
-  readonly message: unknown
-}
+  readonly type: unknown;
+  readonly id: string;
+  readonly code: unknown;
+  readonly message: unknown;
+};
 
 function tableLine(filePath: string, diff: Diff) {
-  return `|${iconFor(diff['type'])}|[${diff['type']} ${diff['id']} - ${diff['code']}](https://github.com/Azure/openapi-diff/blob/master/docs/rules/${diff['id']}.md)|[${shortName(filePath)}](${blobHref(filePath)} "${filePath}")|${diff['message']}|\n`;
+  return `|${iconFor(diff["type"])}|[${diff["type"]} ${diff["id"]} - ${
+    diff["code"]
+  }](https://github.com/Azure/openapi-diff/blob/master/docs/rules/${
+    diff["id"]
+  }.md)|[${shortName(filePath)}](${blobHref(filePath)} "${filePath}")|${
+    diff["message"]
+  }|\n`;
 }
 
 function blobHref(file: unknown) {
@@ -54,12 +81,26 @@ function blobHref(file: unknown) {
  * @param newSpec Path to the new swagger specification file.
  */
 async function runOad(oldSpec: string, newSpec: string) {
-  if (oldSpec === null || oldSpec === undefined || typeof oldSpec.valueOf() !== 'string' || !oldSpec.trim().length) {
-    throw new Error('oldSpec is a required parameter of type "string" and it cannot be an empty string.');
+  if (
+    oldSpec === null ||
+    oldSpec === undefined ||
+    typeof oldSpec.valueOf() !== "string" ||
+    !oldSpec.trim().length
+  ) {
+    throw new Error(
+      'oldSpec is a required parameter of type "string" and it cannot be an empty string.'
+    );
   }
 
-  if (newSpec === null || newSpec === undefined || typeof newSpec.valueOf() !== 'string' || !newSpec.trim().length) {
-    throw new Error('newSpec is a required parameter of type "string" and it cannot be an empty string.');
+  if (
+    newSpec === null ||
+    newSpec === undefined ||
+    typeof newSpec.valueOf() !== "string" ||
+    !newSpec.trim().length
+  ) {
+    throw new Error(
+      'newSpec is a required parameter of type "string" and it cannot be an empty string.'
+    );
   }
 
   console.log(`>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`);
@@ -67,7 +108,34 @@ async function runOad(oldSpec: string, newSpec: string) {
   console.log(`New Spec: "${newSpec}"`);
   console.log(`>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`);
 
-  let result = await oad.compare(oldSpec, newSpec, { consoleLogLevel: 'warn' });
+  let result = await oad.compare(oldSpec, newSpec, { consoleLogLevel: "warn" });
+  let oadResult = JSON.parse(result) as OadMessage[];
+
+  const pipelineResultData: format.ResultMessageRecord[] = oadResult.map(
+    (it) => ({
+      level: it.type as format.MessageLevel,
+      message: it.message,
+      code: it.code,
+      id: it.id,
+      docUrl: it.docUrl,
+      time: new Date(),
+      extra: {
+        mode: it.mode,
+      },
+      paths: [
+        { tag: "New", path: it.new.location || "" },
+        { tag: "Old", path: it.old.location || "" },
+      ],
+    })
+  );
+  const pipelineResult: format.ResultMessage = {
+    type: "Result",
+    data: pipelineResultData,
+  };
+
+  console.log('Write to log')
+  fs.writeJSONSync("pipe.log", pipelineResult);
+
   console.log(JSON.parse(result));
 
   if (!result) {
@@ -75,7 +143,7 @@ async function runOad(oldSpec: string, newSpec: string) {
   }
 
   // fix up output from OAD, it does not output valid JSON
-  result = result.replace(/}\s+{/gi,"},{")
+  result = result.replace(/}\s+{/gi, "},{");
 
   return JSON.parse(result);
 }
@@ -83,7 +151,7 @@ async function runOad(oldSpec: string, newSpec: string) {
 //main function
 export async function runScript() {
   // Used to enable running script outside TravisCI for debugging
-  const isRunningInTravisCI = process.env.TRAVIS === 'true';
+  const isRunningInTravisCI = process.env.TRAVIS === "true";
   const outputFolder = path.join(os.tmpdir(), "resolved");
 
   // This map is used to store the mapping between files resolved and stored location
@@ -95,28 +163,44 @@ export async function runScript() {
    * @param swaggerPath Path to the swagger specification file.
    */
   async function processViaAutoRest(swaggerPath: string) {
-    if (swaggerPath === null || swaggerPath === undefined || typeof swaggerPath.valueOf() !== 'string' || !swaggerPath.trim().length) {
-      throw new Error('swaggerPath is a required parameter of type "string" and it cannot be an empty string.');
+    if (
+      swaggerPath === null ||
+      swaggerPath === undefined ||
+      typeof swaggerPath.valueOf() !== "string" ||
+      !swaggerPath.trim().length
+    ) {
+      throw new Error(
+        'swaggerPath is a required parameter of type "string" and it cannot be an empty string.'
+      );
     }
 
-  const swaggerOutputFolder = path.join(outputFolder, path.dirname(swaggerPath));
-  const swaggerOutputFileNameWithoutExt = path.basename(swaggerPath, '.json');
-  const autorestPath = path.resolve('node_modules/.bin/autorest')
-  const autoRestCmd = `${autorestPath} --input-file=${swaggerPath} --output-artifact=swagger-document.json --output-file=${swaggerOutputFileNameWithoutExt} --output-folder=${swaggerOutputFolder}`;
+    const swaggerOutputFolder = path.join(
+      outputFolder,
+      path.dirname(swaggerPath)
+    );
+    const swaggerOutputFileNameWithoutExt = path.basename(swaggerPath, ".json");
+    const autorestPath = path.resolve("node_modules/.bin/autorest");
+    const autoRestCmd = `${autorestPath} --input-file=${swaggerPath} --output-artifact=swagger-document.json --output-file=${swaggerOutputFileNameWithoutExt} --output-folder=${swaggerOutputFolder}`;
 
     console.log(`Executing : ${autoRestCmd}`);
 
     try {
       await fs.ensureDir(swaggerOutputFolder);
-      await utils.exec(`${autoRestCmd}`, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 64 });
-      resolvedMapForNewSpecs[swaggerPath] = path.join(swaggerOutputFolder, swaggerOutputFileNameWithoutExt + '.json');
+      await utils.exec(`${autoRestCmd}`, {
+        encoding: "utf8",
+        maxBuffer: 1024 * 1024 * 64,
+      });
+      resolvedMapForNewSpecs[swaggerPath] = path.join(
+        swaggerOutputFolder,
+        swaggerOutputFileNameWithoutExt + ".json"
+      );
     } catch (err) {
       console.log(`Error processing via AutoRest: ${err}`);
     }
   }
 
   // create Azure DevOps PR properties.
-  const pr = await devOps.createPullRequestProperties(cli.defaultConfig())
+  const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
 
   // See whether script is in Travis CI context
   console.log(`isRunningInTravisCI: ${isRunningInTravisCI}`);
@@ -124,18 +208,18 @@ export async function runScript() {
   let targetBranch = utils.getTargetBranch();
   let swaggersToProcess = await utils.getFilesChangedInPR(pr);
 
-  console.log('Processing swaggers:');
+  console.log("Processing swaggers:");
   console.log(swaggersToProcess);
 
-  console.log('Finding new swaggers...')
+  console.log("Finding new swaggers...");
   let newSwaggers: unknown[] = [];
   if (swaggersToProcess.length > 0 && pr !== undefined) {
     newSwaggers = await utils.doOnTargetBranch(pr, async () => {
-      return swaggersToProcess.filter((s: string) => !fs.existsSync(s))
+      return swaggersToProcess.filter((s: string) => !fs.existsSync(s));
     });
   }
 
-  console.log('Processing via AutoRest...');
+  console.log("Processing via AutoRest...");
   for (const swagger of swaggersToProcess) {
     if (!newSwaggers.includes(swagger)) {
       await processViaAutoRest(swagger);
@@ -145,7 +229,8 @@ export async function runScript() {
   console.log(`Resolved map for the new specifications:`);
   console.dir(resolvedMapForNewSpecs);
 
-  let errors = 0, warnings = 0;
+  let errors = 0,
+    warnings = 0;
   const diffFiles: stringMap.MutableStringMap<Diff[]> = {};
   const newFiles = [];
 
@@ -157,19 +242,24 @@ export async function runScript() {
       continue;
     }
 
-    const resolved = resolvedMapForNewSpecs[swagger]
+    const resolved = resolvedMapForNewSpecs[swagger];
     if (resolved) {
-      const diffs = await runOad(path.resolve(pr!.workingDir,swagger), resolved);
+      const diffs = await runOad(
+        path.resolve(pr!.workingDir, swagger),
+        resolved
+      );
       if (diffs) {
         diffFiles[swagger] = diffs;
         for (const diff of diffs) {
-          if (diff['type'] === 'Error') {
+          if (diff["type"] === "Error") {
             if (errors === 0) {
-              console.log(`There are potential breaking changes in this PR. Please review before moving forward. Thanks!`);
+              console.log(
+                `There are potential breaking changes in this PR. Please review before moving forward. Thanks!`
+              );
               process.exitCode = 1;
             }
             errors += 1;
-          } else if (diff['type'] === 'Warning') {
+          } else if (diff["type"] === "Warning") {
             warnings += 1;
           }
         }
@@ -178,27 +268,34 @@ export async function runScript() {
   }
 
   if (isRunningInTravisCI) {
-    let summary = '';
+    let summary = "";
     if (errors > 0) {
-      summary += '**There are potential breaking changes in this PR. Please review before moving forward. Thanks!**\n\n';
+      summary +=
+        "**There are potential breaking changes in this PR. Please review before moving forward. Thanks!**\n\n";
     }
     summary += `Compared to the target branch (**${targetBranch}**), this pull request introduces:\n\n`;
-    summary += `&nbsp;&nbsp;&nbsp;${errors > 0 ? iconFor('Error') : ':white_check_mark:'}&nbsp;&nbsp;&nbsp;**${errors}** new error${errors !== 1 ? 's' : ''}\n\n`;
-    summary += `&nbsp;&nbsp;&nbsp;${warnings > 0 ? iconFor('Warning') : ':white_check_mark:'}&nbsp;&nbsp;&nbsp;**${warnings}** new warning${warnings !== 1 ? 's' : ''}\n\n`;
+    summary += `&nbsp;&nbsp;&nbsp;${
+      errors > 0 ? iconFor("Error") : ":white_check_mark:"
+    }&nbsp;&nbsp;&nbsp;**${errors}** new error${errors !== 1 ? "s" : ""}\n\n`;
+    summary += `&nbsp;&nbsp;&nbsp;${
+      warnings > 0 ? iconFor("Warning") : ":white_check_mark:"
+    }&nbsp;&nbsp;&nbsp;**${warnings}** new warning${
+      warnings !== 1 ? "s" : ""
+    }\n\n`;
 
-    let message = '';
+    let message = "";
     if (newFiles.length > 0) {
-      message += '### The following files look to be newly added in this PR:\n';
+      message += "### The following files look to be newly added in this PR:\n";
       newFiles.sort();
       for (const swagger of newFiles) {
         message += `* [${swagger}](${blobHref(swagger)})\n`;
       }
-      message += '<br><br>\n';
+      message += "<br><br>\n";
     }
 
     const diffFileNames = Object.keys(diffFiles);
     if (diffFileNames.length > 0) {
-      message += '### OpenAPI diff results\n';
+      message += "### OpenAPI diff results\n";
       message += headerText;
 
       diffFileNames.sort();
@@ -223,19 +320,22 @@ export async function runScript() {
         }
       }
     } else {
-      message += '**There were no files containing new errors or warnings.**\n';
+      message += "**There were no files containing new errors or warnings.**\n";
     }
 
-    message += '\n<br><br>\nThanks for using breaking change tool to review.\nIf you encounter any issue(s), please open issue(s) at https://github.com/Azure/openapi-diff/issues.';
+    message +=
+      "\n<br><br>\nThanks for using breaking change tool to review.\nIf you encounter any issue(s), please open issue(s) at https://github.com/Azure/openapi-diff/issues.";
 
     const output = {
-      title: `${errors === 0 ? 'No' : errors} potential breaking change${errors !== 1 ? 's' : ''}`,
+      title: `${errors === 0 ? "No" : errors} potential breaking change${
+        errors !== 1 ? "s" : ""
+      }`,
       summary,
-      text: message
+      text: message,
     };
 
-    console.log('---output');
+    console.log("---output");
     console.log(output);
-    console.log('---');
+    console.log("---");
   }
 }
