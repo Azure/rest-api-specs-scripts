@@ -123,8 +123,8 @@ async function runOad(oldSpec: string, newSpec: string) {
         mode: it.mode,
       },
       paths: [
-        { tag: "New", path: it.new.location || "" },
-        { tag: "Old", path: it.old.location || "" },
+        { tag: "New", path: utils.trimSwaggerPath(it.new.location || "") },
+        { tag: "Old", path: utils.trimSwaggerPath(it.old.location || "") },
       ],
     })
   );
@@ -133,7 +133,7 @@ async function runOad(oldSpec: string, newSpec: string) {
     data: pipelineResultData,
   };
 
-  console.log('Write to log')
+  console.log("Write to pipe.log");
   fs.writeJSONSync("pipe.log", pipelineResult);
 
   console.log(JSON.parse(result));
