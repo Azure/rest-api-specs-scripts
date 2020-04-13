@@ -133,8 +133,8 @@ async function runOad(oldSpec: string, newSpec: string) {
     data: pipelineResultData,
   };
 
-  console.log("Write to pipe.log");
-  fs.writeJSONSync("pipe.log", pipelineResult);
+  console.log("Write to pipe.log.");
+  fs.appendFileSync("pipe.log", JSON.stringify(pipelineResult));
 
   console.log(JSON.parse(result));
 
