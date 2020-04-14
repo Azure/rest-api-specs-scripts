@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.2
+
+- Upgrade oav version to 0.21.4.
+
 ## 0.7.1
 
 - Upgrade oav version to 0.21.3 with the change on global parameters validation in request.
