@@ -1,3 +1,4 @@
+import { getTargetBranch } from "./utils";
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
 
@@ -73,6 +74,12 @@ function blobHref(file: unknown) {
   return `https://github.com/${process.env.TRAVIS_PULL_REQUEST_SLUG}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
 }
 
+function targetHref(file: string) {
+  return `https://github.com/${
+    process.env.TRAVIS_PULL_REQUEST_SLUG
+  }/blob/${getTargetBranch()}/${file}`;
+}
+
 /**
  * Compares old and new specifications for breaking change detection.
  *
@@ -123,8 +130,14 @@ async function runOad(oldSpec: string, newSpec: string) {
         mode: it.mode,
       },
       paths: [
-        { tag: "New", path: utils.trimSwaggerPath(it.new.location || "") },
-        { tag: "Old", path: utils.trimSwaggerPath(it.old.location || "") },
+        {
+          tag: "New",
+          path: blobHref(utils.trimSwaggerPath(it.new.location || "")),
+        },
+        {
+          tag: "Old",
+          path: targetHref(utils.trimSwaggerPath(it.old.location || "")),
+        },
       ],
     })
   );
@@ -134,7 +147,7 @@ async function runOad(oldSpec: string, newSpec: string) {
   };
 
   console.log("Write to pipe.log.");
-  fs.appendFileSync("pipe.log", JSON.stringify(pipelineResult));
+  fs.appendFileSync("pipe.log", JSON.stringify(pipelineResult) + "\n");
 
   console.log(JSON.parse(result));
 
@@ -150,6 +163,7 @@ async function runOad(oldSpec: string, newSpec: string) {
 
 //main function
 export async function runScript() {
+  console.log(`ENV: ${JSON.stringify(process.env)}`);
   // Used to enable running script outside TravisCI for debugging
   const isRunningInTravisCI = process.env.TRAVIS === "true";
   const outputFolder = path.join(os.tmpdir(), "resolved");
