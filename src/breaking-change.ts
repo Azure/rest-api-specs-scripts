@@ -1,17 +1,17 @@
-import { getTargetBranch } from "./utils";
+import { cli, devOps } from '@azure/avocado';
+import * as oad from '@azure/oad';
+import * as stringMap from '@ts-common/string-map';
+import * as format from '@zhenglaizhang/swagger-validation-common';
+import * as fs from 'fs-extra';
+import * as os from 'os';
+import * as path from 'path';
+
+import * as tsUtils from './ts-utils';
+import { getTargetBranch } from './utils';
+import * as utils from './utils';
+
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
-
-import * as stringMap from "@ts-common/string-map";
-import * as tsUtils from "./ts-utils";
-import * as utils from "./utils";
-import * as path from "path";
-import * as fs from "fs-extra";
-import * as os from "os";
-import * as oad from "@azure/oad";
-import { devOps, cli } from "@azure/avocado";
-
-import * as format from "@zhenglaizhang/swagger-validation-common";
 
 const headerText = `
 | | Rule | Location | Message |
@@ -71,12 +71,12 @@ function tableLine(filePath: string, diff: Diff) {
 }
 
 function blobHref(file: unknown) {
-  return `https://github.com/${process.env.TRAVIS_PULL_REQUEST_SLUG}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
+  return `https://github.com/${process.env.TRAVIS_REPO_SLUG}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
 }
 
 function targetHref(file: string) {
   return `https://github.com/${
-    process.env.TRAVIS_PULL_REQUEST_SLUG
+    process.env.TRAVIS_REPO_SLUG
   }/blob/${getTargetBranch()}/${file}`;
 }
 
