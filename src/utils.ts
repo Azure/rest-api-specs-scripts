@@ -483,3 +483,15 @@ export const trimSwaggerPath = (filePath: string): string => {
   const position = filePath.search("specification");
   return filePath.substring(position, filePath.length);
 };
+
+/**
+ * For breaking change. Trim file path pattern to github style.
+ * E.g. Input: specification/redis/resource-manager/Microsoft.Cache/preview/2019-07-01/redis.json:191:5
+ *      Output: specification/redis/resource-manager/Microsoft.Cache/preview/2019-07-01/redis.json#L191:5
+ * @param filePath
+ *
+ */
+export const trimGithubStyleFilePath = (filePath: string): string => {
+  const regex = /(.json:)/;
+  return filePath.replace(regex, ".json#L");
+};

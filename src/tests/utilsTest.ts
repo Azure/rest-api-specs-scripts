@@ -122,4 +122,20 @@ class UtilsTest {
       "tmp:a/b/readme.md"
     );
   }
+
+  @test TestTrimGithubStyleFilePath() {
+    assert.deepEqual(
+      utils.trimGithubStyleFilePath(
+        "file:///home/ruowan/work/c93b354fd9c14905bb574a8834c4d69b/specification/redis/resource-manager/Microsoft.Cache/preview/2019-07-01/redis.json:150:5"
+      ),
+      "file:///home/ruowan/work/c93b354fd9c14905bb574a8834c4d69b/specification/redis/resource-manager/Microsoft.Cache/preview/2019-07-01/redis.json#L150:5"
+    );
+
+    assert.deepEqual(
+      utils.trimGithubStyleFilePath(
+        "file:///home/ruowan/work/c93b354fd9c14905bb574a8834c4d69b/specification/redis/resource-manager/Microsoft.Cache/preview/2019-07-01/redis.json"
+      ),
+      "file:///home/ruowan/work/c93b354fd9c14905bb574a8834c4d69b/specification/redis/resource-manager/Microsoft.Cache/preview/2019-07-01/redis.json"
+    );
+  }
 }

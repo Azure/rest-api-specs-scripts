@@ -1,14 +1,14 @@
-import { cli, devOps } from '@azure/avocado';
-import * as oad from '@azure/oad';
-import * as stringMap from '@ts-common/string-map';
-import * as format from '@zhenglaizhang/swagger-validation-common';
-import * as fs from 'fs-extra';
-import * as os from 'os';
-import * as path from 'path';
+import { cli, devOps } from "@azure/avocado";
+import * as oad from "@azure/oad";
+import * as stringMap from "@ts-common/string-map";
+import * as format from "@zhenglaizhang/swagger-validation-common";
+import * as fs from "fs-extra";
+import * as os from "os";
+import * as path from "path";
 
-import * as tsUtils from './ts-utils';
-import { getTargetBranch } from './utils';
-import * as utils from './utils';
+import * as tsUtils from "./ts-utils";
+import { getTargetBranch } from "./utils";
+import * as utils from "./utils";
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
@@ -70,14 +70,18 @@ function tableLine(filePath: string, diff: Diff) {
   }|\n`;
 }
 
-function blobHref(file: unknown) {
-  return `https://github.com/${process.env.TRAVIS_REPO_SLUG}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
+function blobHref(file: string) {
+  return file
+    ? `https://github.com/${process.env.TRAVIS_REPO_SLUG}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`
+    : "";
 }
 
 function targetHref(file: string) {
-  return `https://github.com/${
-    process.env.TRAVIS_REPO_SLUG
-  }/blob/${getTargetBranch()}/${file}`;
+  return file
+    ? `https://github.com/${
+        process.env.TRAVIS_REPO_SLUG
+      }/blob/${getTargetBranch()}/${file}`
+    : "";
 }
 
 /**
@@ -132,11 +136,19 @@ async function runOad(oldSpec: string, newSpec: string) {
       paths: [
         {
           tag: "New",
-          path: blobHref(utils.trimSwaggerPath(it.new.location || "")),
+          path: blobHref(
+            utils.trimGithubStyleFilePath(
+              utils.trimSwaggerPath(it.new.location || "")
+            )
+          ),
         },
         {
           tag: "Old",
-          path: targetHref(utils.trimSwaggerPath(it.old.location || "")),
+          path: targetHref(
+            utils.trimGithubStyleFilePath(
+              utils.trimSwaggerPath(it.old.location || "")
+            )
+          ),
         },
       ],
     })
