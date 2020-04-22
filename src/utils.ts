@@ -14,6 +14,12 @@ import { execSync } from 'child_process'
 import { devOps } from '@azure/avocado'
 import * as childProcess from 'child_process'
 import * as commonmark from "commonmark";
+import {
+  getTagsToSettingsMapping,
+  getInputFiles,
+  getInputFilesForTag,
+  inputFile,
+} from "@azure/openapi-markdown";
 
 export const exec = util.promisify(childProcess.exec)
 
@@ -265,6 +271,120 @@ export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties
     return getSwaggers();
   }
 };
+
+import {
+  MarkDownEx,
+  markDownExToString,
+  parse,
+} from "@ts-common/commonmark-to-markdown";
+import * as sm from "@ts-common/string-map";
+import * as it from "@ts-common/iterator";
+
+const getTagsForFilesChanged = (
+        markDownEx: MarkDownEx,
+        specsChanged: readonly string[]
+    ): readonly string[] => {
+        const codeBlocks = getTagsToSettingsMapping(markDownEx.markDown);
+        const tagsAffected = new Set<string>();
+
+        for (const [tag, settings] of sm.entries(codeBlocks)) {
+            // for every file in settings object, see if it matches one of the
+            // paths changed
+            const filesTouchedInTag = specsChanged.filter(
+                spec => inputFile(settings).some(inputFile => spec.includes(inputFile))
+            )
+
+            if (filesTouchedInTag.length > 0) {
+                tagsAffected.add(tag)
+            }
+        }
+        return [...tagsAffected]
+    }
+
+/**
+ * return [
+ * { 
+ *   tags:"",
+ *   readme:""
+ * },
+ * {
+ * }
+ * ]
+ * 
+ */
+export const getTagsFromChangedFile = async (
+         pr: devOps.PullRequestProperties | undefined
+       ) => {
+         if (pr !== undefined) {
+           try {
+             let filesChanged = (await pr.diff()).map((file) => file.path);
+             console.log(">>>>> Files changed in this PR are as follows:");
+             console.log(filesChanged);
+
+             // traverse up to readme.md files
+             const configFiles = new Map<string,string[]>();
+             for (let fileChanged of filesChanged) {
+               let old = fileChanged
+               while (fileChanged.startsWith("specification")) {
+                 if (
+                   fileChanged.toLowerCase().endsWith("readme.md") &&
+                   fs.existsSync(fileChanged)
+                 ) {
+                     if (configFiles.has(fileChanged)) {
+                     } else {
+                       configFiles.set(fileChanged, []);
+                     }
+                    if (!old.endsWith("readme.md")) {
+                      let value = configFiles.get(fileChanged)
+                      if (value) {
+                        value.push(old)
+                      }
+                    }
+                     break;
+                   }
+                 // select parent readme
+                 const parts = fileChanged.split("/");
+                 parts.pop();
+                 parts.pop();
+                 parts.push("readme.md");
+                 fileChanged = parts.join("/");
+               }
+             }
+
+             
+             configFiles.forEach((value,key) => {
+               const content = fs.readFileSync(key, { encoding: "utf8" });
+               const markDown = parse(content)
+               const tagsMap = new Map<string,string[]>()
+               const tagsCnt = new Map<string,number>()
+               value.map((element) => {
+                const tags = getTagsForFilesChanged(markDown, [element]);
+                tags.forEach(element => {
+                  const oldCnt = tagsCnt.get(element)
+                  tagsCnt.set(element, oldCnt ? oldCnt + 1 : 1);
+                })
+                tagsMap.set(key,[...tags].sort())
+               });
+               let reverse_arr:string[] = []
+               tagsCnt.forEach((e,v) => {
+                 reverse_arr.push(`$e_$v`)
+               })
+               let sorted = reverse_arr.sort()
+               
+
+             });
+             console.log(">>>>> Affected configuration files:");
+             console.log(filesChanged);
+
+             return filesChanged;
+           } catch (err) {
+             throw err;
+           }
+         } else {
+           return getSwaggers();
+         }
+       };
+
 
 /**
  * Retrieves list of swagger files to be processed for linting
