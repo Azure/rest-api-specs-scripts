@@ -141,10 +141,10 @@ export async function runScript() {
 
   /*
  * always compare against master
- * we still use the changed file got from the PR, because the master branch may quite different with the PR target branch
+ * we still use the changed files got from the PR, because the master branch may quite different with the PR target branch
  */
   if (pr && pr.targetBranch !== "master") {
-    (pr.targetBranch as any) = "master"
+    (pr.targetBranch as string) = "master"
     console.log("switch target branch to master")
   }
 
