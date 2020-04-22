@@ -417,3 +417,13 @@ export const getLinterVersion = ():LintVersion => {
      present :lintVersion
   }
 }
+
+/**
+ * set the Upstream Branch of branch, this function should run in a repo dir
+ */
+export const setUpstreamBranch = function (name: string, remote: string) {
+  let cmd = `git branch ${name}  ${remote}`;
+  console.log(`set upstream branch ${remote} ${name} `);
+  console.log(`> ${cmd}`);
+  execSync(cmd, { encoding: 'utf8', stdio: 'inherit' });
+}

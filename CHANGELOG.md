@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.0
+
+- The breaking change checking will always aganist master branch .
+
 ## 0.7.3
 
 - Upgrade oav version to 0.21.5 with exception info output to console when pretty switch is on.
