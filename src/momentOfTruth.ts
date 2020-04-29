@@ -127,8 +127,9 @@ export async function runScript() {
                 }
             }
         }
-        else if (runCnt == 0){
-            const linterErrors = await getLinterResult(swagger, undefined);
+        /* to ensure lint ran at least once */
+        if (runCnt == 0){ 
+            const linterErrors = await getLinterResult(swagger);
             console.log(linterErrors);
             await updateResult(swagger, linterErrors, beforeOrAfter);
         }
