@@ -180,7 +180,7 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
   const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
   const configsToProcess = await utils.getConfigFilesChangedInPR(pr);
 
-  tagsMap = await utils.getTagsFromChangedFile(configsToProcess);
+  tagsMap = await utils.getTagsFromChangedFile(await utils.getChangedFilesFromPR(pr));
 
   console.log("Processing configs:");
   console.log(configsToProcess);

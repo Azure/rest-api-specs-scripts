@@ -274,6 +274,21 @@ export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties
   }
 };
 
+
+/**
+ * 
+ * @param pr 
+ */
+export const getChangedFilesFromPR = async (
+  pr: devOps.PullRequestProperties | undefined
+): Promise<string[]> => {
+  if (pr) {
+    let filesChanged = (await pr.diff()).map((file) => file.path);
+    return filesChanged;
+  }
+  return [];
+}; 
+
 /**
  * get all tags who is containing the changed files
  * @returns {array} ["tag1","tag2"]
