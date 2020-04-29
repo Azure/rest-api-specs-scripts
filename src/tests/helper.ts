@@ -132,5 +132,7 @@ export const createDevOpsEnv = async (rootName: string, repoName: string): Promi
 };
 
 export async function cleanUpDir(dir:string) {
-  await pfs.recursiveRmdir(dir);
+  if (await pfs.exists(dir)) {
+    await pfs.recursiveRmdir(dir);
+  }
 }
