@@ -89,7 +89,7 @@ class MomentOfTruthTest {
 
     errorIds = (resultFiles["specification/test-lint/readme.md"]
       .after as Array<any>).map((error) => error.id).sort();
-    assert.deepEqual(errorIds, ["R2054", "R3023", "D5001"]);
+    assert.deepEqual(errorIds, ["D5001","R2054", "R3023"]);
   }
 
   after() {
