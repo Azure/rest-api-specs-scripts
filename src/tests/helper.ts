@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as pfs from "@ts-common/fs";
 import { git, cli, devOps, avocado } from "@azure/avocado";
+import { fstat } from 'fs';
 
 export const create = async (rootName: string, repoName: string) => {
   const tmpRoot = path.resolve(path.join("..", rootName));
@@ -129,3 +130,7 @@ export const createDevOpsEnv = async (rootName: string, repoName: string): Promi
     }
   };
 };
+
+export async function cleanUpDir(dir:string) {
+  await pfs.recursiveRmdir(dir);
+}
