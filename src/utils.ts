@@ -16,10 +16,12 @@ import * as childProcess from 'child_process'
 import * as commonmark from "commonmark";
 import {
   getTagsToSettingsMapping,
-  getInputFiles,
   getInputFilesForTag,
   inputFile,
 } from "@azure/openapi-markdown";
+
+import { MarkDownEx, parse } from "@ts-common/commonmark-to-markdown";
+import * as sm from "@ts-common/string-map";
 
 export const exec = util.promisify(childProcess.exec)
 
@@ -272,13 +274,7 @@ export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties
   }
 };
 
-import {
-  MarkDownEx,
-  markDownExToString,
-  parse,
-} from "@ts-common/commonmark-to-markdown";
-import * as sm from "@ts-common/string-map";
-import * as it from "@ts-common/iterator";
+
 
 const getTagsForFilesChanged = (
         markDownEx: MarkDownEx,
@@ -301,90 +297,132 @@ const getTagsForFilesChanged = (
         return [...tagsAffected]
     }
 
+
 /**
- * return [
- * { 
- *   tags:"",
- *   readme:""
- * },
- * {
- * }
- * ]
+ * Gets the path to the readme starting with "specification" folder and without returning the file name
+ * @param readmeUrl Full Url path to readme
+ */
+const getReadMeRelativePathToRepoWithoutFileName = (readmeUrl: string): string => {
+  return readmeUrl.substring(readmeUrl.indexOf("specification"), readmeUrl.indexOf("readme.md"));
+}
+
+export const isTagExisting = (config:string,tag:string):boolean => {
+    const content = fs.readFileSync(config, { encoding: "utf8" });
+    const readme = parse(content);
+   return getInputFilesForTag(readme.markDown,tag) != undefined
+} 
+
+export const getChangeFilesReadmeMap = async (
+         filesChanged: string[]
+       ): Promise<Map<string, string[]>> => {
+         const configFiles = new Map<string, string[]>();
+         for (let fileChanged of filesChanged) {
+           let backup = fileChanged;
+           while (fileChanged.startsWith("specification")) {
+             if (
+               fileChanged.toLowerCase().endsWith("readme.md") &&
+               fs.existsSync(fileChanged)
+             ) {
+               if (configFiles.has(fileChanged)) {
+               } else {
+                 configFiles.set(fileChanged, []);
+               }
+               if (!backup.endsWith("readme.md")) {
+                 let value = configFiles.get(fileChanged);
+                 if (value) {
+                   value.push(backup);
+                 }
+               }
+               break;
+             }
+             // select parent readme
+             const parts = fileChanged.split("/");
+             parts.pop();
+             parts.pop();
+             parts.push("readme.md");
+             fileChanged = parts.join("/");
+           }
+         }
+         return configFiles;
+       };
+
+/**
+ * return [["readme.md",["tag1","tag2"]]...]
  * 
  */
 export const getTagsFromChangedFile = async (
-         pr: devOps.PullRequestProperties | undefined
-       ) => {
-         if (pr !== undefined) {
-           try {
-             let filesChanged = (await pr.diff()).map((file) => file.path);
-             console.log(">>>>> Files changed in this PR are as follows:");
-             console.log(filesChanged);
+         filesChanged: string[]
+       ): Promise<Map<string, string[]>> => {
+  try {
+    console.log(filesChanged);
+    // traverse up to readme.md files
+    const configFiles = await getChangeFilesReadmeMap(filesChanged);
 
-             // traverse up to readme.md files
-             const configFiles = new Map<string,string[]>();
-             for (let fileChanged of filesChanged) {
-               let old = fileChanged
-               while (fileChanged.startsWith("specification")) {
-                 if (
-                   fileChanged.toLowerCase().endsWith("readme.md") &&
-                   fs.existsSync(fileChanged)
-                 ) {
-                     if (configFiles.has(fileChanged)) {
-                     } else {
-                       configFiles.set(fileChanged, []);
-                     }
-                    if (!old.endsWith("readme.md")) {
-                      let value = configFiles.get(fileChanged)
-                      if (value) {
-                        value.push(old)
-                      }
-                    }
-                     break;
-                   }
-                 // select parent readme
-                 const parts = fileChanged.split("/");
-                 parts.pop();
-                 parts.pop();
-                 parts.push("readme.md");
-                 fileChanged = parts.join("/");
-               }
-             }
+    const tagsAffectedMap = new Map<string, string[]>();
 
-             
-             configFiles.forEach((value,key) => {
-               const content = fs.readFileSync(key, { encoding: "utf8" });
-               const markDown = parse(content)
-               const tagsMap = new Map<string,string[]>()
-               const tagsCnt = new Map<string,number>()
-               value.map((element) => {
-                const tags = getTagsForFilesChanged(markDown, [element]);
-                tags.forEach(element => {
-                  const oldCnt = tagsCnt.get(element)
-                  tagsCnt.set(element, oldCnt ? oldCnt + 1 : 1);
-                })
-                tagsMap.set(key,[...tags].sort())
-               });
-               let reverse_arr:string[] = []
-               tagsCnt.forEach((e,v) => {
-                 reverse_arr.push(`$e_$v`)
-               })
-               let sorted = reverse_arr.sort()
-               
+    configFiles.forEach((changedFiles, key) => {
+      const content = fs.readFileSync(key, { encoding: "utf8" });
+      const readme = parse(content);
+      const relativePath = getReadMeRelativePathToRepoWithoutFileName(
+        key
+      );
+      /**
+      *  count the changed file count in each tag
+      */
+      const tagsCnt = new Map<string, number>();
+      changedFiles.map((changedFile) => {
+        const tags = getTagsForFilesChanged(readme, [
+          changedFile.substring(changedFiles.indexOf(relativePath)),
+        ]);
+        tags.forEach((element) => {
+          const oldCnt = tagsCnt.get(element);
+          tagsCnt.set(element, oldCnt ? oldCnt + 1 : 1);
+        });
+      });
+      
+      /**
+       * first sort by count, then sort by tag
+       */
+      let sortedTagsCnt = [...tagsCnt].sort((a, b) => {
+        if (a[1] - b[1] === 0) {
+          if (a[0] < b[0]) {
+            return 1;
+          } else if (a[0] > b[0]) {
+            return -1;
+          }
+          return 0;
+        }
+        return b[1] - a[1];
+      });
 
-             });
-             console.log(">>>>> Affected configuration files:");
-             console.log(filesChanged);
+      let AffectedTags: string[] = [];
+      sortedTagsCnt.forEach((v) => {
+        if (!changedFiles.length) {
+          return;
+        }
+        const tag = v[0];
+        let tagFiles = getInputFilesForTag(readme.markDown, tag);
 
-             return filesChanged;
-           } catch (err) {
-             throw err;
-           }
-         } else {
-           return getSwaggers();
-         }
-       };
-
+        if (tagFiles) {
+          let intersection = tagFiles.filter((v) =>changedFiles.includes(relativePath + v));
+          if (intersection) {
+            changedFiles = changedFiles.filter((v) =>!intersection.includes(v.substring(relativePath.length)));
+            AffectedTags.push(tag);
+          }
+        }
+      });
+      if (changedFiles.length) {
+        console.log(
+          `these changed files:${changedFiles.join(";")} ,can not find the related tag`
+        );
+      }
+      tagsAffectedMap.set(key, AffectedTags);
+    });
+    return tagsAffectedMap;
+  } catch (err) {
+    throw err;
+  }
+}; 
 
 /**
  * Retrieves list of swagger files to be processed for linting

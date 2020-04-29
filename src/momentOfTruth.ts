@@ -10,7 +10,7 @@ import * as fs from 'fs'
 import { devOps, cli } from '@azure/avocado'
 
 // Executes linter on given swagger path and returns structured JSON of linter output
-export async function getLinterResult(swaggerPath: string|null|undefined) {
+export async function getLinterResult(swaggerPath: string|null|undefined,tag = "") {
     if (swaggerPath === null || swaggerPath === undefined || typeof swaggerPath.valueOf() !== 'string' || !swaggerPath.trim().length) {
         throw new Error('swaggerPath is a required parameter of type "string" and it cannot be an empty string.');
     }
@@ -30,7 +30,14 @@ export async function getLinterResult(swaggerPath: string|null|undefined) {
         lintVersionCmd += '--use=@microsoft.azure/openapi-validator@' + lintVersion.present + ' '
     }
     let openapiTypeCmd = '--openapi-type=' + openapiType + ' ';
-    let cmd = "npx autorest --reset && " + linterCmd + openapiTypeCmd + lintVersionCmd + swaggerPath;
+    const tagCmd = tag ? '--tags='+ tag + ' ' : ''
+    let cmd =
+      "npx autorest --reset && " +
+      linterCmd +
+      openapiTypeCmd +
+      lintVersionCmd +
+      swaggerPath +
+      tagCmd;
     console.log(`Executing: ${cmd}`);
     const { err, stdout, stderr } = await new Promise(res => exec(cmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 64 },
         (err: unknown, stdout: unknown, stderr: unknown) => res({ err: err, stdout: stdout, stderr: stderr })));
@@ -75,6 +82,7 @@ export async function runScript() {
         repositoryUrl: utils.getRepoUrl(),
         files: {}
     }
+    let tagsMap : Map<string,string[]>
 
     //creates the log file if it has not been created
     function createLogFile() {
@@ -99,15 +107,31 @@ export async function runScript() {
             files[spec] = { before: [], after: [] };
         }
         const filesSpec = tsUtils.asNonUndefined(files[spec])
-        filesSpec[beforeOrAfter] = errors;
+        
+        filesSpec[beforeOrAfter] = filesSpec[beforeOrAfter].concat(errors);
     }
 
     // Run linter tool
     async function runTools(swagger: string, beforeOrAfter: momentOfTruthUtils.BeforeOrAfter) {
+
         console.log(`Processing "${swagger}":`);
-        const linterErrors = await getLinterResult(swagger);
-        console.log(linterErrors);
-        await updateResult(swagger, linterErrors, beforeOrAfter);
+        const tags = tagsMap.get(swagger)
+        let runCnt = 0;
+        if (tags) {
+             for (const tag of tags){
+                if (utils.isTagExisting(swagger,tag)) {
+                     const linterErrors = await getLinterResult(swagger, tag);
+                     console.log(linterErrors);
+                     await updateResult(swagger, linterErrors, beforeOrAfter);
+                     runCnt++
+                }
+            }
+        }
+        else if (runCnt == 0){
+            const linterErrors = await getLinterResult(swagger, undefined);
+            console.log(linterErrors);
+            await updateResult(swagger, linterErrors, beforeOrAfter);
+        }
     };
 
     //
