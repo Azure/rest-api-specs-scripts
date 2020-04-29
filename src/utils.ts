@@ -274,8 +274,12 @@ export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties
   }
 };
 
-
-
+/**
+ * get all tags who is containing the changed files
+ * @returns {array} ["tag1","tag2"]
+ * @param markDownEx 
+ * @param specsChanged 
+ */
 const getTagsForFilesChanged = (
         markDownEx: MarkDownEx,
         specsChanged: readonly string[]
@@ -312,6 +316,11 @@ export const isTagExisting = (config:string,tag:string):boolean => {
    return getInputFilesForTag(readme.markDown,tag) != undefined
 } 
 
+/**
+ * @return {map} ,key is the readme and value is an array of the changed files belonging to the readme  
+ * [["1/readme.md",["file1.json","file2.json"]]] 
+ * @param filesChanged
+ */
 export const getChangeFilesReadmeMap = async (
          filesChanged: string[]
        ): Promise<Map<string, string[]>> => {
@@ -319,12 +328,10 @@ export const getChangeFilesReadmeMap = async (
          for (let fileChanged of filesChanged) {
            let backup = fileChanged;
            while (fileChanged.startsWith("specification")) {
-             if (
-               fileChanged.toLowerCase().endsWith("readme.md") &&
-               fs.existsSync(fileChanged)
-             ) {
+             if (fileChanged.toLowerCase().endsWith("readme.md") && fs.existsSync(fileChanged)) {
                if (configFiles.has(fileChanged)) {
-               } else {
+               } 
+               else {
                  configFiles.set(fileChanged, []);
                }
                if (!backup.endsWith("readme.md")) {
@@ -347,8 +354,8 @@ export const getChangeFilesReadmeMap = async (
        };
 
 /**
- * return [["readme.md",["tag1","tag2"]]...]
- * 
+ * return [["Sevice/readme.md",["tag1","tag2"]]...]
+ * the tags are sorted by refered changed file's count 
  */
 export const getTagsFromChangedFile = async (
          filesChanged: string[]
@@ -363,11 +370,9 @@ export const getTagsFromChangedFile = async (
     configFiles.forEach((changedFiles, key) => {
       const content = fs.readFileSync(key, { encoding: "utf8" });
       const readme = parse(content);
-      const relativePath = getReadMeRelativePathToRepoWithoutFileName(
-        key
-      );
+      const relativePath = getReadMeRelativePathToRepoWithoutFileName(key);
       /**
-      *  count the changed file count in each tag
+      *  count the changed file count for each tags
       */
       const tagsCnt = new Map<string, number>();
       changedFiles.map((changedFile) => {
@@ -381,7 +386,7 @@ export const getTagsFromChangedFile = async (
       });
       
       /**
-       * first sort by count, then sort by tag
+       * first sort by count, then by tag
        */
       let sortedTagsCnt = [...tagsCnt].sort((a, b) => {
         if (a[1] - b[1] === 0) {
