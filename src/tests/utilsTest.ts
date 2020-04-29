@@ -13,7 +13,7 @@ import {getTagsFromChangedFile,isTagExisting,getChangeFilesReadmeMap} from "../u
 
 @suite
 class UtilsTest {
-  
+
   @test async "TestGetOpenapiTypeDataplane"() {
     let openapiType = await utils.getOpenapiType("./src/tests/Resource/openapi-type-data-plane-readme.md")
     assert.equal(openapiType, "data-plane")
@@ -132,7 +132,6 @@ class UtilsTest {
       "package-2020-06"
     );
     assert.equal(result, false);
-
     process.chdir(cwd);
   }
 
@@ -142,13 +141,13 @@ class UtilsTest {
 
      let result = await getChangeFilesReadmeMap([
        "specification/network/resource-manager/readme.md",
-       "Microsoft.Network/stable/2020-03-01/privateEndpoint.json",
-       "a.json"
+       "specification/network/resource-manager/Microsoft.Network/stable/2020-03-01/privateEndpoint.json",
+       "profiles/network/resource-manager/Microsoft.Network/a.json"
      ]);
      const expect = new Map<string, string[]>([
        [
          "specification/network/resource-manager/readme.md",
-         ["Microsoft.Network/stable/2020-03-01/privateEndpoint.json"],
+         ["specification/network/resource-manager/Microsoft.Network/stable/2020-03-01/privateEndpoint.json"],
        ],
      ]);
      assert.deepEqual(result, expect);

@@ -30,14 +30,14 @@ export async function getLinterResult(swaggerPath: string|null|undefined,tag = "
         lintVersionCmd += '--use=@microsoft.azure/openapi-validator@' + lintVersion.present + ' '
     }
     let openapiTypeCmd = '--openapi-type=' + openapiType + ' ';
-    const tagCmd = tag ? '--tags='+ tag + ' ' : ''
+    const tagCmd = tag ? '--tag='+ tag + ' ' : ''
     let cmd =
       "npx autorest --reset && " +
       linterCmd +
       openapiTypeCmd +
       lintVersionCmd +
-      swaggerPath +
-      tagCmd;
+      tagCmd +
+      swaggerPath
     console.log(`Executing: ${cmd}`);
     const { err, stdout, stderr } = await new Promise(res => exec(cmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 64 },
         (err: unknown, stdout: unknown, stderr: unknown) => res({ err: err, stdout: stdout, stderr: stderr })));

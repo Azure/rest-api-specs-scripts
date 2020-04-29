@@ -20,4 +20,13 @@ import * as assert from "assert";
       assert.deepEqual(resultIds,["D5001","R2054","R3023"])
     }
 
+  @test @timeout(60000) async "TestGetLinterResultWithTag"() {
+
+    process.env.CLASSIC_LINT_VERSION = "1.1.0"
+    process.env.LINT_VERSION = "1.1.0"
+    const result = await getLinterResult("./src/tests/Resource/swagger/test-lint-result.md","package-2017-04");
+    assert.equal(Object.keys(result).length, 3)
+    const resultIds = [result[0].id, result[1].id, result[2].id].sort()
+    assert.deepEqual(resultIds, ["D5001", "R2054", "R3023"])
+  } 
 }
