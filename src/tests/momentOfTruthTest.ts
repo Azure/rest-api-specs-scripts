@@ -59,6 +59,10 @@ class MomentOfTruthTest {
     await cleanUpDir("./output");
     await lintDiff(utils, devOps);
 
+    stub2.restore();
+    stub3.restore();
+    stub4.restore();
+
     assert.equal(true, stub2.called);
     assert.equal(true, stub3.called);
     assert.equal(true, stub4.called);
