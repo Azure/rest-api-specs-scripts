@@ -283,7 +283,7 @@ export const getChangedFilesFromPR = async (
   pr: devOps.PullRequestProperties | undefined
 ): Promise<string[]> => {
   if (pr) {
-    let filesChanged = (await pr.diff()).map((file) => file.path);
+    const filesChanged = (await pr.diff()).map((file) => file.path);
     return filesChanged;
   }
   return [];
@@ -341,7 +341,7 @@ export const getChangeFilesReadmeMap = async (
        ): Promise<Map<string, string[]>> => {
          const configFiles = new Map<string, string[]>();
          for (let fileChanged of filesChanged) {
-           let backup = fileChanged;
+           const backup = fileChanged;
            while (fileChanged.startsWith("specification")) {
              if (fileChanged.toLowerCase().endsWith("readme.md") && fs.existsSync(fileChanged)) {
                if (configFiles.has(fileChanged)) {
@@ -403,7 +403,7 @@ export const getTagsFromChangedFile = async (
       /**
        * first sort by count, then by tag
        */
-      let sortedTagsCnt = [...tagsCnt].sort((a, b) => {
+      const sortedTagsCnt = [...tagsCnt].sort((a, b) => {
         if (a[1] - b[1] === 0) {
           if (a[0] < b[0]) {
             return 1;
