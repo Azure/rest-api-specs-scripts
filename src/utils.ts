@@ -321,7 +321,7 @@ const getTagsForFilesChanged = (
  * Gets the path to the readme starting with "specification" folder and without returning the file name
  * @param readmeUrl Full Url path to readme
  */
-const getReadMeRelativePathToRepoWithoutFileName = (readmeUrl: string): string => {
+const getReadMeRelativeDirPathToRepo = (readmeUrl: string): string => {
   return readmeUrl.substring(readmeUrl.indexOf("specification"), readmeUrl.indexOf("readme.md"));
 }
 
@@ -340,29 +340,30 @@ export const getChangeFilesReadmeMap = async (
          filesChanged: string[]
        ): Promise<Map<string, string[]>> => {
          const configFiles = new Map<string, string[]>();
-         for (let fileChanged of filesChanged) {
-           const backup = fileChanged;
-           while (fileChanged.startsWith("specification")) {
-             if (fileChanged.toLowerCase().endsWith("readme.md") && fs.existsSync(fileChanged)) {
-               if (configFiles.has(fileChanged)) {
-               } 
-               else {
-                 configFiles.set(fileChanged, []);
+         for (const fileChanged of filesChanged) {
+           let cur = fileChanged;
+           while (cur.startsWith("specification")) {
+             if (
+               cur.toLowerCase().endsWith("readme.md") &&
+               fs.existsSync(cur)
+             ) {
+               if (!configFiles.has(cur)) {
+                 configFiles.set(cur, []);
                }
-               if (!backup.endsWith("readme.md")) {
-                 let value = configFiles.get(fileChanged);
+               if (!fileChanged.endsWith("readme.md")) {
+                 let value = configFiles.get(cur);
                  if (value) {
-                   value.push(backup);
+                   value.push(fileChanged);
                  }
                }
                break;
              }
              // select parent readme
-             const parts = fileChanged.split("/");
+             const parts = cur.split("/");
              parts.pop();
              parts.pop();
              parts.push("readme.md");
-             fileChanged = parts.join("/");
+             cur = parts.join("/");
            }
          }
          return configFiles;
@@ -385,7 +386,7 @@ export const getTagsFromChangedFile = async (
     configFiles.forEach((changedFiles, key) => {
       const content = fs.readFileSync(key, { encoding: "utf8" });
       const readme = parse(content);
-      const relativePath = getReadMeRelativePathToRepoWithoutFileName(key);
+      const relativePath = getReadMeRelativeDirPathToRepo(key);
       /**
       *  count the changed file count for each tags
       */
@@ -401,7 +402,7 @@ export const getTagsFromChangedFile = async (
       });
       
       /**
-       * first sort by count, then by tag
+       * first sort by count, then by tag name
        */
       const sortedTagsCnt = [...tagsCnt].sort((a, b) => {
         if (a[1] - b[1] === 0) {
