@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.0
+
+- The LintDiff will check the changed files which are not belong to default tag.
+
 ## 0.8.0
 
 - The breaking change checking will always aganist master branch .
