@@ -416,13 +416,13 @@ export const getTagsFromChangedFile = async (
         return b[1] - a[1];
       });
 
-      let AffectedTags: string[] = [];
+      const AffectedTags: string[] = [];
       sortedTagsCnt.forEach((v) => {
         if (!changedFiles.length) {
           return;
         }
         const tag = v[0];
-        let tagFiles = getInputFilesForTag(readme.markDown, tag);
+        const tagFiles = getInputFilesForTag(readme.markDown, tag);
 
         if (tagFiles) {
           let intersection = tagFiles.filter((v) =>changedFiles.includes(relativePath + v));
