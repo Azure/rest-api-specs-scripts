@@ -4,6 +4,7 @@
 
 - Fixed the bug:The LintDiff exit with code 1 when new RP is being added .It caused by an unhandled error:
  read non-existing readme file .
+- Upgrade @azure/oad version to 0.8.0.
 
 ## 0.9.0
 
