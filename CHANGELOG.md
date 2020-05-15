@@ -3,7 +3,7 @@
 ## 0.9.1
 
 - Fixed the bug:The LintDiff exit with code 1 when new RP is being added .It caused by an unhandled error:
- read non-existing readme file 
+ read non-existing readme file .
 
 ## 0.9.0
 
