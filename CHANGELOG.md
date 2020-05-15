@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.1
+
+- Fixed the bug:The LintDiff exit with code 1 when new RP is being added .It caused by an unhandled error:
+ read non-existing readme file 
+
 ## 0.9.0
 
 - The LintDiff will check the changed files which are not belong to default tag.
