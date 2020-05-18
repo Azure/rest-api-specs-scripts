@@ -272,21 +272,6 @@ export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties
   } else {
     return getSwaggers();
   }
-};
-
-
-/**
- * 
- * @param pr 
- */
-export const getChangedFilesFromPR = async (
-  pr: devOps.PullRequestProperties | undefined
-): Promise<string[]> => {
-  if (pr) {
-    const filesChanged = (await pr.diff()).map((file) => file.path);
-    return filesChanged;
-  }
-  return [];
 }; 
 
 /**
