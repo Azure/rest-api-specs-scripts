@@ -222,6 +222,7 @@ export async function runScript() {
       );
     } catch (err) {
       console.log(`Error processing via AutoRest: ${err}`);
+      throw err;
     }
   }
 
@@ -255,10 +256,12 @@ export async function runScript() {
   console.log(`Resolved map for the new specifications:`);
   console.dir(resolvedMapForNewSpecs);
 
-  let errors = 0,
-    warnings = 0;
+  let errorCnt = 0,
+    warningCnt = 0;
   const diffFiles: stringMap.MutableStringMap<Diff[]> = {};
   const newFiles = [];
+
+  const errors: Error[] = [];
 
   for (const swagger of swaggersToProcess) {
     // If file does not exists in the previous commits then we ignore it as it's new file
@@ -270,43 +273,56 @@ export async function runScript() {
 
     const resolved = resolvedMapForNewSpecs[swagger];
     if (resolved) {
-      const diffs = await runOad(
-        path.resolve(pr!.workingDir, swagger),
-        resolved
-      );
-      if (diffs) {
-        diffFiles[swagger] = diffs;
-        for (const diff of diffs) {
-          if (diff["type"] === "Error") {
-            if (errors === 0) {
-              console.log(
-                `There are potential breaking changes in this PR. Please review before moving forward. Thanks!`
-              );
-              process.exitCode = 1;
+      try {
+        const diffs = await runOad(
+          path.resolve(pr!.workingDir, swagger),
+          resolved
+        );
+        if (diffs) {
+          diffFiles[swagger] = diffs;
+          for (const diff of diffs) {
+            if (diff["type"] === "Error") {
+              if (errorCnt === 0) {
+                console.log(
+                  `There are potential breaking changes in this PR. Please review before moving forward. Thanks!`
+                );
+                process.exitCode = 1;
+              }
+              errorCnt += 1;
+            } else if (diff["type"] === "Warning") {
+              warningCnt += 1;
             }
-            errors += 1;
-          } else if (diff["type"] === "Warning") {
-            warnings += 1;
           }
         }
+      } catch (err) {
+        errors.push(err);
       }
     }
   }
 
+  if (errors.length > 0) {
+    console.log(`oad error log: ${errors}`);
+  }
+  for (const err of errors) {
+    fs.appendFileSync("error.log", err.stack);
+  }
+
   if (isRunningInTravisCI) {
     let summary = "";
-    if (errors > 0) {
+    if (errorCnt > 0) {
       summary +=
         "**There are potential breaking changes in this PR. Please review before moving forward. Thanks!**\n\n";
     }
     summary += `Compared to the target branch (**${targetBranch}**), this pull request introduces:\n\n`;
     summary += `&nbsp;&nbsp;&nbsp;${
-      errors > 0 ? iconFor("Error") : ":white_check_mark:"
-    }&nbsp;&nbsp;&nbsp;**${errors}** new error${errors !== 1 ? "s" : ""}\n\n`;
+      errorCnt > 0 ? iconFor("Error") : ":white_check_mark:"
+    }&nbsp;&nbsp;&nbsp;**${errorCnt}** new error${
+      errorCnt !== 1 ? "s" : ""
+    }\n\n`;
     summary += `&nbsp;&nbsp;&nbsp;${
-      warnings > 0 ? iconFor("Warning") : ":white_check_mark:"
-    }&nbsp;&nbsp;&nbsp;**${warnings}** new warning${
-      warnings !== 1 ? "s" : ""
+      warningCnt > 0 ? iconFor("Warning") : ":white_check_mark:"
+    }&nbsp;&nbsp;&nbsp;**${warningCnt}** new warning${
+      warningCnt !== 1 ? "s" : ""
     }\n\n`;
 
     let message = "";
@@ -353,8 +369,8 @@ export async function runScript() {
       "\n<br><br>\nThanks for using breaking change tool to review.\nIf you encounter any issue(s), please open issue(s) at https://github.com/Azure/openapi-diff/issues.";
 
     const output = {
-      title: `${errors === 0 ? "No" : errors} potential breaking change${
-        errors !== 1 ? "s" : ""
+      title: `${errorCnt === 0 ? "No" : errorCnt} potential breaking change${
+        errorCnt !== 1 ? "s" : ""
       }`,
       summary,
       text: message,
