@@ -272,21 +272,6 @@ export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties
   } else {
     return getSwaggers();
   }
-};
-
-
-/**
- * 
- * @param pr 
- */
-export const getChangedFilesFromPR = async (
-  pr: devOps.PullRequestProperties | undefined
-): Promise<string[]> => {
-  if (pr) {
-    const filesChanged = (await pr.diff()).map((file) => file.path);
-    return filesChanged;
-  }
-  return [];
 }; 
 
 /**
@@ -326,6 +311,9 @@ const getReadMeRelativeDirPathToRepo = (readmeUrl: string): string => {
 }
 
 export const isTagExisting = (config:string,tag:string):boolean => {
+    if (!fs.existsSync(config)) {
+      return false
+    }
     const content = fs.readFileSync(config, { encoding: "utf8" });
     const readme = parse(content);
    return getInputFilesForTag(readme.markDown,tag) != undefined

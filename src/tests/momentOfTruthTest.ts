@@ -8,6 +8,8 @@ import { utils } from '..';
 import {devOps} from '@azure/avocado'
 import * as fs from "fs";
 import {cleanUpDir } from './helper';
+import * as asyncIt from "@ts-common/async-iterator";
+
 const sinon = require("sinon");
 let cwd = process.cwd()
 
@@ -54,6 +56,10 @@ class MomentOfTruthTest {
       diff: () => {
         return [{ path: "specification/test-lint/test/test-lint-result.json" }];
       },
+      structuralDiff: (): asyncIt.AsyncIterableEx<string> =>
+        asyncIt.fromSequence<string>(
+             "specification/test-lint/test/test-lint-result.json"
+        ),
     });
 
     await cleanUpDir("./output");

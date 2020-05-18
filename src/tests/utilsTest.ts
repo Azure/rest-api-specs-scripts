@@ -132,6 +132,13 @@ class UtilsTest {
       "package-2020-06"
     );
     assert.equal(result, false);
+    
+    // test non-existing readme
+    result = isTagExisting(
+      "specification/network/resource-manager/readme1.md",
+      "package-2020-06"
+    );
+    assert.equal(result, false);
     process.chdir(cwd);
   }
 
@@ -153,4 +160,5 @@ class UtilsTest {
      assert.deepEqual(result, expect);
      process.chdir(cwd);
   }
+
 }
