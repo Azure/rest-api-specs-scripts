@@ -53,7 +53,7 @@ class MomentOfTruthTest {
     let stub4 = sinon.stub(devOps, "createPullRequestProperties").returns({
       workingDir: cwd + "/src/tests/Resource/momentOfTruth/old",
       checkout: () => "true",
-      diff: async () => {
+      diff: () => {
         return [{ path: "specification/test-lint/test/test-lint-result.json" }];
       },
       structuralDiff: (): asyncIt.AsyncIterableEx<string> =>
