@@ -1,6 +1,6 @@
 {
   "name": "@azure/rest-api-specs-scripts",
-  "version": "0.7.2-beta.5",
+  "version": "0.7.2-beta.6",
   "description": "Scripts for the Azure RestAPI specification repository 'azure-rest-api-specs'.",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
@@ -41,7 +41,7 @@
     "@azure/oad": "^0.7.1",
     "@octokit/rest": "^16.42.0",
     "@ts-common/string-map": "^0.3.0",
-    "@zhenglaizhang/swagger-validation-common": "^1.0.1",
+    "@azure/swagger-validation-common": "^0.0.2",
     "commonmark": "0.27.0",
     "fs-extra": "^7.0.1",
     "glob": "^7.1.3",

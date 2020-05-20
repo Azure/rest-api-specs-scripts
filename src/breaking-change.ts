@@ -1,7 +1,7 @@
 import { cli, devOps } from "@azure/avocado";
 import * as oad from "@azure/oad";
 import * as stringMap from "@ts-common/string-map";
-import * as format from "@zhenglaizhang/swagger-validation-common";
+import * as format from "@azure/swagger-validation-common";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
@@ -124,6 +124,7 @@ async function runOad(oldSpec: string, newSpec: string) {
 
   const pipelineResultData: format.ResultMessageRecord[] = oadResult.map(
     (it) => ({
+      type: "Result",
       level: it.type as format.MessageLevel,
       message: it.message,
       code: it.code,
@@ -153,12 +154,9 @@ async function runOad(oldSpec: string, newSpec: string) {
       ],
     })
   );
-  const pipelineResult: format.ResultMessage = {
-    type: "Result",
-    data: pipelineResultData,
-  };
+  const pipelineResult: format.MessageLine = pipelineResultData;
 
-  console.log("Write to pipe.log.");
+  console.log("Write to pipe.log");
   fs.appendFileSync("pipe.log", JSON.stringify(pipelineResult) + "\n");
 
   console.log(JSON.parse(result));
@@ -261,7 +259,7 @@ export async function runScript() {
   const diffFiles: stringMap.MutableStringMap<Diff[]> = {};
   const newFiles = [];
 
-  const errors: Error[] = [];
+  const errors: { error: Error; old: string; new: string }[] = [];
 
   for (const swagger of swaggersToProcess) {
     // If file does not exists in the previous commits then we ignore it as it's new file
@@ -295,16 +293,32 @@ export async function runScript() {
           }
         }
       } catch (err) {
-        errors.push(err);
+        errors.push({
+          error: err,
+          old: targetHref(
+            utils.trimSwaggerPath(path.resolve(pr!.workingDir, swagger))
+          ),
+          new: blobHref(utils.trimSwaggerPath(resolved)),
+        });
       }
     }
   }
 
   if (errors.length > 0) {
     console.log(`oad error log: ${errors}`);
-  }
-  for (const err of errors) {
-    fs.appendFileSync("error.log", err.stack);
+    const errorResult: format.MessageLine = errors.map((it) => ({
+      type: "Raw",
+      level: "Error",
+      message: it.error.stack || "",
+      time: new Date(),
+      extra: {
+        role: "Breaking change",
+        new: it.new,
+        old: it.old,
+      },
+    }));
+
+    fs.appendFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
   }
 
   if (isRunningInTravisCI) {
