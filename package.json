@@ -41,7 +41,7 @@
   "dependencies": {
     "@octokit/rest": "^16.42.0",
     "@azure/avocado": "^0.4.1",
-    "@azure/oad": "^0.8.0",
+    "@azure/oad": "^0.8.1",
     "@ts-common/string-map": "^0.3.0",
     "fs-extra": "^7.0.1",
     "glob": "^7.1.3",
