@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.2
+
+- Upgrade @azure/oav version to 0.21.6.
+  
 ## 0.9.1
 
 - Fixed the bug:The LintDiff exit with code 1 when new RP is being added .It caused by an unhandled error:
