@@ -2,7 +2,8 @@
 
 ## 0.9.2
 
-- Upgrade @azure/oav version to 0.21.6.
+- Upgrade oav version to 0.21.6.
+- Upgrade @azure/oad version to 0.8.1.
   
 ## 0.9.1
 
