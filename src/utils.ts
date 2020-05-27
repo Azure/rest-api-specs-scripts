@@ -14,6 +14,14 @@ import { execSync } from 'child_process'
 import { devOps } from '@azure/avocado'
 import * as childProcess from 'child_process'
 import * as commonmark from "commonmark";
+import {
+  getTagsToSettingsMapping,
+  getInputFilesForTag,
+  inputFile,
+} from "@azure/openapi-markdown";
+
+import { MarkDownEx, parse } from "@ts-common/commonmark-to-markdown";
+import * as sm from "@ts-common/string-map";
 
 export const exec = util.promisify(childProcess.exec)
 
@@ -264,7 +272,166 @@ export const getConfigFilesChangedInPR = async (pr: devOps.PullRequestProperties
   } else {
     return getSwaggers();
   }
-};
+}; 
+
+/**
+ * get all tags who is containing the changed files
+ * @returns {array} ["tag1","tag2"]
+ * @param markDownEx 
+ * @param specsChanged 
+ */
+const getTagsForFilesChanged = (
+        markDownEx: MarkDownEx,
+        specsChanged: readonly string[]
+    ): readonly string[] => {
+        const codeBlocks = getTagsToSettingsMapping(markDownEx.markDown);
+        const tagsAffected = new Set<string>();
+
+        for (const [tag, settings] of sm.entries(codeBlocks)) {
+            // for every file in settings object, see if it matches one of the
+            // paths changed
+            const filesTouchedInTag = specsChanged.filter(
+                spec => inputFile(settings).some(inputFile => spec.includes(inputFile))
+            )
+
+            if (filesTouchedInTag.length > 0) {
+                tagsAffected.add(tag)
+            }
+        }
+        return [...tagsAffected]
+    }
+
+
+/**
+ * Gets the path to the readme starting with "specification" folder and without returning the file name
+ * @param readmeUrl Full Url path to readme
+ */
+const getReadMeRelativeDirPathToRepo = (readmeUrl: string): string => {
+  return readmeUrl.substring(readmeUrl.indexOf("specification"), readmeUrl.indexOf("readme.md"));
+}
+
+export const isTagExisting = (config:string,tag:string):boolean => {
+    if (!fs.existsSync(config)) {
+      return false
+    }
+    const content = fs.readFileSync(config, { encoding: "utf8" });
+    const readme = parse(content);
+   return getInputFilesForTag(readme.markDown,tag) != undefined
+} 
+
+/**
+ * @return {map} ,key is the readme and value is an array of the changed files belonging to the readme  
+ * [["1/readme.md",["file1.json","file2.json"]]] 
+ * @param filesChanged
+ */
+export const getChangeFilesReadmeMap = async (
+         filesChanged: string[]
+       ): Promise<Map<string, string[]>> => {
+         const configFiles = new Map<string, string[]>();
+         for (const fileChanged of filesChanged) {
+           let cur = fileChanged;
+           while (cur.startsWith("specification")) {
+             if (
+               cur.toLowerCase().endsWith("readme.md") &&
+               fs.existsSync(cur)
+             ) {
+               if (!configFiles.has(cur)) {
+                 configFiles.set(cur, []);
+               }
+               if (!fileChanged.endsWith("readme.md")) {
+                 let value = configFiles.get(cur);
+                 if (value) {
+                   value.push(fileChanged);
+                 }
+               }
+               break;
+             }
+             // select parent readme
+             const parts = cur.split("/");
+             parts.pop();
+             parts.pop();
+             parts.push("readme.md");
+             cur = parts.join("/");
+           }
+         }
+         return configFiles;
+       };
+
+/**
+ * return [["Sevice/readme.md",["tag1","tag2"]]...]
+ * the tags are sorted by refered changed file's count 
+ */
+export const getTagsFromChangedFile = async (
+         filesChanged: string[]
+       ): Promise<Map<string, string[]>> => {
+  try {
+    console.log(filesChanged);
+    // traverse up to readme.md files
+    const configFiles = await getChangeFilesReadmeMap(filesChanged);
+
+    const tagsAffectedMap = new Map<string, string[]>();
+
+    configFiles.forEach((changedFiles, key) => {
+      const content = fs.readFileSync(key, { encoding: "utf8" });
+      const readme = parse(content);
+      const relativePath = getReadMeRelativeDirPathToRepo(key);
+      /**
+      *  count the changed file count for each tags
+      */
+      const tagsCnt = new Map<string, number>();
+      changedFiles.map((changedFile) => {
+        const tags = getTagsForFilesChanged(readme, [
+          changedFile.substring(changedFiles.indexOf(relativePath)),
+        ]);
+        tags.forEach((element) => {
+          const oldCnt = tagsCnt.get(element);
+          tagsCnt.set(element, oldCnt ? oldCnt + 1 : 1);
+        });
+      });
+      
+      /**
+       * first sort by count, then by tag name
+       */
+      const sortedTagsCnt = [...tagsCnt].sort((a, b) => {
+        if (a[1] - b[1] === 0) {
+          if (a[0] < b[0]) {
+            return 1;
+          } else if (a[0] > b[0]) {
+            return -1;
+          }
+          return 0;
+        }
+        return b[1] - a[1];
+      });
+
+      const AffectedTags: string[] = [];
+      sortedTagsCnt.forEach((v) => {
+        if (!changedFiles.length) {
+          return;
+        }
+        const tag = v[0];
+        const tagFiles = getInputFilesForTag(readme.markDown, tag);
+
+        if (tagFiles) {
+          let intersection = tagFiles.filter((v) =>changedFiles.includes(relativePath + v));
+          if (intersection) {
+            changedFiles = changedFiles.filter((v) =>!intersection.includes(v.substring(relativePath.length)));
+            AffectedTags.push(tag);
+          }
+        }
+      });
+      if (changedFiles.length) {
+        console.log(
+          `these changed files:${changedFiles.join(";")} ,can not find the related tag`
+        );
+      }
+      tagsAffectedMap.set(key, AffectedTags);
+    });
+    return tagsAffectedMap;
+  } catch (err) {
+    throw err;
+  }
+}; 
 
 /**
  * Retrieves list of swagger files to be processed for linting
@@ -416,4 +583,14 @@ export const getLinterVersion = ():LintVersion => {
      classic : classicLintVersion,
      present :lintVersion
   }
+}
+
+/**
+ * set the Upstream Branch of branch, this function should run in a repo dir
+ */
+export const setUpstreamBranch = function (name: string, remote: string) {
+  let cmd = `git branch ${name}  ${remote}`;
+  console.log(`set upstream branch ${remote} ${name} `);
+  console.log(`> ${cmd}`);
+  execSync(cmd, { encoding: 'utf8', stdio: 'inherit' });
 }

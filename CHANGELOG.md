@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.9.1
+
+- Fixed the bug:The LintDiff exit with code 1 when new RP is being added .It caused by an unhandled error:
+ read non-existing readme file .
+- Upgrade @azure/oad version to 0.8.0.
+
+## 0.9.0
+
+- The LintDiff will check the changed files which are not belong to default tag.
+
+## 0.8.0
+
+- The breaking change checking will always aganist master branch .
+
+## 0.7.3
+
+- Upgrade oav version to 0.21.5 with exception info output to console when pretty switch is on.
+
 ## 0.7.2
 
 - Upgrade oav version to 0.21.4.
