@@ -14,13 +14,19 @@ export async function main() {
     //   return (item.match(/.*Microsoft.Logic.*2016-06-01.*/ig) !== null);
     return (item.match(/.*specification\/.*/ig) !== null);
   });
+  let exitCode: number = 0;
+  let specValidationResult;
   for (const swagger of swaggersToProcess) {
     try {
-      await oav.validateSpec(swagger, {consoleLogLevel: 'error', pretty: true});
+      specValidationResult = await oav.validateSpec(swagger, {consoleLogLevel: 'error', pretty: true});
+      if (specValidationResult.validityStatus === false) {
+        exitCode = 1;
+      }
     } catch (e) {
       console.error("error: ")
       console.error(e)
       process.exitCode = 1
     }
   }
+  process.exitCode = exitCode;
 }

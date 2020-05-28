@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.1
+
+- Set exitCode for semantic validation when process normally.
+
 ## 0.10.0
 
 - Breaking change support unified pipeline log format
