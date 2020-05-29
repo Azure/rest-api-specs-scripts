@@ -187,7 +187,7 @@ export async function runScript() {
    * if not the switching to master below would failed
    */
   if (
-    cli.defaultConfig().env.SYSTEM_PULLREQUEST_TARGETBRANCH! in targetBranches
+    !(cli.defaultConfig().env.SYSTEM_PULLREQUEST_TARGETBRANCH! in targetBranches)
   ) {
     utils.setUpstreamBranch("master", "remotes/origin/master");
   }
