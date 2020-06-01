@@ -187,7 +187,9 @@ export async function runScript() {
    * if not the switching to master below would failed
    */
   if (
-    !(cli.defaultConfig().env.SYSTEM_PULLREQUEST_TARGETBRANCH! in targetBranches)
+    !targetBranches.includes(
+      cli.defaultConfig().env.SYSTEM_PULLREQUEST_TARGETBRANCH!
+    )
   ) {
     utils.setUpstreamBranch("master", "remotes/origin/master");
   }
@@ -209,7 +211,7 @@ export async function runScript() {
    * always compare against master
    * we still use the changed files got from the PR, because the master branch may quite different with the PR target branch
    */
-  if (pr && !(pr.targetBranch in targetBranches)) {
+  if (pr && !targetBranches.includes(pr.targetBranch)) {
     (pr.targetBranch as string) = "master";
     console.log("switch target branch to master");
   }
