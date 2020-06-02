@@ -177,18 +177,25 @@ export async function runScript() {
   const isRunningInTravisCI = process.env.TRAVIS === "true";
 
   /**
-   * prepare for switch to master branch,
+   * NOTE: For base branch which not in targetBranches, the breaking change tool compare head branch with master branch.
+   * TargetBranches is a set of branches and treat each of them like a service team master branch.
+   */
+  const targetBranches = ["master", "RPSaaSDev", "RPSaaSMaster"];
+
+  /**
+   * For PR target branch not in `targetBranches`. prepare for switch to master branch,
    * if not the switching to master below would failed
    */
-  if (cli.defaultConfig().env.SYSTEM_PULLREQUEST_TARGETBRANCH !== "master") {
+  if (
+    !targetBranches.includes(
+      cli.defaultConfig().env.SYSTEM_PULLREQUEST_TARGETBRANCH!
+    )
+  ) {
     utils.setUpstreamBranch("master", "remotes/origin/master");
   }
 
   // create Azure DevOps PR properties.
   const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
-
-  // See whether script is in Travis CI context
-  console.log(`isRunningInTravisCI: ${isRunningInTravisCI}`);
 
   console.log(`PR target branch is ${pr ? pr.targetBranch : ""}`);
 
@@ -204,7 +211,7 @@ export async function runScript() {
    * always compare against master
    * we still use the changed files got from the PR, because the master branch may quite different with the PR target branch
    */
-  if (pr && pr.targetBranch !== "master") {
+  if (pr && !targetBranches.includes(pr.targetBranch)) {
     (pr.targetBranch as string) = "master";
     console.log("switch target branch to master");
   }

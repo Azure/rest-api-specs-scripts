@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.2
+
+- Set breaking change target branch whitelist [RPSaaSMaster, RPSaaSDev, master]. If target branch not in this whitelist,
+  the breaking change will compare against master.
+
 ## 0.10.1
 
 - Set exitCode for semantic validation when process normally.
