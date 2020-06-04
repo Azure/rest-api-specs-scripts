@@ -9,6 +9,9 @@ import * as gitHubPost from './postToGitHub'
 import * as fs from 'fs'
 import * as path from 'path'
 
+import { targetHref } from "./breaking-change"
+import * as format from "@azure/swagger-validation-common"
+
 let githubTemplate = (title: unknown, contact_message: unknown, file_summaries: unknown) =>
   `# AutoRest linter results for ${title}\n${contact_message}\n\n${file_summaries}`;
 
@@ -155,8 +158,12 @@ function shortName(filePath: string) {
   return `${path.basename(path.dirname(filePath))}/&#8203;<strong>${path.basename(filePath)}</strong>`;
 }
 
-function blobHref(file: unknown) {
+export function blobHref(file: unknown) {
   return `https://github.com/${process.env.TRAVIS_PULL_REQUEST_SLUG}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
+}
+
+function getDocUrl(id: string) {
+  return `https://github.com/Azure/azure-rest-api-specs/blob/master/documentation/openapi-authoring-automated-guidelines.md#${id}`;
 }
 
 type Formatter = (
@@ -400,6 +407,51 @@ export function postProcessing() {
       }
     });
 
+    function composeLintResult(it: MutableIssue) {
+      return {
+        level: it.type as format.MessageLevel,
+        message: String(it.message),
+        code: String(it.code),
+        id: String(it.id),
+        docUrl: getDocUrl(it.id),
+        time: new Date(),
+        extra: {
+          validationCategory: it.validationCategory,
+          providerNamespace: it.providerNamespace,
+          resourceType: it.resourceType,
+          oldRef: targetHref(
+            utils.getGithubStyleFilePath(
+              utils.getRelativeSwaggerPathToRepo(it.jsonref.split(' ')[0] || "")
+            )
+          ) + " " + (it.jsonref.split(' ').length > 1 ? it.jsonref.split(' ')[1] : ''),
+          newRef: blobHref(
+            utils.getGithubStyleFilePath(
+              utils.getRelativeSwaggerPathToRepo(it.jsonref.split(' ')[0] || "")
+            )
+          ) + " " + (it.jsonref.split(' ').length > 1 ? it.jsonref.split(' ')[1] : '')
+        },
+        paths: [
+          {
+            tag: "New",
+            path: blobHref(
+              utils.getGithubStyleFilePath(
+                utils.getRelativeSwaggerPathToRepo(it.filePath || "")
+              )
+            ),
+          },
+          {
+            tag: "Old",
+            path: targetHref(
+              utils.getGithubStyleFilePath(
+                utils.getRelativeSwaggerPathToRepo(it.filePath || "")
+              )
+            ),
+          },
+        ],
+      }
+    }
+    
+
     compareBeforeAfterArrays(afterErrorsARMArray, beforeErrorsARMArray, existingARMErrors, newARMErrors);
     compareBeforeAfterArrays(afterErrorsSDKArray, beforeErrorsSDKArray, existingSDKErrors, newSDKErrors);
     compareBeforeAfterArrays(afterWarningsARMArray, beforeWarningsARMArray, existingARMWarnings, newARMWarnings);
@@ -452,6 +504,23 @@ export function postProcessing() {
     newARMErrorsCount += newARMErrors.length;
     newSDKWarningsCount += newSDKWarnings.length;
     newARMWarningsCount += newARMWarnings.length;
+
+    console.log("-------- Compose Lint Diff Final Result --------\n");
+    const pipelineResultData: format.ResultMessageRecord[] = newSDKErrors
+    .concat(newARMErrors)
+    .concat(newSDKWarnings)
+    .concat(newARMWarnings)
+    .map(
+      (it) => ({
+        type: "Result",
+        ...composeLintResult(it)
+      })
+    );
+  const pipelineResult: format.MessageLine = pipelineResultData;
+
+  console.log("Write to pipe.log");
+  console.log(JSON.stringify(pipelineResult));
+  fs.appendFileSync("pipe.log", JSON.stringify(pipelineResult) + "\n");
 
     sdkFileSummaries += getFileSummary("SDK", fileName, existingSDKWarnings, existingSDKErrors, newSDKWarnings, newSDKErrors);
     armFileSummaries += getFileSummary("ARM", fileName, existingARMWarnings, existingARMErrors, newARMWarnings, newARMErrors);

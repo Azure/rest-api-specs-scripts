@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.2
+
+- LintDiff support unified pipeline log format.
+
 ## 0.10.1
 
 - Set exitCode for semantic validation when process normally.

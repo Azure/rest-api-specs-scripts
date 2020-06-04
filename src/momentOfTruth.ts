@@ -8,6 +8,9 @@ import * as path from "path";
 import * as utils from "./utils";
 import * as fs from "fs";
 import { devOps, cli } from "@azure/avocado";
+import { targetHref } from "./breaking-change";
+import { blobHref } from "./momentOfTruthPostProcessing";
+import * as format from "@azure/swagger-validation-common";
 
 type TypeUtils = typeof utils;
 type TypeDevOps = typeof devOps;
@@ -68,7 +71,7 @@ export async function getLinterResult(
   if (err && stderr.indexOf("Process() cancelled due to exception") !== -1) {
     console.error(`AutoRest exited with code ${err.code}`);
     console.error(stderr);
-    throw new Error("AutoRest failed");
+    throw new Error(`AutoRest exited with code ${err.code}`);
   }
 
   let resultString = stdout + stderr;
@@ -189,17 +192,63 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
   createLogFile();
   console.log(`The results will be logged here: "${logFilepath}".`);
 
+  const errors: { error: Error; old: string; new: string }[] = [];
+
   if (configsToProcess.length > 0 && pr !== undefined) {
     for (const configFile of configsToProcess) {
-      await runTools(configFile, "after");
+      try {
+        await runTools(configFile, "after");
+      } catch (err) {
+          errors.push({
+            error: err,
+            old: targetHref(
+              utils.getRelativeSwaggerPathToRepo(
+                path.resolve(pr!.workingDir, configFile)
+              )
+            ),
+            new: blobHref(utils.getRelativeSwaggerPathToRepo(configFile)),
+          });
+        }
     }
 
     await utils.doOnTargetBranch(pr, async () => {
       for (const configFile of configsToProcess) {
-        await runTools(configFile, "before");
+        try {
+          await runTools(configFile, "before");
+        } catch (err) {
+          errors.push({
+            error: err,
+            old: targetHref(
+              utils.getRelativeSwaggerPathToRepo(
+                path.resolve(pr!.workingDir, configFile)
+              )
+            ),
+            new: blobHref(utils.getRelativeSwaggerPathToRepo(configFile)),
+          });
+        }
       }
     });
   }
 
   writeContent(JSON.stringify(finalResult, null, 2));
+
+  if (errors.length > 0) {
+    process.exitCode = 1;
+    console.log(`LintDiff error log: ${errors}`);
+    const errorResult: format.MessageLine = errors.map((it) => ({
+      type: "Raw",
+      level: "Error",
+      message: it.error.stack || "",
+      time: new Date(),
+      extra: {
+        role: "Lint Diff",
+        new: it.new,
+        old: it.old,
+      },
+    }));
+
+    console.log("--- Errors of Lint Diff ----\n");
+    console.log(JSON.stringify(errorResult));
+    fs.appendFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
+  }
 }
