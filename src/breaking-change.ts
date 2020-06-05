@@ -274,7 +274,6 @@ export async function runScript() {
 
   if (errors.length > 0) {
     process.exitCode = 1;
-    console.log(`oad error log: ${errors}`);
     const errorResult: format.MessageLine = errors.map((it) => ({
       type: "Raw",
       level: "Error",
@@ -288,6 +287,7 @@ export async function runScript() {
     }));
 
     fs.appendFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
+    console.log(`oad error log: ${JSON.stringify(errorResult)}`);
   }
 
   if (isRunningInTravisCI) {

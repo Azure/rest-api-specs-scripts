@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.3
+
+- Breaking change print error log
+- swagger file filter regex fix
+
 ## 0.10.2
 
 - Set breaking change target branch whitelist [RPSaaSMaster, RPSaaSDev, master]. If target branch not in this whitelist,

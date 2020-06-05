@@ -498,7 +498,7 @@ export const getFilesChangedInPR = async (
       let swaggerFilesInPR = filesChanged.filter(function (item: string) {
         if (
           item.match(/.*(json|yaml)$/gi) == null ||
-          item.match(/.*specification.*/gi) == null
+          item.match(/.*specification\/.*/gi) == null
         ) {
           return false;
         }
