@@ -75,7 +75,7 @@ function blobHref(file: string) {
     : "";
 }
 
-function targetHref(file: string) {
+export function targetHref(file: string) {
   return file
     ? `https://github.com/${
         process.env.TRAVIS_REPO_SLUG
