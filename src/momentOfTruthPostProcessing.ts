@@ -159,7 +159,8 @@ function shortName(filePath: string) {
 }
 
 export function blobHref(file: unknown) {
-  return `https://github.com/${process.env.TRAVIS_PULL_REQUEST_SLUG}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
+  const repoName = process.env.TRAVIS_PULL_REQUEST_SLUG !== undefined ? process.env.TRAVIS_PULL_REQUEST_SLUG : process.env.TRAVIS_REPO_SLUG;
+  return `https://github.com/${repoName}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
 }
 
 function getDocUrl(id: string) {

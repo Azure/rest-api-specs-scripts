@@ -50,20 +50,6 @@
       "after": [
         {
           "type": "Error",
-          "code": "XmsExamplesRequired",
-          "message": "Please provide x-ms-examples describing minimum/maximum property set for response/request payloads for operations. Operation: 'Noun_test'",
-          "id": "D5001",
-          "validationCategory": "Documentation",
-          "providerNamespace": null,
-          "resourceType": null,
-          "sources": [
-            "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)"
-          ],
-          "jsonref": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)",
-          "json-path": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)"
-        },
-        {
-          "type": "Error",
           "code": "OperationsAPIImplementation",
           "message": "Operations API must be implemented for '/providers//operations'.",
           "id": "R3023",
@@ -75,6 +61,20 @@
           ],
           "jsonref": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:19:2 ($.paths)",
           "json-path": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:19:2 ($.paths)"
+        },
+        {
+          "type": "Error",
+          "code": "XmsExamplesRequired",
+          "message": "Please provide x-ms-examples describing minimum/maximum property set for response/request payloads for operations. Operation: 'Noun_test'",
+          "id": "D5001",
+          "validationCategory": "Documentation",
+          "providerNamespace": null,
+          "resourceType": null,
+          "sources": [
+            "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)"
+          ],
+          "jsonref": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)",
+          "json-path": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)"
         },
         {
           "type": "Error",
