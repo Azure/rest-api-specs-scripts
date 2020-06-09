@@ -437,7 +437,7 @@ export function postProcessing() {
             tag: "New",
             path: blobHref(
               utils.getGithubStyleFilePath(
-                utils.getRelativeSwaggerPathToRepo(it.filePath || "")
+                utils.getRelativeSwaggerPathToRepo(it.filePath+'#L'+String(it.lineNumber) || "")
               )
             ),
           },
@@ -445,7 +445,7 @@ export function postProcessing() {
             tag: "Old",
             path: targetHref(
               utils.getGithubStyleFilePath(
-                utils.getRelativeSwaggerPathToRepo(it.filePath || "")
+                utils.getRelativeSwaggerPathToRepo(it.filePath+'#L'+String(it.lineNumber) || "")
               )
             ),
           },
