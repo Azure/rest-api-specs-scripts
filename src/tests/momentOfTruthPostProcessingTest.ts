@@ -10,6 +10,8 @@ import * as fs from "fs";
 import {cleanUpDir } from './helper';
 import * as asyncIt from "@ts-common/async-iterator";
 import { postProcessing } from '../momentOfTruthPostProcessing';
+import { MessageLine, MessageRecord } from "@azure/swagger-validation-common";
+import * as _ from "lodash";
 
 const sinon = require("sinon");
 let cwd = process.cwd()
@@ -74,6 +76,21 @@ assert.deepEqual(Object.keys(resultFiles), [
     errorIds = (resultFiles["specification/test-lint/readme.md"]
       .after as Array<any>).map((error) => error.id).sort();
     assert.deepEqual(errorIds, ["D5001","R2054", "R3023"]);
+    
+    const pipeFile = "./pipe.log";
+    console.log("------------- read from pipe.log -----------------");
+    const chunck = fs.readFileSync(pipeFile, { encoding: "utf8" })
+    console.log(chunck);
+    const messages = chunck.split(/[\r\n]+/)
+      .filter(l => l) // filter out empty lines
+      .map(l => JSON.parse(l.trim()) as MessageLine)
+      .map(l => Array.isArray(l) ? l : [l]);
+    const res: MessageRecord[] = _.flatMap(messages, m => m);
+    console.log("------------- parse validation message from[pipe.log] ------------------");
+    console.log(JSON.stringify(res));
+    assert.deepEqual(res[0].type, "Result");
+    assert.deepEqual(res[0].level, "Error");
+    assert.deepEqual(res[0].message, "Please provide x-ms-examples describing minimum/maximum property set for response/request payloads for operations. Operation: 'Noun_test'");
   }
 
   after() {

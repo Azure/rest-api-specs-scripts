@@ -1,0 +1,96 @@
+{
+  "pullRequest": 1001,
+  "repositoryUrl": "repo",
+  "files": {
+    "specification/test-lint/readme.md": {
+      "before": [
+        {
+          "type": "warning",
+          "code": "OperationIdRequired",
+          "message": "Missing operationId in path:'/foo/subScriptions/{subscriptionId}/test', operation:'post', consider adding the operationId .",
+          "id": "R4004",
+          "validationCategory": "ARMViolation",
+          "providerNamespace": false,
+          "resourceType": false,
+          "sources": [
+            "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/old/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)"
+          ],
+          "jsonref": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/old/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)",
+          "json-path": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/old/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)"
+        },
+        {
+          "type": "Error",
+          "code": "OperationsAPIImplementation",
+          "message": "Operations API must be implemented for '/providers//operations'.",
+          "id": "R3023",
+          "validationCategory": "ARMViolation",
+          "providerNamespace": null,
+          "resourceType": null,
+          "sources": [
+            "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/old/specification/test-lint/test/test-lint-result.json:19:2 ($.paths)"
+          ],
+          "jsonref": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/old/specification/test-lint/test/test-lint-result.json:19:2 ($.paths)",
+          "json-path": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/old/specification/test-lint/test/test-lint-result.json:19:2 ($.paths)"
+        },
+        {
+          "type": "Error",
+          "code": "SecurityDefinitionsStructure",
+          "message": "Every swagger/configuration must have a security definitions section and it must adhere to the structure described in: https://github.com/Azure/azure-openapi-validator/blob/master/docs/security-definitions-structure-validation.md",
+          "id": "R2054",
+          "validationCategory": "SDKViolation",
+          "providerNamespace": null,
+          "resourceType": null,
+          "sources": [
+            "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/old/specification/test-lint/test/test-lint-result.json:1:0 ($)"
+          ],
+          "jsonref": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/old/specification/test-lint/test/test-lint-result.json:1:0 ($)",
+          "json-path": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/old/specification/test-lint/test/test-lint-result.json:1:0 ($)"
+        }
+      ],
+      "after": [
+        {
+          "type": "Error",
+          "code": "XmsExamplesRequired",
+          "message": "Please provide x-ms-examples describing minimum/maximum property set for response/request payloads for operations. Operation: 'Noun_test'",
+          "id": "D5001",
+          "validationCategory": "Documentation",
+          "providerNamespace": null,
+          "resourceType": null,
+          "sources": [
+            "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)"
+          ],
+          "jsonref": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)",
+          "json-path": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:21:6 ($.paths[\"/foo/subScriptions/{subscriptionId}/test\"].post)"
+        },
+        {
+          "type": "Error",
+          "code": "OperationsAPIImplementation",
+          "message": "Operations API must be implemented for '/providers//operations'.",
+          "id": "R3023",
+          "validationCategory": "ARMViolation",
+          "providerNamespace": null,
+          "resourceType": null,
+          "sources": [
+            "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:19:2 ($.paths)"
+          ],
+          "jsonref": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:19:2 ($.paths)",
+          "json-path": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:19:2 ($.paths)"
+        },
+        {
+          "type": "Error",
+          "code": "SecurityDefinitionsStructure",
+          "message": "Every swagger/configuration must have a security definitions section and it must adhere to the structure described in: https://github.com/Azure/azure-openapi-validator/blob/master/docs/security-definitions-structure-validation.md",
+          "id": "R2054",
+          "validationCategory": "SDKViolation",
+          "providerNamespace": null,
+          "resourceType": null,
+          "sources": [
+            "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:1:0 ($)"
+          ],
+          "jsonref": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:1:0 ($)",
+          "json-path": "file:///c:/Users/xiaoxuqi/Work_Project/azure/rest-api-specs-scripts/src/tests/Resource/momentOfTruth/new/specification/test-lint/test/test-lint-result.json:1:0 ($)"
+        }
+      ]
+    }
+  }
+}

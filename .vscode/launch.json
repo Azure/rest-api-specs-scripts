@@ -35,7 +35,7 @@
         "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
         "args": [
             "--inspect-brk",
-            "${workspaceFolder}/src/tests/momentOfTruthPostProcessingTest.ts"
+            "${workspaceFolder}/dist/tests/momentOfTruthPostProcessingTest.js"
         ],
         "port": 9229,
         "internalConsoleOptions": "openOnSessionStart"

@@ -510,10 +510,11 @@ export function postProcessing() {
       })
     );
   const pipelineResult: format.MessageLine = pipelineResultData;
-+
-+  console.log("Write to pipe.log");
-+  console.log(JSON.stringify(pipelineResult));
-+  fs.appendFileSync("pipe.log", JSON.stringify(pipelineResult) + "\n");
+
+  console.log("---------------- Write to pipe.log -------------------");
+  console.log(JSON.stringify(pipelineResult));
+  fs.appendFileSync("pipe.log", JSON.stringify(pipelineResult) + "\n");
+  console.log("---------");
 
     sdkFileSummaries += getFileSummary("SDK", fileName, existingSDKWarnings, existingSDKErrors, newSDKWarnings, newSDKErrors);
     armFileSummaries += getFileSummary("ARM", fileName, existingARMWarnings, existingARMErrors, newARMWarnings, newARMErrors);
