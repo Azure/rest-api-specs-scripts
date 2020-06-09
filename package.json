@@ -1,6 +1,6 @@
 {
   "name": "@azure/rest-api-specs-scripts",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "Scripts for the Azure RestAPI specification repository 'azure-rest-api-specs'.",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",

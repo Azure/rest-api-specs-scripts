@@ -407,9 +407,16 @@ export function postProcessing() {
       }
     });
 
+    const severityMap: Map<string, string> = new Map([
+      ['error', 'Error'],
+      ['warning', 'Warning'],
+      ['info', 'Info']
+    ]);
+
     function composeLintResult(it: MutableIssue) {
+      const type = severityMap.get(String(it.type).toLowerCase()) ? severityMap.get(String(it.type).toLowerCase()) : 'Info';
       return {
-        level: it.type as format.MessageLevel,
+        level: type as format.MessageLevel,
         message: String(it.message),
         code: String(it.code),
         id: String(it.id),
