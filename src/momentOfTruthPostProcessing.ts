@@ -418,7 +418,7 @@ export function postProcessing() {
       const type = severityMap.get(String(it.type).toLowerCase()) ? severityMap.get(String(it.type).toLowerCase()) : 'Info';
       return {
         level: type as format.MessageLevel,
-        message: String(it.message),
+        message: String(it.message).replace(/"/g, "'"),
         code: String(it.code),
         id: String(it.id),
         docUrl: getDocUrl(it.id),
