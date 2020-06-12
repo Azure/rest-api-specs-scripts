@@ -677,3 +677,15 @@ export const setUpstreamBranch = function (name: string, remote: string) {
   console.log(`> ${cmd}`);
   execSync(cmd, { encoding: "utf8", stdio: "inherit" });
 };
+
+/**
+ * Get the targeted Github url of swagger file.
+ * @param file Swagger file starts with specification
+ */
+export function targetHref(file: string) {
+  return file
+    ? `https://github.com/${
+        process.env.TRAVIS_REPO_SLUG
+      }/blob/${getTargetBranch()}/${file}`
+    : "";
+}

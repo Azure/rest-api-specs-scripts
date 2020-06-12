@@ -9,7 +9,6 @@ import * as gitHubPost from './postToGitHub'
 import * as fs from 'fs'
 import * as path from 'path'
 
-import { targetHref } from "./breaking-change"
 import * as format from "@azure/swagger-validation-common"
 
 let githubTemplate = (title: unknown, contact_message: unknown, file_summaries: unknown) =>
@@ -443,7 +442,7 @@ export function postProcessing() {
           },
           {
             tag: "Old",
-            path: targetHref(
+            path: utils.targetHref(
               utils.getGithubStyleFilePath(
                 utils.getRelativeSwaggerPathToRepo(it.filePath+'#L'+String(it.lineNumber) || "")
               )

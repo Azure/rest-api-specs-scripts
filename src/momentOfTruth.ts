@@ -8,7 +8,6 @@ import * as path from "path";
 import * as utils from "./utils";
 import * as fs from "fs";
 import { devOps, cli } from "@azure/avocado";
-import { targetHref } from "./breaking-change";
 import { blobHref } from "./momentOfTruthPostProcessing";
 import * as format from "@azure/swagger-validation-common";
 
@@ -202,7 +201,7 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
       } catch (err) {
           errors.push({
             error: err,
-            old: targetHref(
+            old: utils.targetHref(
               utils.getRelativeSwaggerPathToRepo(
                 path.resolve(pr!.workingDir, configFile)
               )
@@ -219,7 +218,7 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
         } catch (err) {
           errors.push({
             error: err,
-            old: targetHref(
+            old: utils.targetHref(
               utils.getRelativeSwaggerPathToRepo(
                 path.resolve(pr!.workingDir, configFile)
               )

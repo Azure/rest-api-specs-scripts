@@ -10,7 +10,7 @@ import * as fs from "fs";
 import {cleanUpDir } from './helper';
 import * as asyncIt from "@ts-common/async-iterator";
 import { postProcessing } from '../momentOfTruthPostProcessing';
-import { MessageLine, MessageRecord } from "@azure/swagger-validation-common";
+import { MessageLine, ResultMessageRecord } from "@azure/swagger-validation-common";
 import * as _ from "lodash";
 
 const sinon = require("sinon");
@@ -85,12 +85,11 @@ assert.deepEqual(Object.keys(resultFiles), [
       .filter(l => l) // filter out empty lines
       .map(l => JSON.parse(l.trim()) as MessageLine)
       .map(l => Array.isArray(l) ? l : [l]);
-    const res: MessageRecord[] = _.flatMap(messages, m => m);
+    const res: ResultMessageRecord[] = _.flatMap(messages, m => m).map(m => <ResultMessageRecord>m);
+    const resIds = res.map(m => m.id).sort();
     console.log("------------- parse validation message from[pipe.log] ------------------");
     console.log(JSON.stringify(res));
-    assert.deepEqual(res[0].type, "Result");
-    assert.deepEqual(res[0].level, "Error");
-    assert.deepEqual(res[0].message, "Please provide x-ms-examples describing minimum/maximum property set for response/request payloads for operations. Operation: 'Noun_test'");
+    assert.deepEqual(resIds, ["D5001"]);
   }
 
   after() {
