@@ -679,8 +679,8 @@ export const setUpstreamBranch = function (name: string, remote: string) {
 };
 
 /**
- * Get the targeted Github url of swagger file.
- * @param file Swagger file starts with specification
+ * Get the Github url of targeted swagger file.
+ * @param file Swagger file starts with "specification"
  */
 export function targetHref(file: string) {
   return file
@@ -688,4 +688,13 @@ export function targetHref(file: string) {
         process.env.TRAVIS_REPO_SLUG
       }/blob/${getTargetBranch()}/${file}`
     : "";
+}
+
+/**
+ * Get the Github url of commited swagger file.
+ * @param file Swagger file starts with "specification"
+ */
+export function blobHref(file: unknown) {
+  const repoName = process.env.TRAVIS_PULL_REQUEST_SLUG !== undefined ? process.env.TRAVIS_PULL_REQUEST_SLUG : process.env.TRAVIS_REPO_SLUG;
+  return `https://github.com/${repoName}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
 }

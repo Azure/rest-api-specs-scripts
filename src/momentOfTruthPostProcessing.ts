@@ -34,7 +34,7 @@ let potentialNewWarningErrorSummaryMarkdown = (
   warning_error_message: unknown
 ) =>
   `|${count}|[${warning_error_id} - ${warning_error_code}](https://github.com/Azure/azure-rest-api-specs/blob/master/documentation/openapi-authoring-automated-guidelines.md#${warning_error_id})|` +
-  `[${shortName(warning_error_file)}:${warning_error_line}](${blobHref(warning_error_file)}#L${warning_error_line} "${warning_error_file}")|` +
+  `[${shortName(warning_error_file)}:${warning_error_line}](${utils.blobHref(warning_error_file)}#L${warning_error_line} "${warning_error_file}")|` +
   `${warning_error_message}|\n`;
 
 let potentialNewWarningErrorSummaryPlain = (
@@ -157,11 +157,6 @@ function shortName(filePath: string) {
   return `${path.basename(path.dirname(filePath))}/&#8203;<strong>${path.basename(filePath)}</strong>`;
 }
 
-export function blobHref(file: unknown) {
-  const repoName = process.env.TRAVIS_PULL_REQUEST_SLUG !== undefined ? process.env.TRAVIS_PULL_REQUEST_SLUG : process.env.TRAVIS_REPO_SLUG;
-  return `https://github.com/${repoName}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
-}
-
 function getDocUrl(id: string) {
   return `https://github.com/Azure/azure-rest-api-specs/blob/master/documentation/openapi-authoring-automated-guidelines.md#${id}`;
 }
@@ -253,7 +248,7 @@ function getFileSummary(
   }
 
   if (fileSummary !== "") {
-    return fileSummaryHeader(fileName, blobHref(fileName)) + fileSummary;
+    return fileSummaryHeader(fileName, utils.blobHref(fileName)) + fileSummary;
   } else {
     return "";
   }
@@ -434,7 +429,7 @@ export function postProcessing() {
         paths: [
           {
             tag: "New",
-            path: blobHref(
+            path: utils.blobHref(
               utils.getGithubStyleFilePath(
                 utils.getRelativeSwaggerPathToRepo(it.filePath+'#L'+String(it.lineNumber) || "")
               )

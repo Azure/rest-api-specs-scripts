@@ -8,7 +8,6 @@ import * as path from "path";
 import * as utils from "./utils";
 import * as fs from "fs";
 import { devOps, cli } from "@azure/avocado";
-import { blobHref } from "./momentOfTruthPostProcessing";
 import * as format from "@azure/swagger-validation-common";
 
 type TypeUtils = typeof utils;
@@ -206,7 +205,7 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
                 path.resolve(pr!.workingDir, configFile)
               )
             ),
-            new: blobHref(utils.getRelativeSwaggerPathToRepo(configFile)),
+            new: utils.blobHref(utils.getRelativeSwaggerPathToRepo(configFile)),
           });
         }
     }
@@ -223,7 +222,7 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
                 path.resolve(pr!.workingDir, configFile)
               )
             ),
-            new: blobHref(utils.getRelativeSwaggerPathToRepo(configFile)),
+            new: utils.blobHref(utils.getRelativeSwaggerPathToRepo(configFile)),
           });
         }
       }
