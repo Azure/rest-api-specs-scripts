@@ -6,7 +6,7 @@ import * as fs from "fs-extra";
 import * as path from "path";
 
 import * as tsUtils from "./ts-utils";
-import { getTargetBranch } from "./utils";
+import { targetHref } from "./utils";
 import * as utils from "./utils";
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -72,14 +72,6 @@ function tableLine(filePath: string, diff: Diff) {
 function blobHref(file: string) {
   return file
     ? `https://github.com/${process.env.TRAVIS_REPO_SLUG}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`
-    : "";
-}
-
-function targetHref(file: string) {
-  return file
-    ? `https://github.com/${
-        process.env.TRAVIS_REPO_SLUG
-      }/blob/${getTargetBranch()}/${file}`
     : "";
 }
 

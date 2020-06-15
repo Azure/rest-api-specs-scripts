@@ -1,6 +1,6 @@
 {
   "name": "@azure/rest-api-specs-scripts",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "Scripts for the Azure RestAPI specification repository 'azure-rest-api-specs'.",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
@@ -36,14 +36,15 @@
     "typescript": "~3.4.4",
     "mocha": "^7.0.1",
     "mocha-typescript": "^1.0.22",
-    "sinon": "^9.0.2"
+    "sinon": "^9.0.2",
+    "@types/lodash": "^4.14.149"
   },
   "dependencies": {
     "@octokit/rest": "^16.42.0",
     "@azure/avocado": "^0.4.1",
     "@azure/oad": "^0.8.1",
     "@ts-common/string-map": "^0.3.0",
-    "@azure/swagger-validation-common": "^0.0.2",
+    "@azure/swagger-validation-common": "^0.0.3",
     "commonmark": "0.27.0",
     "fs-extra": "^7.0.1",
     "glob": "^7.1.3",

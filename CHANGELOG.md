@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.4
+
+- LintDiff support unified pipeline log format.
+
 ## 0.10.3
 
 - Breaking change print error log

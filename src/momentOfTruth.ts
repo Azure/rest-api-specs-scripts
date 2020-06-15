@@ -8,6 +8,7 @@ import * as path from "path";
 import * as utils from "./utils";
 import * as fs from "fs";
 import { devOps, cli } from "@azure/avocado";
+import * as format from "@azure/swagger-validation-common";
 
 type TypeUtils = typeof utils;
 type TypeDevOps = typeof devOps;
@@ -97,6 +98,7 @@ export async function getLinterResult(
       );
       console.dir(resultString);
       console.dir(e, { depth: null, colors: true });
+      throw new Error(`An error occurred while executing JSON.parse() on the linter output for ${swaggerPath}:`);
       process.exit(1);
     }
   }
@@ -189,17 +191,64 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
   createLogFile();
   console.log(`The results will be logged here: "${logFilepath}".`);
 
+  const errors: { error: Error; old: string; new: string }[] = [];
+
   if (configsToProcess.length > 0 && pr !== undefined) {
     for (const configFile of configsToProcess) {
-      await runTools(configFile, "after");
+      try {
+        await runTools(configFile, "after");
+      } catch (err) {
+          errors.push({
+            error: err,
+            old: utils.targetHref(
+              utils.getRelativeSwaggerPathToRepo(
+                path.resolve(pr!.workingDir, configFile)
+              )
+            ),
+            new: utils.blobHref(utils.getRelativeSwaggerPathToRepo(configFile)),
+          });
+        }
     }
 
     await utils.doOnTargetBranch(pr, async () => {
       for (const configFile of configsToProcess) {
-        await runTools(configFile, "before");
+        try {
+          await runTools(configFile, "before");
+        } catch (err) {
+          errors.push({
+            error: err,
+            old: utils.targetHref(
+              utils.getRelativeSwaggerPathToRepo(
+                path.resolve(pr!.workingDir, configFile)
+              )
+            ),
+            new: utils.blobHref(utils.getRelativeSwaggerPathToRepo(configFile)),
+          });
+        }
       }
     });
   }
 
   writeContent(JSON.stringify(finalResult, null, 2));
+
+  if (errors.length > 0) {
+    process.exitCode = 1;
+    console.log(`LintDiff error log ----`);
+    const errorResult: format.MessageLine = errors.map((it) => ({
+      type: "Raw",
+      level: "Error",
+      message: it.error.message || "",
+      time: new Date(),
+      extra: {
+        role: "Lint Diff",
+        new: it.new,
+        old: it.old,
+      },
+    }));
+
+    console.log("--- Errors of Lint Diff (formated) ----\n");
+    console.log(JSON.stringify(errorResult));
+    fs.appendFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
+    throw new Error('Autorest fail');
+  }
 }

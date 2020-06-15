@@ -9,6 +9,8 @@ import * as gitHubPost from './postToGitHub'
 import * as fs from 'fs'
 import * as path from 'path'
 
+import * as format from "@azure/swagger-validation-common"
+
 let githubTemplate = (title: unknown, contact_message: unknown, file_summaries: unknown) =>
   `# AutoRest linter results for ${title}\n${contact_message}\n\n${file_summaries}`;
 
@@ -32,7 +34,7 @@ let potentialNewWarningErrorSummaryMarkdown = (
   warning_error_message: unknown
 ) =>
   `|${count}|[${warning_error_id} - ${warning_error_code}](https://github.com/Azure/azure-rest-api-specs/blob/master/documentation/openapi-authoring-automated-guidelines.md#${warning_error_id})|` +
-  `[${shortName(warning_error_file)}:${warning_error_line}](${blobHref(warning_error_file)}#L${warning_error_line} "${warning_error_file}")|` +
+  `[${shortName(warning_error_file)}:${warning_error_line}](${utils.blobHref(warning_error_file)}#L${warning_error_line} "${warning_error_file}")|` +
   `${warning_error_message}|\n`;
 
 let potentialNewWarningErrorSummaryPlain = (
@@ -155,8 +157,8 @@ function shortName(filePath: string) {
   return `${path.basename(path.dirname(filePath))}/&#8203;<strong>${path.basename(filePath)}</strong>`;
 }
 
-function blobHref(file: unknown) {
-  return `https://github.com/${process.env.TRAVIS_PULL_REQUEST_SLUG}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
+function getDocUrl(id: string) {
+  return `https://github.com/Azure/azure-rest-api-specs/blob/master/documentation/openapi-authoring-automated-guidelines.md#${id}`;
 }
 
 type Formatter = (
@@ -246,7 +248,7 @@ function getFileSummary(
   }
 
   if (fileSummary !== "") {
-    return fileSummaryHeader(fileName, blobHref(fileName)) + fileSummary;
+    return fileSummaryHeader(fileName, utils.blobHref(fileName)) + fileSummary;
   } else {
     return "";
   }
@@ -400,6 +402,51 @@ export function postProcessing() {
       }
     });
 
+    const severityMap: Map<string, string> = new Map([
+      ['error', 'Error'],
+      ['warning', 'Warning'],
+      ['info', 'Info']
+    ]);
+
+    function composeLintResult(it: MutableIssue) {
+      const type = severityMap.get(String(it.type).toLowerCase()) ? severityMap.get(String(it.type).toLowerCase()) : 'Info';
+      return {
+        level: type as format.MessageLevel,
+        message: String(it.message).replace(/"/g, "'"),
+        code: String(it.code),
+        id: String(it.id),
+        docUrl: getDocUrl(it.id),
+        time: new Date(),
+        extra: {
+          validationCategory: it.validationCategory,
+          providerNamespace: it.providerNamespace,
+          resourceType: it.resourceType,
+          jsonref: it.jsonref,
+          filePath: it.filePath,
+          lineNumber: it.lineNumber,
+          sources: it.sources
+        },
+        paths: [
+          {
+            tag: "New",
+            path: utils.blobHref(
+              utils.getGithubStyleFilePath(
+                utils.getRelativeSwaggerPathToRepo(it.filePath+'#L'+String(it.lineNumber) || "")
+              )
+            ),
+          },
+          {
+            tag: "Old",
+            path: utils.targetHref(
+              utils.getGithubStyleFilePath(
+                utils.getRelativeSwaggerPathToRepo(it.filePath+'#L'+String(it.lineNumber) || "")
+              )
+            ),
+          },
+        ],
+      }
+    }
+
     compareBeforeAfterArrays(afterErrorsARMArray, beforeErrorsARMArray, existingARMErrors, newARMErrors);
     compareBeforeAfterArrays(afterErrorsSDKArray, beforeErrorsSDKArray, existingSDKErrors, newSDKErrors);
     compareBeforeAfterArrays(afterWarningsARMArray, beforeWarningsARMArray, existingARMWarnings, newARMWarnings);
@@ -452,6 +499,24 @@ export function postProcessing() {
     newARMErrorsCount += newARMErrors.length;
     newSDKWarningsCount += newSDKWarnings.length;
     newARMWarningsCount += newARMWarnings.length;
+
+    console.log("-------- Compose Lint Diff Final Result --------\n");
+    const pipelineResultData: format.ResultMessageRecord[] = newSDKErrors
+    .concat(newARMErrors)
+    .concat(newSDKWarnings)
+    .concat(newARMWarnings)
+    .map(
+      (it) => ({
+        type: "Result",
+        ...composeLintResult(it)
+      })
+    );
+  const pipelineResult: format.MessageLine = pipelineResultData;
+
+  console.log("---------------- Write to pipe.log -------------------");
+  console.log(JSON.stringify(pipelineResult));
+  fs.appendFileSync("pipe.log", JSON.stringify(pipelineResult) + "\n");
+  console.log("---------");
 
     sdkFileSummaries += getFileSummary("SDK", fileName, existingSDKWarnings, existingSDKErrors, newSDKWarnings, newSDKErrors);
     armFileSummaries += getFileSummary("ARM", fileName, existingARMWarnings, existingARMErrors, newARMWarnings, newARMErrors);

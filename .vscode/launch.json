@@ -27,6 +27,18 @@
         ],
         "port": 9229,
         "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+        "type": "node",
+        "request": "launch",
+        "name": "Mocha Test MomentOfTruthPostProcessing",
+        "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
+        "args": [
+            "--inspect-brk",
+            "${workspaceFolder}/dist/tests/momentOfTruthPostProcessingTest.js"
+        ],
+        "port": 9229,
+        "internalConsoleOptions": "openOnSessionStart"
     }
     ]
 }
