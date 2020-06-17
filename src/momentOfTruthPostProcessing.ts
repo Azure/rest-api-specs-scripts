@@ -434,15 +434,7 @@ export function postProcessing() {
                 utils.getRelativeSwaggerPathToRepo(it.filePath+'#L'+String(it.lineNumber) || "")
               )
             ),
-          },
-          {
-            tag: "Old",
-            path: utils.targetHref(
-              utils.getGithubStyleFilePath(
-                utils.getRelativeSwaggerPathToRepo(it.filePath+'#L'+String(it.lineNumber) || "")
-              )
-            ),
-          },
+          }
         ],
       }
     }
