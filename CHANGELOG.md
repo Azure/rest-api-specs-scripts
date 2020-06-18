@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.5
+
+- Remove old tag for Lint Diff.
+
 ## 0.10.4
 
 - LintDiff support unified pipeline log format.
