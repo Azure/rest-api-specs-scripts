@@ -9,9 +9,58 @@ import * as utils from "./utils";
 import * as fs from "fs";
 import { devOps, cli } from "@azure/avocado";
 import * as format from "@azure/swagger-validation-common";
+import * as yaml from "js-yaml";
 
 type TypeUtils = typeof utils;
 type TypeDevOps = typeof devOps;
+
+type LintErrorMessage = {
+   type:string
+   code:string
+   message:string
+   id:string
+   validationCategory:string
+   providerNamespace:string
+   resourceType:string
+   sources:string[]
+   jsonref:string
+   "json-path":string
+} 
+
+class LintErrorParser {
+  results: string;
+  AutoRestErrors = [
+    '{\n  "Channel": "error"',
+    '{\n  "Channel": "fatal"',
+    "Process() cancelled due to exception",
+  ];
+  constructor(output: string) {
+    this.results = output;
+  }
+
+  getLintResult() {
+    const regexLintResult = /\{\n  "type": "[\s\S]*\n\}/gi;
+    let results: any[] = [];
+    let matches;
+    while ((matches = regexLintResult.exec(this.results))) {
+      const oneMessage = yaml.load(matches[1]!) as undefined | LintErrorMessage;
+      if (oneMessage) {
+        results.push(oneMessage);
+      }
+    }
+    return JSON.stringify(results);
+  }
+
+  getAutoRestError() {
+    if (this.AutoRestErrors.some( error => this.results.indexOf(error) != -1)) {
+        const regexLintResult = /\{\n  "type": "[\s\S]*\n\}/gi;
+        return this.results.replace(regexLintResult, "");
+    }
+    return ""
+  }
+}
+
+
 
 // Executes linter on given swagger path and returns structured JSON of linter output
 export async function getLinterResult(
@@ -65,11 +114,18 @@ export async function getLinterResult(
         res({ err: err, stdout: stdout, stderr: stderr })
     )
   );
-
-  if (err && stderr.indexOf("Process() cancelled due to exception") !== -1) {
-    console.error(`AutoRest exited with code ${err.code}`);
-    console.error(stderr);
-    throw new Error("AutoRest failed");
+  const AutoRestErrors = [
+    '{\n  "Channel": "error"',
+    '{\n  "Channel": "fatal"',
+    "Process() cancelled due to exception",
+  ];
+  if (err &&
+      AutoRestErrors.some((error) => err.message.indexOf(error) !== -1)
+  )
+  {
+      console.error(`AutoRest exited with code ${err.code}`);
+      console.error(stderr);
+      throw new Error("AutoRest failed");
   }
 
   let resultString = stdout + stderr;

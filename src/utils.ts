@@ -427,8 +427,10 @@ export const getTagsFromChangedFile = async (
           changedFile.substring(changedFiles.indexOf(relativePath)),
         ]);
         tags.forEach((element) => {
-          const oldCnt = tagsCnt.get(element);
-          tagsCnt.set(element, oldCnt ? oldCnt + 1 : 1);
+          if (element.indexOf("package") !== -1) {
+             const oldCnt = tagsCnt.get(element);
+             tagsCnt.set(element, oldCnt ? oldCnt + 1 : 1);
+          }
         });
       });
 
@@ -672,7 +674,7 @@ export const getGithubStyleFilePath = (filePath: string): string => {
  * set the Upstream Branch of branch, this function should run in a repo dir
  */
 export const setUpstreamBranch = function (name: string, remote: string) {
-  let cmd = `git branch ${name}  ${remote}`;
+  let cmd = `git branch ${name} ${remote}`;
   console.log(`set upstream branch ${remote} ${name} `);
   console.log(`> ${cmd}`);
   execSync(cmd, { encoding: "utf8", stdio: "inherit" });
