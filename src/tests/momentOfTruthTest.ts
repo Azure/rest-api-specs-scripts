@@ -23,7 +23,7 @@ class MomentOfTruthTest {
   /**
    * test if the lint tool run normally
    */
-  @test @skip @timeout(60000) async TestGetLinterResult() {
+  @test @timeout(60000) async TestGetLinterResult() {
     const resultStr = await getLinterResult(
       "./src/tests/Resource/swagger/test-lint-result.md"
     );
@@ -36,7 +36,7 @@ class MomentOfTruthTest {
     assert.deepEqual(resultIds, ["D5001", "R2054", "R3023"]);
   }
 
-  @test @skip @timeout(60000) async TestGetLinterResultWithTag() {
+  @test @timeout(60000) async TestGetLinterResultWithTag() {
     const resultStr = await getLinterResult(
       "./src/tests/Resource/swagger/test-lint-result.md",
       "package-2017-04"
@@ -48,7 +48,7 @@ class MomentOfTruthTest {
     assert.deepEqual(resultIds, ["D5001", "R2054", "R3023"]);
   }
 
-  @test @skip @timeout(100000) async TestLintDiff() {
+  @test @timeout(100000) async TestLintDiff() {
     let cwd = process.cwd();
     process.chdir("./src/tests/Resource/momentOfTruth/new");
 
