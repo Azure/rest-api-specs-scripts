@@ -164,26 +164,33 @@ class MomentOfTruthTest {
     assert.equal(
       Object.keys(resultFiles["specification/test-lint/readme.md"].after)
         .length,
-      5
+      4
     );
 
     let errorIds = (resultFiles["specification/test-lint/readme.md"]
       .before as Array<any>)
       .map((error) => error.id)
       .sort();
-    assert.deepEqual(errorIds, ["R2015","R2054", "R2054", "R4001","R4004","R4004"]);
+    assert.deepEqual(errorIds, [
+      "R2015",
+      "R2054",
+      "R2054",
+      "R4001",
+      "R4004",
+      "R4004"
+    ]);
 
     errorIds = (resultFiles["specification/test-lint/readme.md"].after as Array<
       any
     >)
       .map((error) => error.id)
       .sort();
-    assert.deepEqual(errorIds, ["D5001", "D5001", "R2054", "R2054", "R3023"]);
+    assert.deepEqual(errorIds, ["D5001", "D5001", "R2054", "R2054"]);
 
      const pipeFile = "./pipe.log";
      const errors = JSON.parse(fs.readFileSync(pipeFile, { encoding: "utf8" }));
      
-     assert.equal(errors.length,1)
+     assert.equal(errors.length,2)
      assert.equal(
        errors[0].message.indexOf('{\n  "Channel": "fatal",') !== -1,
        true
