@@ -426,11 +426,9 @@ export const getTagsFromChangedFile = async (
         const tags = getTagsForFilesChanged(readme, [
           changedFile.substring(changedFiles.indexOf(relativePath)),
         ]);
-        tags.forEach((element) => {
-          if (element.indexOf("package") !== -1) {
-             const oldCnt = tagsCnt.get(element);
-             tagsCnt.set(element, oldCnt ? oldCnt + 1 : 1);
-          }
+        tags.filter(e=>e.indexOf("package-") !== -1).forEach((element) => {
+          const oldCnt = tagsCnt.get(element);
+          tagsCnt.set(element, oldCnt ? oldCnt + 1 : 1);
         });
       });
 
