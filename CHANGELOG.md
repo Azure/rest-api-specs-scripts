@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.0
+
+- Improve error handling for Lint Diff.
+
 ## 0.10.5
 
 - Remove old tag for Lint Diff.
