@@ -41,6 +41,7 @@ export type AutorestError = {
    message:string
    readme:string
    readmeUrl:string
+   tag?:string
 } 
 
 export class LintingResultParser {

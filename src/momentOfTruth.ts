@@ -260,6 +260,9 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
 
   store.writeContent(JSON.stringify(linter.getResult(), null, 2));
 
+  console.log("--- Lint Violation Result ----\n");
+  console.log(JSON.stringify(linter.getResult(), null, 2));
+
   if (linter.getError().length > 0) {
     process.exitCode = 1;
     console.log(`LintDiff error log ----`);
