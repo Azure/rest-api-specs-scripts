@@ -73,8 +73,8 @@ export async function getLinterResult(
       /Processing batch task - {.*} \.\n/g,
       ""
     );
-    return resultString
   }
+  return resultString;
 }
 
 

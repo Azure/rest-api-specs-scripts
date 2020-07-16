@@ -77,14 +77,14 @@ export class LintingResultParser {
   }
 
   hasAutoRestError() {
-    return this.AutoRestErrors.some(
+    return this.results ? this.AutoRestErrors.some(
       (error) => this.results.indexOf(error) != -1
-    );
+    ) : false;
   }
 
   getAutoRestError() {
-    if (this.AutoRestErrors.some( error => this.results.indexOf(error) != -1)) {
-        return this.results.replace(this.regexLintResult, "");
+    if (this.hasAutoRestError()) {
+      return this.results.replace(this.regexLintResult, "");
     }
     return ""
   }
