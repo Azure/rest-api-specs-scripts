@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.6
+
+- Fix bug: LintDiff does not report error when before-lint-errors-count is bigger or equal than after-lint-errors-count.
+
 ## 0.10.5
 
 - Remove old tag for Lint Diff.
