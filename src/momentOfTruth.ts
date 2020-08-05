@@ -100,7 +100,7 @@ class LintStore {
  * run linter and handling exception
  */
 class LinterRunner {
-  tagsMap: Map<string, string[]>;
+  filesTagsMapping: Map<string, string[]>;
   errors: momentOfTruthUtils.AutorestError[] = [];
   pullRequestNumber: string;
   pr: devOps.PullRequestProperties | undefined;
@@ -113,10 +113,10 @@ class LinterRunner {
   };
 
   constructor(
-    tagsMapping: Map<string, string[]>,
+    filesTagsMapping: Map<string, string[]>,
     pr: devOps.PullRequestProperties | undefined
   ) {
-    this.tagsMap = tagsMapping;
+    this.filesTagsMapping = filesTagsMapping;
     this.pullRequestNumber = utils.getPullRequestNumber();
     this.pr = pr;
   }
@@ -143,41 +143,56 @@ class LinterRunner {
         code: "",
         message: parser.getAutoRestError(),
         readme: spec,
-        readmeUrl:
-          beforeOrAfter === "before"
-            ? utils.targetHref(
-                utils.getRelativeSwaggerPathToRepo(
-                  path.resolve(this.pr!.workingDir, spec)
-                )
-              )
-            : utils.blobHref(utils.getRelativeSwaggerPathToRepo(spec)),
+        readmeUrl: this.getReadmeUrl(beforeOrAfter,spec)
       });
     }
   }
 
   // Run linter tool
-  async runTools(
-    swagger: string,
-    beforeOrAfter: momentOfTruthUtils.BeforeOrAfter
-  ) {
-    console.log(`Processing "${swagger}":`);
-    const tags = this.tagsMap.get(swagger);
-    let runCnt = 0;
-    if (tags) {
-      for (const tag of tags) {
-        if (utils.isTagExisting(swagger, tag)) {
-          const linterErrors = await getLinterResult(swagger, tag);
+  async runTools(beforeOrAfter: momentOfTruthUtils.BeforeOrAfter) {
+    for (let swagger of this.filesTagsMapping.keys()) {
+      try {
+        console.log(`Processing "${swagger}":`);
+        const tags = this.filesTagsMapping.get(swagger);
+        let runCnt = 0;
+        if (tags) {
+          for (const tag of tags) {
+            if (utils.isTagExisting(swagger, tag)) {
+              const linterErrors = await getLinterResult(swagger, tag);
+              console.log(linterErrors);
+              await this.updateResult(swagger, linterErrors, beforeOrAfter);
+              runCnt++;
+            }
+          }
+        }
+        /* to ensure lint ran at least once */
+        if (runCnt == 0) {
+          const linterErrors = await getLinterResult(swagger);
           console.log(linterErrors);
           await this.updateResult(swagger, linterErrors, beforeOrAfter);
-          runCnt++;
         }
+      } catch (err) {
+        this.pushError({
+          type: "RuntimeErrors",
+          code: err.code,
+          message: err.message,
+          readmeUrl: this.getReadmeUrl(beforeOrAfter,swagger),
+          readme: swagger,
+        });
       }
     }
-    /* to ensure lint ran at least once */
-    if (runCnt == 0) {
-      const linterErrors = await getLinterResult(swagger);
-      console.log(linterErrors);
-      await this.updateResult(swagger, linterErrors, beforeOrAfter);
+  }
+
+  getReadmeUrl(beforeOrAfter: momentOfTruthUtils.BeforeOrAfter, readme: string) {
+    if (beforeOrAfter === "after") {
+      return utils.blobHref(utils.getRelativeSwaggerPathToRepo(readme));
+    }
+    else {
+      return utils.targetHref(
+              utils.getRelativeSwaggerPathToRepo(
+                path.resolve(this.pr!.workingDir, readme)
+              )
+            )
     }
   }
 
@@ -211,50 +226,27 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
   const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
   const configsToProcess = await utils.getConfigFilesChangedInPR(pr);
 
-  const tagsMap = await utils.getTagsFromChangedFile(
+  const changedFileAndTagsMap = await utils.getTagsFromChangedFile(
     await utils.getFilesChangedInPR(pr)
   );
 
+  if (changedFileAndTagsMap.size === 0) {
+    console.log("Since no tag contains changed swagger, skip run lintDiff");
+    return
+  }
+
   console.log("Processing configs:");
   console.log(configsToProcess);
-  const linter = new LinterRunner(tagsMap,pr);
+
+  const linter = new LinterRunner(changedFileAndTagsMap, pr);
   console.log(`The results will be logged here: "${logFilepath}".`);
 
-  const errors: { error: Error; old: string; new: string }[] = [];
-
   if (configsToProcess.length > 0 && pr !== undefined) {
-    for (const configFile of configsToProcess) {
-      try {
-        await linter.runTools(configFile, "after");
-      } catch (err) {
-          linter.pushError({
-            type:"RuntimeErrors",
-            code:err.code,
-            message: err.message,
-            readmeUrl: utils.blobHref(utils.getRelativeSwaggerPathToRepo(configFile)),
-            readme:configFile
-          });
-        }
-    }
-
+    
+    await linter.runTools("after");
+     
     await utils.doOnTargetBranch(pr, async () => {
-      for (const configFile of configsToProcess) {
-        try {
-          await linter.runTools(configFile, "before");
-        } catch (err) {
-          linter.pushError({
-            type: "RuntimeErrors",
-            code: err.code,
-            message: err.message,
-            readmeUrl: utils.targetHref(
-              utils.getRelativeSwaggerPathToRepo(
-                path.resolve(pr!.workingDir, configFile)
-              )
-            ),
-            readme: configFile,
-          });
-        }
-      }
+      await linter.runTools("before");
     });
   }
 

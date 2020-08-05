@@ -12,10 +12,34 @@ import {
   getTagsFromChangedFile,
   isTagExisting,
   getChangeFilesReadmeMap,
+  tagLess,
 } from "../utils";
 
 @suite
 class UtilsTest {
+  
+  @test TestTagLess() {
+    const toBeSort: [string, number][] = [
+      ["package-2019-01", 5],
+      ["package-2020-01-schema", 7],
+      ["package-2018-01", 6],
+      ["other-package-2020-01", 7],
+      ["package-2020-01-only", 7],
+      ["package-2017-01", 6],
+      ["package-2020-01-profile", 7],
+    ];
+    toBeSort.sort(utils.tagLess);
+    assert.deepEqual(toBeSort, [
+      ["package-2018-01", 6],
+      ["package-2017-01", 6],
+      ["package-2019-01", 5],
+      ["other-package-2020-01", 7],
+      ["package-2020-01-only", 7],
+      ["package-2020-01-schema", 7],
+      ["package-2020-01-profile", 7],
+    ]);
+  }
+
   @test async TestGetOpenapiTypeDataplane() {
     let openapiType = await utils.getOpenapiType(
       "./src/tests/Resource/openapi-type-data-plane-readme.md"

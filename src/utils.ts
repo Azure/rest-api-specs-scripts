@@ -400,6 +400,45 @@ export const getChangeFilesReadmeMap = async (
   return configFiles;
 };
 
+
+/**
+ * input like : ["tagName",5]
+ * first item is the tag name , second item is the count of  changed swagger contained by the tag
+ */
+export function tagLess(a: [string, number], b: [string, number]) {
+
+  /*
+   * Per the analysis of all the tags, tags with these word are not for generating SDK, we should decrease the prior of them   
+   */
+  const TagNamePatterns = ["only","schema","profile"] 
+  const getPriorOfTag = function(tag: string) {
+    for (let i = 0; i< TagNamePatterns.length ; i++) {
+      if (tag.indexOf(TagNamePatterns[i]) !== -1) {
+        return i
+      }
+    }
+    if (tag.startsWith("package-")) { // higher prior tag
+      return -2 
+    }
+    return -1
+  }
+  const priorA = getPriorOfTag(a[0])
+  const priorB = getPriorOfTag(b[0])
+  if (priorA !== priorB) {
+    return priorA - priorB;
+  }
+  if (a[1] - b[1] === 0) {
+    if (a[0] < b[0]) {
+      return 1;
+    } else if (a[0] > b[0]) {
+      return -1;
+    }
+    return 0;
+  }
+   return b[1] - a[1];
+}
+
+
 /**
  * return [["Sevice/readme.md",["tag1","tag2"]]...]
  * the tags are sorted by refered changed file's count
@@ -426,26 +465,20 @@ export const getTagsFromChangedFile = async (
         const tags = getTagsForFilesChanged(readme, [
           changedFile.substring(changedFiles.indexOf(relativePath)),
         ]);
-        tags.filter(e=>e.indexOf("package-") !== -1).forEach((element) => {
+        tags.forEach((element) => {
           const oldCnt = tagsCnt.get(element);
-          tagsCnt.set(element, oldCnt ? oldCnt + 1 : 1);
+          const tagFiles = getInputFilesForTag(readme.markDown ,element)
+          /**
+           * consider one changed file as 10000, so that the more changed file in the tag the higher prior the tag is when sort the tag
+           */
+          tagsCnt.set(element, oldCnt ? oldCnt + 10000 : tagFiles ? tagFiles.length : 0);
         });
       });
 
       /**
-       * first sort by count, then by tag name
+       *  sort tag by prior
        */
-      const sortedTagsCnt = [...tagsCnt].sort((a, b) => {
-        if (a[1] - b[1] === 0) {
-          if (a[0] < b[0]) {
-            return 1;
-          } else if (a[0] > b[0]) {
-            return -1;
-          }
-          return 0;
-        }
-        return b[1] - a[1];
-      });
+      const sortedTagsCnt = [...tagsCnt].sort(tagLess);
 
       const AffectedTags: string[] = [];
       sortedTagsCnt.forEach((v) => {
@@ -469,9 +502,9 @@ export const getTagsFromChangedFile = async (
       });
       if (changedFiles.length) {
         console.log(
-          `these changed files:${changedFiles.join(
-            ";"
-          )} ,can not find the related tag`
+          `These following changed files can not find the related tag:${changedFiles.join(
+            "\n"
+          )}`
         );
       }
       tagsAffectedMap.set(key, AffectedTags);
