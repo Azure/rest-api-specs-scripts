@@ -93,31 +93,30 @@ function compareBeforeAfterArrays(
   existingArray: unknown[],
   newArray: unknown[]
 ) {
-  if(afterArray.length > beforeArray.length){
-    afterArray.forEach(afterValue => {
-      let errorFound = false;
-      beforeArray.forEach(beforeValue => {
-        if(
-          beforeValue.type               == afterValue.type &&
-          beforeValue.code               == afterValue.code &&
-          beforeValue.message            == afterValue.message &&
-          beforeValue.id                 == afterValue.id &&
-          beforeValue.validationCategory == afterValue.validationCategory &&
-          beforeValue.providerNamespace  == afterValue.providerNamespace &&
-          beforeValue.resourceType       == afterValue.resourceType &&
-          beforeValue.sources.length     == afterValue.sources.length &&
-          compareJsonRef(beforeValue.jsonref, afterValue.jsonref)
-        ) {
-          errorFound = true;
-        }
-      });
-      if(errorFound) {
-        existingArray.push(afterValue);
-      } else {
-        newArray.push(afterValue);
+  afterArray.forEach(afterValue => {
+    let errorFound = false;
+    beforeArray.some(beforeValue => {
+      if(
+        beforeValue.type               == afterValue.type &&
+        beforeValue.code               == afterValue.code &&
+        beforeValue.message            == afterValue.message &&
+        beforeValue.id                 == afterValue.id &&
+        beforeValue.validationCategory == afterValue.validationCategory &&
+        beforeValue.providerNamespace  == afterValue.providerNamespace &&
+        beforeValue.resourceType       == afterValue.resourceType &&
+        beforeValue.sources.length     == afterValue.sources.length &&
+        compareJsonRef(beforeValue.jsonref, afterValue.jsonref)
+      ) {
+        errorFound = true;
+        return true
       }
     });
-  }
+    if(errorFound) {
+      existingArray.push(afterValue);
+    } else {
+      newArray.push(afterValue);
+    }
+  });
 }
 
 function iconFor(type: string, num: unknown = undefined) {
