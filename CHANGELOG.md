@@ -2,7 +2,8 @@
 
 ## 0.11.0
 
-- Improve error handling for Lint Diff.
+- Improve error handling for Lint Diff - separate autorest error from the whole error output.
+- Change the method to find related tags through changed files , let tags with 'schema','profile','only' have low prior.
 
 ## 0.10.6
 
