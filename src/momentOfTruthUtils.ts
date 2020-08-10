@@ -78,7 +78,7 @@ export class LintingResultParser {
 
   hasAutoRestError() {
     return this.results ? this.AutoRestErrors.some(
-      (error) => this.results.indexOf(error) != -1
+      (error) => this.results.indexOf(error) !== -1
     ) : false;
   }
 

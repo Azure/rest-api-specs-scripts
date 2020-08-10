@@ -272,6 +272,5 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
     console.log("--- Errors of Lint Diff (formated) ----\n");
     console.log(JSON.stringify(errorResult,undefined,2));
     fs.writeFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
-    throw new Error('Autorest fail');
   }
 }
