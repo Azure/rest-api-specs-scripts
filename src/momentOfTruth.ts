@@ -13,6 +13,7 @@ import * as format from "@azure/swagger-validation-common";
 type TypeUtils = typeof utils;
 type TypeDevOps = typeof devOps;
 
+
 // Executes linter on given swagger path and returns structured JSON of linter output
 export async function getLinterResult(
   swaggerPath: string | null | undefined,
@@ -28,8 +29,8 @@ export async function getLinterResult(
       'swaggerPath is a required parameter of type "string" and it cannot be an empty string.'
     );
   }
+  const linterCmd = `npx autorest --validation --azure-validator --message-format=json `;
 
-  let jsonResult = [];
   if (!fs.existsSync(swaggerPath)) {
     return [];
   }
@@ -66,46 +67,147 @@ export async function getLinterResult(
     )
   );
 
-  if (err && stderr.indexOf("Process() cancelled due to exception") !== -1) {
-    console.error(`AutoRest exited with code ${err.code}`);
-    console.error(stderr);
-    throw new Error("AutoRest failed");
-  }
-
-  let resultString = stdout + stderr;
+  let resultString = stderr + stdout;
   if (resultString.indexOf("{") !== -1) {
     resultString = resultString.replace(
       /Processing batch task - {.*} \.\n/g,
       ""
     );
-    resultString =
-      "[" +
-      resultString
-        .substring(resultString.indexOf("{"))
-        .trim()
-        .replace(/\}\n\{/g, "},\n{") +
-      "]";
-    //console.log('>>>>>> Trimmed Result...');
-    //console.log(resultString);
-    try {
-      jsonResult = JSON.parse(resultString);
-      //console.log('>>>>>> Parsed Result...');
-      //console.dir(resultObject, {depth: null, colors: true});
-      return jsonResult;
-    } catch (e) {
-      console.error(
-        `An error occurred while executing JSON.parse() on the linter output for ${swaggerPath}:`
-      );
-      console.dir(resultString);
-      console.dir(e, { depth: null, colors: true });
-      throw new Error(`An error occurred while executing JSON.parse() on the linter output for ${swaggerPath}:`);
-      process.exit(1);
-    }
   }
-  return [];
+  return resultString;
 }
 
-const linterCmd = `npx autorest --validation --azure-validator --message-format=json `;
+
+class LintStore {
+  logFilepath : string;
+  constructor(logFile:string) {
+    this.logFilepath = logFile;
+    
+  }
+  createLogFile() {
+    if (!fs.existsSync(this.logFilepath)) {
+      fs.writeFileSync(this.logFilepath, "");
+    }
+  }
+
+  //appends the content to the log file
+  writeContent(content: unknown) {
+    fs.writeFileSync(this.logFilepath, content);
+  }
+}
+
+/*
+ * run linter and handling exception
+ */
+class LinterRunner {
+  filesTagsMapping: Map<string, string[]>;
+  errors: momentOfTruthUtils.AutorestError[] = [];
+  pullRequestNumber: string;
+  pr: devOps.PullRequestProperties | undefined;
+
+  // Updates final result json to be written to the output file
+  finalResult: momentOfTruthUtils.FinalResult = {
+    pullRequest: this.pullRequestNumber,
+    repositoryUrl: utils.getRepoUrl(),
+    files: {},
+  };
+
+  constructor(
+    filesTagsMapping: Map<string, string[]>,
+    pr: devOps.PullRequestProperties | undefined
+  ) {
+    this.filesTagsMapping = filesTagsMapping;
+    this.pullRequestNumber = utils.getPullRequestNumber();
+    this.pr = pr;
+  }
+
+  async updateResult(
+    spec: string,
+    lintErrors: string,
+    beforeOrAfter: momentOfTruthUtils.BeforeOrAfter
+  ) {
+    const parser = new momentOfTruthUtils.LintingResultParser(lintErrors);
+
+    const files = this.finalResult["files"];
+    if (!files[spec]) {
+      files[spec] = { before: [], after: [] };
+    }
+    const filesSpec = tsUtils.asNonUndefined(files[spec]);
+
+    filesSpec[beforeOrAfter] = filesSpec[beforeOrAfter].concat(
+      parser.getResult()
+    );
+    if (parser.hasAutoRestError()) {
+      this.errors.push({
+        type: "AutoRestErr",
+        code: "",
+        message: parser.getAutoRestError(),
+        readme: spec,
+        readmeUrl: this.getReadmeUrl(beforeOrAfter,spec)
+      });
+    }
+  }
+
+  // Run linter tool
+  async runTools(beforeOrAfter: momentOfTruthUtils.BeforeOrAfter) {
+    for (let swagger of this.filesTagsMapping.keys()) {
+      try {
+        console.log(`Processing "${swagger}":`);
+        const tags = this.filesTagsMapping.get(swagger);
+        let runCnt = 0;
+        if (tags) {
+          for (const tag of tags) {
+            if (utils.isTagExisting(swagger, tag)) {
+              const linterErrors = await getLinterResult(swagger, tag);
+              console.log(linterErrors);
+              await this.updateResult(swagger, linterErrors, beforeOrAfter);
+              runCnt++;
+            }
+          }
+        }
+        /* to ensure lint ran at least once */
+        if (runCnt == 0) {
+          const linterErrors = await getLinterResult(swagger);
+          console.log(linterErrors);
+          await this.updateResult(swagger, linterErrors, beforeOrAfter);
+        }
+      } catch (err) {
+        this.pushError({
+          type: "RuntimeErrors",
+          code: err.code,
+          message: err.message,
+          readmeUrl: this.getReadmeUrl(beforeOrAfter,swagger),
+          readme: swagger,
+        });
+      }
+    }
+  }
+
+  getReadmeUrl(beforeOrAfter: momentOfTruthUtils.BeforeOrAfter, readme: string) {
+    if (beforeOrAfter === "after") {
+      return utils.blobHref(utils.getRelativeSwaggerPathToRepo(readme));
+    }
+    else {
+      return utils.targetHref(
+              utils.getRelativeSwaggerPathToRepo(
+                path.resolve(this.pr!.workingDir, readme)
+              )
+            )
+    }
+  }
+
+  getResult() {
+    return this.finalResult;
+  }
+
+  getError() {
+    return this.errors;
+  }
+
+  pushError(error: momentOfTruthUtils.AutorestError) {
+    this.errors.push(error);
+  }
+}
 
 //main function
 export async function runScript() {
@@ -118,137 +220,57 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
   const filename = `${pullRequestNumber}.json`;
   const logFilepath = path.join(momentOfTruthUtils.getLogDir(), filename);
 
-  const finalResult: momentOfTruthUtils.FinalResult = {
-    pullRequest: pullRequestNumber,
-    repositoryUrl: utils.getRepoUrl(),
-    files: {},
-  };
-  let tagsMap: Map<string, string[]>;
-
-  //creates the log file if it has not been created
-  function createLogFile() {
-    if (!fs.existsSync(logFilepath)) {
-      fs.writeFileSync(logFilepath, "");
-    }
-  }
-
-  //appends the content to the log file
-  function writeContent(content: unknown) {
-    fs.writeFileSync(logFilepath, content);
-  }
-
-  // Updates final result json to be written to the output file
-  async function updateResult(
-    spec: string,
-    errors: readonly momentOfTruthUtils.Issue[],
-    beforeOrAfter: momentOfTruthUtils.BeforeOrAfter
-  ) {
-    const files = finalResult["files"];
-    if (!files[spec]) {
-      files[spec] = { before: [], after: [] };
-    }
-    const filesSpec = tsUtils.asNonUndefined(files[spec]);
-
-    filesSpec[beforeOrAfter] = filesSpec[beforeOrAfter].concat(errors);
-  }
-
-  // Run linter tool
-  async function runTools(
-    swagger: string,
-    beforeOrAfter: momentOfTruthUtils.BeforeOrAfter
-  ) {
-    console.log(`Processing "${swagger}":`);
-    const tags = tagsMap.get(swagger);
-    let runCnt = 0;
-    if (tags) {
-      for (const tag of tags) {
-        if (utils.isTagExisting(swagger, tag)) {
-          const linterErrors = await getLinterResult(swagger, tag);
-          console.log(linterErrors);
-          await updateResult(swagger, linterErrors, beforeOrAfter);
-          runCnt++;
-        }
-      }
-    }
-    /* to ensure lint ran at least once */
-    if (runCnt == 0) {
-      const linterErrors = await getLinterResult(swagger);
-      console.log(linterErrors);
-      await updateResult(swagger, linterErrors, beforeOrAfter);
-    }
-  }
-
-  //
+  const store = new LintStore(logFilepath);
+  store.createLogFile();
+  
   const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
   const configsToProcess = await utils.getConfigFilesChangedInPR(pr);
 
-  tagsMap = await utils.getTagsFromChangedFile(
+  const changedFileAndTagsMap = await utils.getTagsFromChangedFile(
     await utils.getFilesChangedInPR(pr)
   );
 
+  if (changedFileAndTagsMap.size === 0) {
+    console.log("Since no tag contains changed swagger, skip run lintDiff");
+    return
+  }
+
   console.log("Processing configs:");
   console.log(configsToProcess);
-  createLogFile();
+
+  const linter = new LinterRunner(changedFileAndTagsMap, pr);
   console.log(`The results will be logged here: "${logFilepath}".`);
 
-  const errors: { error: Error; old: string; new: string }[] = [];
-
   if (configsToProcess.length > 0 && pr !== undefined) {
-    for (const configFile of configsToProcess) {
-      try {
-        await runTools(configFile, "after");
-      } catch (err) {
-          errors.push({
-            error: err,
-            old: utils.targetHref(
-              utils.getRelativeSwaggerPathToRepo(
-                path.resolve(pr!.workingDir, configFile)
-              )
-            ),
-            new: utils.blobHref(utils.getRelativeSwaggerPathToRepo(configFile)),
-          });
-        }
-    }
-
+    
+    await linter.runTools("after");
+     
     await utils.doOnTargetBranch(pr, async () => {
-      for (const configFile of configsToProcess) {
-        try {
-          await runTools(configFile, "before");
-        } catch (err) {
-          errors.push({
-            error: err,
-            old: utils.targetHref(
-              utils.getRelativeSwaggerPathToRepo(
-                path.resolve(pr!.workingDir, configFile)
-              )
-            ),
-            new: utils.blobHref(utils.getRelativeSwaggerPathToRepo(configFile)),
-          });
-        }
-      }
+      await linter.runTools("before");
     });
   }
 
-  writeContent(JSON.stringify(finalResult, null, 2));
+  store.writeContent(JSON.stringify(linter.getResult(), null, 2));
 
-  if (errors.length > 0) {
+  console.log("--- Lint Violation Result ----\n");
+  console.log(JSON.stringify(linter.getResult(), null, 2));
+
+  if (linter.getError().length > 0) {
     process.exitCode = 1;
     console.log(`LintDiff error log ----`);
-    const errorResult: format.MessageLine = errors.map((it) => ({
+    const errorResult: format.MessageLine = linter.getError().map((it) => ({
       type: "Raw",
       level: "Error",
-      message: it.error.message || "",
+      message: it.message || "",
       time: new Date(),
       extra: {
-        role: "Lint Diff",
-        new: it.new,
-        old: it.old,
+        role: it.type,
+        new: it.readmeUrl,
       },
     }));
 
     console.log("--- Errors of Lint Diff (formated) ----\n");
-    console.log(JSON.stringify(errorResult));
-    fs.appendFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
-    throw new Error('Autorest fail');
+    console.log(JSON.stringify(errorResult,undefined,2));
+    fs.writeFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
   }
 }

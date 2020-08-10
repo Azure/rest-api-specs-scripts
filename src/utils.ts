@@ -16,6 +16,7 @@ import * as childProcess from "child_process";
 import * as commonmark from "commonmark";
 import {
   getTagsToSettingsMapping,
+  getCodeBlocksAndHeadings,
   getInputFilesForTag,
   inputFile,
 } from "@azure/openapi-markdown";
@@ -400,6 +401,88 @@ export const getChangeFilesReadmeMap = async (
   return configFiles;
 };
 
+
+/**
+ * input like : ["tagName",5]
+ * first item is the tag name , second item is the prior of  changed swagger contained by the tag
+ */
+export function tagLess(a: [string, number], b: [string, number]) {
+
+  /*
+   * Per the analysis of all the tags, tags with these word are not for generating SDK, we should decrease the prior of them
+   * prior: start with package- > other > with 'only','schema','profile'
+   */
+  const TagNamePatterns = ["only","schema","profile"] 
+  const getPriorOfTag = function(tag: string) {
+    for (let i = 0; i< TagNamePatterns.length ; i++) {
+      if (tag.indexOf(TagNamePatterns[i]) !== -1) {
+        return i
+      }
+    }
+    if (tag.startsWith("package-")) { // higher prior tag
+      return -2 
+    }
+    return -1 // other kind of tags with 
+  }
+  const priorA = getPriorOfTag(a[0])
+  const priorB = getPriorOfTag(b[0])
+  if (priorA !== priorB) {
+    return priorA - priorB;
+  }
+  if (a[1] - b[1] === 0) {
+    if (a[0] < b[0]) {
+      return 1;
+    } else if (a[0] > b[0]) {
+      return -1;
+    }
+    return 0;
+  }
+   return b[1] - a[1];
+}
+
+function safeLoad(content: string) {
+  try {
+    return YAML.safeLoad(content);
+  } catch (err) {
+    console.log(err);
+    return undefined;
+  }
+}
+
+export function getDefaultTag(markDown: commonmark.Node): string {
+ 
+  const startNode = markDown;
+  const codeBlockMap = getCodeBlocksAndHeadings(startNode);
+
+  const latestHeader = "Basic Information";
+
+  const lh = codeBlockMap[latestHeader];
+  if (lh) {
+    const latestDefinition = safeLoad(lh.literal!) as
+      | undefined
+      | { tag: string };
+    if (latestDefinition) {
+      return latestDefinition.tag;
+    }
+  } else {
+    for (let idx of Object.keys(codeBlockMap)) {
+      const lh = codeBlockMap[idx];
+      if (!lh || !lh.info || lh.info.trim().toLocaleLowerCase() !== "yaml") {
+        continue;
+      }
+      const latestDefinition = safeLoad(lh.literal!) as
+        | undefined
+        | { tag: string };
+
+      if (latestDefinition) {
+        return latestDefinition.tag;
+      }
+    }
+  }
+  return "";
+}
+
+
 /**
  * return [["Sevice/readme.md",["tag1","tag2"]]...]
  * the tags are sorted by refered changed file's count
@@ -418,34 +501,54 @@ export const getTagsFromChangedFile = async (
       const content = fs.readFileSync(key, { encoding: "utf8" });
       const readme = parse(content);
       const relativePath = getReadMeRelativeDirPathToRepo(key);
+      const defaultTag = getDefaultTag(readme.markDown)
       /**
        *  count the changed file count for each tags
        */
-      const tagsCnt = new Map<string, number>();
+      const tagsPriority = new Map<string, number>();
       changedFiles.map((changedFile) => {
         const tags = getTagsForFilesChanged(readme, [
           changedFile.substring(changedFiles.indexOf(relativePath)),
         ]);
         tags.forEach((element) => {
-          const oldCnt = tagsCnt.get(element);
-          tagsCnt.set(element, oldCnt ? oldCnt + 1 : 1);
+          const previousPrior = tagsPriority.get(element);
+          const tagFiles = getInputFilesForTag(readme.markDown ,element)
+          /**
+          * consider 
+          * one changed file in a tag's priority is 10000 
+          * default tag's priority is 10000000
+          * 
+          */
+          const DefaultTagPriority = 10000000
+          const changedFilePriority = 10000
+          if (defaultTag === element) {
+            tagsPriority.set(
+              element,
+              previousPrior
+                ? previousPrior + changedFilePriority
+                : tagFiles
+                ? DefaultTagPriority
+                : 0
+            );
+          }
+          else {
+             tagsPriority.set(
+               element,
+               previousPrior
+                 ? previousPrior + changedFilePriority
+                 : tagFiles
+                 ? tagFiles.length
+                 : 0
+             );
+          }
+         
         });
       });
 
       /**
-       * first sort by count, then by tag name
+       *  sort tag by prior
        */
-      const sortedTagsCnt = [...tagsCnt].sort((a, b) => {
-        if (a[1] - b[1] === 0) {
-          if (a[0] < b[0]) {
-            return 1;
-          } else if (a[0] > b[0]) {
-            return -1;
-          }
-          return 0;
-        }
-        return b[1] - a[1];
-      });
+      const sortedTagsCnt = [...tagsPriority].sort(tagLess);
 
       const AffectedTags: string[] = [];
       sortedTagsCnt.forEach((v) => {
@@ -469,9 +572,9 @@ export const getTagsFromChangedFile = async (
       });
       if (changedFiles.length) {
         console.log(
-          `these changed files:${changedFiles.join(
-            ";"
-          )} ,can not find the related tag`
+          `These following changed files can not find the related tag:${changedFiles.join(
+            "\n"
+          )}`
         );
       }
       tagsAffectedMap.set(key, AffectedTags);
@@ -672,7 +775,7 @@ export const getGithubStyleFilePath = (filePath: string): string => {
  * set the Upstream Branch of branch, this function should run in a repo dir
  */
 export const setUpstreamBranch = function (name: string, remote: string) {
-  let cmd = `git branch ${name}  ${remote}`;
+  let cmd = `git branch ${name} ${remote}`;
   console.log(`set upstream branch ${remote} ${name} `);
   console.log(`> ${cmd}`);
   execSync(cmd, { encoding: "utf8", stdio: "inherit" });

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.0
+
+- Improve error handling for Lint Diff - separate autorest error from the whole error output & refactor the code.
+- Change the method to find related tags through changed files , let tags with 'schema','profile','only' have low prior.
+- If no swagger file changed and only readme file changed, the LintDiff would be skipped .
+
 ## 0.10.6
 
 - Fix bug: LintDiff does not report error when before-lint-errors-count is bigger or equal than after-lint-errors-count.

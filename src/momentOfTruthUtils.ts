@@ -4,6 +4,7 @@
 import * as stringMap from '@ts-common/string-map'
 import * as path from 'path'
 import * as fs from 'fs'
+import * as yaml from "js-yaml";
 
 export type Issue = {
   readonly type?: string
@@ -20,6 +21,74 @@ export type Issue = {
 }
 
 export type BeforeOrAfter = 'before' | 'after'
+
+export type LintingResultMessage = {
+   type:string
+   code:string
+   message:string
+   id:string
+   validationCategory:string
+   providerNamespace:string | boolean | undefined
+   resourceType:string | boolean | undefined
+   sources:string[]
+   jsonref:string 
+   "json-path":string
+} 
+
+export type AutorestError = {
+   type:string
+   code:string
+   message:string
+   readme:string
+   readmeUrl:string
+   tag?:string
+} 
+
+export class LintingResultParser {
+  results: string;
+  AutoRestErrors = [
+    '{\n  "Channel": "error"',
+    '{\n  "Channel": "fatal"',
+    "Process() cancelled due to exception",
+  ];
+  regexLintResult = /\{\n  "type": "[\s\S]*?\n\}/gi;
+
+  constructor(output: string) {
+    this.results = output;
+  }
+
+  getResult() {
+    let results: any[] = [];
+    let matches;
+    while ((matches = this.regexLintResult.exec(this.results))) {
+      try {
+          const oneMessage = yaml.load(matches[0]!) as
+        | undefined
+        | LintingResultMessage;
+        if (oneMessage) {
+          results.push(oneMessage);
+        }
+      }
+      catch(e) {
+        console.log(e)
+      }
+    }
+    return results;
+  }
+
+  hasAutoRestError() {
+    return this.results ? this.AutoRestErrors.some(
+      (error) => this.results.indexOf(error) !== -1
+    ) : false;
+  }
+
+  getAutoRestError() {
+    if (this.hasAutoRestError()) {
+      return this.results.replace(this.regexLintResult, "");
+    }
+    return ""
+  }
+}
 
 export type File = {
   [key in BeforeOrAfter]: readonly Issue[]
