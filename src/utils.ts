@@ -656,6 +656,28 @@ export const initializeValidator = async function () {
   return context;
 };
 
+
+function parseCommonmark(markdown: string): commonmark.Node {
+  return new commonmark.Parser().parse(markdown);
+}
+
+export function* parseCodeblocks(markdown: string): Iterable<commonmark.Node> {
+  const parsed = parseCommonmark(markdown);
+  const walker = parsed.walker();
+  let event;
+  while ((event = walker.next())) {
+    const node = event.node;
+    if (event.entering && node.type === "code_block") {
+      yield node;
+    }
+  }
+}
+
+function isValidType(type: string): boolean {
+  const types = ["arm", "data-plane"];
+  return types.indexOf(type) !== -1;
+}
+
 /**
  * Get Openapi Type From readme.md ,If failed then from the path
  * @returns {string} arm | data-plane | default
@@ -710,26 +732,6 @@ export const getOpenapiType = async function (
     });
   }
 
-  function parseCommonmark(markdown: string): commonmark.Node {
-    return new commonmark.Parser().parse(markdown);
-  }
-
-  function* parseCodeblocks(markdown: string): Iterable<commonmark.Node> {
-    const parsed = parseCommonmark(markdown);
-    const walker = parsed.walker();
-    let event;
-    while ((event = walker.next())) {
-      const node = event.node;
-      if (event.entering && node.type === "code_block") {
-        yield node;
-      }
-    }
-  }
-
-  function isValidType(type: string): boolean {
-    const types = ["arm", "data-plane"];
-    return types.indexOf(type) !== -1;
-  }
 };
 
 type LintVersion = {
