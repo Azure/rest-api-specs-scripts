@@ -36,13 +36,14 @@ export type LintingResultMessage = {
 } 
 
 export type AutorestError = {
-   type:string
-   code:string
-   message:string
-   readme:string
-   readmeUrl:string
-   tag?:string
-} 
+  type: string;
+  code: string;
+  message: string;
+  readme: string;
+  readmeUrl: string;
+  tag?: string;
+  context: string;
+}; 
 
 export class LintingResultParser {
   results: string;

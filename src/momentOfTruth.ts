@@ -138,12 +138,13 @@ class LinterRunner {
       parser.getResult()
     );
     if (parser.hasAutoRestError()) {
-      this.errors.push({
+      this.pushError({
         type: "AutoRestErr",
         code: "",
         message: parser.getAutoRestError(),
         readme: spec,
-        readmeUrl: this.getReadmeUrl(beforeOrAfter,spec)
+        readmeUrl: this.getReadmeUrl(beforeOrAfter, spec),
+        context: beforeOrAfter,
       });
     }
   }
@@ -176,8 +177,9 @@ class LinterRunner {
           type: "RuntimeErrors",
           code: err.code,
           message: err.message,
-          readmeUrl: this.getReadmeUrl(beforeOrAfter,swagger),
+          readmeUrl: this.getReadmeUrl(beforeOrAfter, swagger),
           readme: swagger,
+          context: beforeOrAfter
         });
       }
     }
