@@ -231,8 +231,7 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
   );
 
   if (changedFileAndTagsMap.size === 0) {
-    console.log("Since no tag contains changed swagger, skip run lintDiff");
-    return
+    console.log("No tag contains changed swagger, skip run lintDiff");
   }
 
   console.log("Processing configs:");
@@ -241,10 +240,13 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
   const linter = new LinterRunner(changedFileAndTagsMap, pr);
   console.log(`The results will be logged here: "${logFilepath}".`);
 
-  if (configsToProcess.length > 0 && pr !== undefined) {
-    
+  if (
+    configsToProcess.length > 0 &&
+    changedFileAndTagsMap.size > 0 &&
+    pr !== undefined
+  ) {
     await linter.runTools("after");
-     
+
     await utils.doOnTargetBranch(pr, async () => {
       await linter.runTools("before");
     });
