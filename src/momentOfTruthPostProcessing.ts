@@ -81,11 +81,11 @@ function getSummaryBlock(summaryTitle: unknown, fileSummaries: unknown, contactM
   );
 }
 
-type Mutable<T extends object> = {
+export type Mutable<T extends object> = {
   -readonly [K in keyof T]: T[K]
 }
 
-type MutableIssue = Mutable<momentOfTruthUtils.Issue>
+export type MutableIssue = Mutable<momentOfTruthUtils.Issue>
 
 function compareBeforeAfterArrays(
   afterArray: readonly momentOfTruthUtils.Issue[],
@@ -268,6 +268,49 @@ function emailLink(title: unknown, addr: unknown, subject = "", body = "") {
   return link;
 }
 
+   
+
+export function composeLintResult(it: MutableIssue) {
+  const severityMap: Map<string, string> = new Map([
+     ["error", "Error"],
+     ["warning", "Warning"],
+     ["info", "Info"],
+   ]);
+
+  const type = severityMap.get(String(it.type).toLowerCase())
+    ? severityMap.get(String(it.type).toLowerCase())
+    : "Info";
+  return {
+    level: type as format.MessageLevel,
+    message: String(it.message).replace(/"/g, "'"),
+    code: String(it.code),
+    id: String(it.id),
+    docUrl: getDocUrl(it.id),
+    time: new Date(),
+    extra: {
+      validationCategory: it.validationCategory,
+      providerNamespace: it.providerNamespace,
+      resourceType: it.resourceType,
+      jsonref: it.jsonref,
+      filePath: it.filePath,
+      lineNumber: it.lineNumber,
+      sources: it.sources,
+    },
+    paths: [
+      {
+        tag: "New",
+        path: utils.blobHref(
+          utils.getGithubStyleFilePath(
+            utils.getRelativeSwaggerPathToRepo(
+              it.filePath + "#L" + String(it.lineNumber) || ""
+            )
+          )
+        ),
+      },
+    ],
+  };
+}
+
 export function postProcessing() {
   const pullRequestNumber = utils.getPullRequestNumber();
   const targetBranch = utils.getTargetBranch();
@@ -401,42 +444,7 @@ export function postProcessing() {
       }
     });
 
-    const severityMap: Map<string, string> = new Map([
-      ['error', 'Error'],
-      ['warning', 'Warning'],
-      ['info', 'Info']
-    ]);
 
-    function composeLintResult(it: MutableIssue) {
-      const type = severityMap.get(String(it.type).toLowerCase()) ? severityMap.get(String(it.type).toLowerCase()) : 'Info';
-      return {
-        level: type as format.MessageLevel,
-        message: String(it.message).replace(/"/g, "'"),
-        code: String(it.code),
-        id: String(it.id),
-        docUrl: getDocUrl(it.id),
-        time: new Date(),
-        extra: {
-          validationCategory: it.validationCategory,
-          providerNamespace: it.providerNamespace,
-          resourceType: it.resourceType,
-          jsonref: it.jsonref,
-          filePath: it.filePath,
-          lineNumber: it.lineNumber,
-          sources: it.sources
-        },
-        paths: [
-          {
-            tag: "New",
-            path: utils.blobHref(
-              utils.getGithubStyleFilePath(
-                utils.getRelativeSwaggerPathToRepo(it.filePath+'#L'+String(it.lineNumber) || "")
-              )
-            ),
-          }
-        ],
-      }
-    }
 
     compareBeforeAfterArrays(afterErrorsARMArray, beforeErrorsARMArray, existingARMErrors, newARMErrors);
     compareBeforeAfterArrays(afterErrorsSDKArray, beforeErrorsSDKArray, existingSDKErrors, newSDKErrors);

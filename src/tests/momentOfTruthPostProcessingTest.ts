@@ -45,7 +45,11 @@ class MomentOfTruthPostProcessingTest {
     });
 
     let stub5 = sinon.stub(utils, "getTargetBranch").callsFake(() => "master");
-
+    const pipeFile = "./pipe.log";
+    if (fs.existsSync(pipeFile)) {
+      fs.unlinkSync(pipeFile);
+    }
+    
     await cleanUpDir("./output");
     await lintDiff(utils, devOps);
     await postProcessing();
@@ -63,7 +67,7 @@ class MomentOfTruthPostProcessingTest {
     const logFile = "./output/1001.json";
     const result = JSON.parse(fs.readFileSync(logFile, { encoding: "utf8" }));
     const resultFiles = result.files;
-assert.deepEqual(Object.keys(resultFiles), [
+    assert.deepEqual(Object.keys(resultFiles), [
       "specification/test-lint/readme.md",
     ]);
 
@@ -77,7 +81,6 @@ assert.deepEqual(Object.keys(resultFiles), [
       .after as Array<any>).map((error) => error.id).sort();
     assert.deepEqual(errorIds, ["D5001","R2054", "R3023"]);
     
-    const pipeFile = "./pipe.log";
     console.log("------------- read from pipe.log -----------------");
     const chunck = fs.readFileSync(pipeFile, { encoding: "utf8" })
     console.log(chunck);
