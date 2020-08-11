@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.1
+
+- LintDiff only retains the first 10 lines of autorest error , as the limitation to the github comment.
+- Fix bug: LintDiff post-processing fail when no swagger changes in PR.
+
 ## 0.11.0
 
 - Improve error handling for Lint Diff - separate autorest error from the whole error output & refactor the code.

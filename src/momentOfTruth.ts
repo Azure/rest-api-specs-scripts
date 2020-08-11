@@ -205,6 +205,14 @@ class LinterRunner {
   }
 
   pushError(error: momentOfTruthUtils.AutorestError) {
+    let errMsg = error.message.trim().split("\n");
+    /**
+     * Because the autorest error is in the first 10 lines 
+     */
+    if (errMsg && errMsg.length > 10) {
+      errMsg = errMsg.slice(0,10)
+    }
+    error.message = errMsg ? errMsg.join("") : ""
     this.errors.push(error);
   }
 }
@@ -267,7 +275,7 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
       time: new Date(),
       extra: {
         role: it.type,
-        new: it.readmeUrl,
+        location: it.readmeUrl,
       },
     }));
 
