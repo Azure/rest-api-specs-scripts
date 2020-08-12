@@ -135,11 +135,9 @@ class MomentOfTruthTest {
     await cleanUpDir("./output");
 
     try {
-       await lintDiff(utils, devOps);
-    }
-    catch(e) {
-    }
-    
+      await lintDiff(utils, devOps);
+    } catch (e) {}
+
     stub2.restore();
     stub3.restore();
     stub4.restore();
@@ -176,7 +174,7 @@ class MomentOfTruthTest {
       "R2054",
       "R4001",
       "R4004",
-      "R4004"
+      "R4004",
     ]);
 
     errorIds = (resultFiles["specification/test-lint/readme.md"].after as Array<
@@ -186,15 +184,14 @@ class MomentOfTruthTest {
       .sort();
     assert.deepEqual(errorIds, ["D5001", "D5001", "R2054", "R2054"]);
 
-     const pipeFile = "./pipe.log";
-     const errors = JSON.parse(fs.readFileSync(pipeFile, { encoding: "utf8" }));
-     
-     assert.equal(errors.length,2)
-     assert.equal(
-       errors[0].message.indexOf('{\n  "Channel": "fatal",') !== -1,
-       true
-     );
+    const pipeFile = "./pipe.log";
+    const errors = JSON.parse(fs.readFileSync(pipeFile, { encoding: "utf8" }));
 
+    assert.equal(errors.length, 2);
+    assert.equal(
+      errors[0].message.indexOf('{  "Channel": "fatal",') !== -1,
+      true
+    );
   }
 
   after() {

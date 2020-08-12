@@ -138,12 +138,13 @@ class LinterRunner {
       parser.getResult()
     );
     if (parser.hasAutoRestError()) {
-      this.errors.push({
+      this.pushError({
         type: "AutoRestErr",
         code: "",
         message: parser.getAutoRestError(),
         readme: spec,
-        readmeUrl: this.getReadmeUrl(beforeOrAfter,spec)
+        readmeUrl: this.getReadmeUrl(beforeOrAfter, spec),
+        context: beforeOrAfter,
       });
     }
   }
@@ -176,8 +177,9 @@ class LinterRunner {
           type: "RuntimeErrors",
           code: err.code,
           message: err.message,
-          readmeUrl: this.getReadmeUrl(beforeOrAfter,swagger),
+          readmeUrl: this.getReadmeUrl(beforeOrAfter, swagger),
           readme: swagger,
+          context: beforeOrAfter
         });
       }
     }
@@ -205,6 +207,14 @@ class LinterRunner {
   }
 
   pushError(error: momentOfTruthUtils.AutorestError) {
+    let errMsg = error.message.trim().split("\n");
+    /**
+     * Because the autorest error is in the first 10 lines 
+     */
+    if (errMsg && errMsg.length > 10) {
+      errMsg = errMsg.slice(0,10)
+    }
+    error.message = errMsg ? errMsg.join("") : ""
     this.errors.push(error);
   }
 }
@@ -231,8 +241,7 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
   );
 
   if (changedFileAndTagsMap.size === 0) {
-    console.log("Since no tag contains changed swagger, skip run lintDiff");
-    return
+    console.log("No tag contains changed swagger, skip run lintDiff");
   }
 
   console.log("Processing configs:");
@@ -241,10 +250,13 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
   const linter = new LinterRunner(changedFileAndTagsMap, pr);
   console.log(`The results will be logged here: "${logFilepath}".`);
 
-  if (configsToProcess.length > 0 && pr !== undefined) {
-    
+  if (
+    configsToProcess.length > 0 &&
+    changedFileAndTagsMap.size > 0 &&
+    pr !== undefined
+  ) {
     await linter.runTools("after");
-     
+
     await utils.doOnTargetBranch(pr, async () => {
       await linter.runTools("before");
     });
@@ -265,7 +277,7 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
       time: new Date(),
       extra: {
         role: it.type,
-        new: it.readmeUrl,
+        location: it.readmeUrl,
       },
     }));
 
