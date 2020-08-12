@@ -11,6 +11,7 @@ import * as modelValidation from './modelValidation'
 import * as postToGitHub from './postToGitHub'
 import * as momentOfTruthPostProcessing from './momentOfTruthPostProcessing'
 import * as semanticValidation from './semanticValidation'
+import * as lintingRpaas from "./lintingRpaas";
 
 export {
   utils,
@@ -19,5 +20,6 @@ export {
   modelValidation,
   postToGitHub,
   momentOfTruthPostProcessing,
-  semanticValidation
-}
+  semanticValidation,
+  lintingRpaas
+};
