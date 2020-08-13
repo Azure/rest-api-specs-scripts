@@ -54,10 +54,10 @@ import { composeLintResult,MutableIssue,Mutable } from './momentOfTruthPostProce
 
  }
 
-class LintMsgTransformer {
+export class LintMsgTransformer {
   constructor() {}
 
-  lintMsgToUnifiedData(msg: LintingResultMessage[]) {
+  lintMsgToUnifiedMsg(msg: LintingResultMessage[]) {
      const result = msg.map(
       (it) => ({
         type: "Result",
@@ -66,42 +66,66 @@ class LintMsgTransformer {
       return JSON.stringify(result)
   }
 
-  rawErrorToUnifiedData(error: string,config:string) {
+  rawErrorToUnifiedMsg(errType:string, errorMsg: string,config:string) {
       const result = {
         type: "Raw",
         level: "Error",
-        message: error,
+        message: errType,
         time: new Date(),
         extra: {
-          role: "error",
-          new: utils.targetHref(
-              utils.getRelativeSwaggerPathToRepo(config)
-            )
+          new: utils.targetHref(utils.getRelativeSwaggerPathToRepo(config)),
+          details: errorMsg,
         },
-      }
+      };
       return JSON.stringify(result);
   }
 } 
 
  class UnifiedPipeLineStore {
    logFile = "pipe.log";
-   readme:string
+   readme: string;
    transformer: LintMsgTransformer;
    constructor(readme: string) {
      this.transformer = new LintMsgTransformer();
-     this.readme = readme
+     this.readme = readme;
    }
 
-  private appendMsg(msg: string) {
+   private appendMsg(msg: string) {
      fs.appendFileSync(this.logFile, msg);
    }
 
-  public appendLintMsg(msg: LintingResultMessage[]) {
-     this.appendMsg(this.transformer.lintMsgToUnifiedData(msg));
+   public appendLintMsg(msg: LintingResultMessage[]) {
+     this.appendMsg(this.transformer.lintMsgToUnifiedMsg(msg));
    }
 
-  public appendRawErr(msg: string) {
-      this.appendMsg(this.transformer.rawErrorToUnifiedData(msg, this.readme));
+   public appendAutoRestErr(msg: string) {
+     this.appendMsg(
+       this.transformer.rawErrorToUnifiedMsg(
+         "AutoRest exception",
+         msg,
+         this.readme
+       )
+     );
+   }
+
+   public appendRunTimeErr(msg: string) {
+     this.appendMsg(
+       this.transformer.rawErrorToUnifiedMsg(
+         "Runtime exception",
+         msg,
+         this.readme
+       )
+     );
+   }
+
+   public appendReadmeErr(msg: string) {
+     this.appendMsg(
+       this.transformer.rawErrorToUnifiedMsg(
+         "Readme exception",
+         msg,
+         this.readme
+       )
+     );
    }
  }
 
@@ -114,20 +138,27 @@ export async function runRpaasLint() {
       const store = new UnifiedPipeLineStore(config);
       const subType = checker.getGlobalConfigByName("openapi-subtype");
       if (subType !== "rpass") {
-        const subMsg = !subType ? " undefined, please add it!":`incorrect, expects 'rpaas', but provides:${subType}.`
-        const errorMsg = `the readme:${config} , the config of 'openapi-subtype' is ${subMsg} !`;
+        const helpInfo = "Please set the 'openapi-subtype:rpaas' to it."
+        const subMsg = !subType ? "unset":`incorrect, expects 'rpaas', but received: ${subType}`
+        const errorMsg = `For the readme:${config} , the 'openapi-subtype' is ${subMsg}.\n${helpInfo}`;
 
         console.log(errorMsg);
-        store.appendRawErr(errorMsg);
+        store.appendReadmeErr(errorMsg);
         process.exitCode = 1;
-        return;
+        continue
       }
-      const resultMsgs = await getLinterResult(config);
-      const lintParser = new LintingResultParser(resultMsgs);
-      if (lintParser.hasAutoRestError()) {
-        store.appendRawErr(lintParser.getAutoRestError());
-      } else {
-        store.appendLintMsg(lintParser.getResult());
+      try {
+        const resultMsgs = await getLinterResult(config);
+        const lintParser = new LintingResultParser(resultMsgs);
+        if (lintParser.hasAutoRestError()) {
+          store.appendAutoRestErr(lintParser.getAutoRestError());
+        } else {
+          store.appendLintMsg(lintParser.getResult());
+        }
+      }
+      catch(e) {
+        store.appendRunTimeErr(e.message);
+        process.exitCode = 1;
       }
     }
 }
