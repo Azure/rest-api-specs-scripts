@@ -139,7 +139,7 @@ class LinterRunner {
     );
     if (parser.hasAutoRestError()) {
       this.pushError({
-        type: "AutoRestErr",
+        type: "AutoRest Exception",
         code: "",
         message: parser.getAutoRestError(),
         readme: spec,
@@ -174,7 +174,7 @@ class LinterRunner {
         }
       } catch (err) {
         this.pushError({
-          type: "RuntimeErrors",
+          type: "Runtime Exception",
           code: err.code,
           message: err.message,
           readmeUrl: this.getReadmeUrl(beforeOrAfter, swagger),
@@ -273,10 +273,10 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
     const errorResult: format.MessageLine = linter.getError().map((it) => ({
       type: "Raw",
       level: "Error",
-      message: it.message || "",
+      message: it.type || "",
       time: new Date(),
       extra: {
-        role: it.type,
+        details: it.message,
         location: it.readmeUrl,
       },
     }));
