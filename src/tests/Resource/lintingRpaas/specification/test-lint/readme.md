@@ -24,7 +24,7 @@ These are the global settings
 
 ``` yaml
 openapi-type: arm
-openapi-subtype: rpass
+openapi-subtype: rpaas
 tag: package-2017-04
 ```
 

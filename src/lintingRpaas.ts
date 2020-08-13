@@ -148,7 +148,7 @@ export async function runRpaasLint() {
         continue
       }
       try {
-        const resultMsgs = await getLinterResult(config,"",false);
+        const resultMsgs = await getLinterResult(config);
         const lintParser = new LintingResultParser(resultMsgs);
         if (lintParser.hasAutoRestError()) {
           store.appendAutoRestErr(lintParser.getAutoRestError());

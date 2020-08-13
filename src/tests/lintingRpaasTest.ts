@@ -109,7 +109,7 @@ class LintingRpaasTest {
       "------------- parse validation message from[pipe.log] ------------------"
     );
     console.log(JSON.stringify(res));
-    assert.deepEqual(resIds, ["D5001", "R2054", "R3023"]);
+    assert.deepEqual(resIds, []);
   }
 
   after() {
