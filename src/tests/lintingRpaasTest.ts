@@ -58,7 +58,7 @@ class LintingRpaasTest {
         docUrl:
           "https://github.com/Azure/azure-rest-api-specs/blob/master/documentation/openapi-authoring-automated-guidelines.md#R4001",
     };
-    const tranformedMsg = transformer.lintMsgToUnifiedData(testMsg)
+    const tranformedMsg = transformer.lintMsgToUnifiedMsg(testMsg)
     const MsgJson = JSON.parse(tranformedMsg)
     assert.equal(MsgJson[0].type, expectedMsg.type);
     assert.equal(MsgJson[0].level, expectedMsg.level);
