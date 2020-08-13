@@ -137,7 +137,7 @@ export async function runRpaasLint() {
       const checker = new ReadmeParser(config);
       const store = new UnifiedPipeLineStore(config);
       const subType = checker.getGlobalConfigByName("openapi-subtype");
-      if (subType !== "rpass") {
+      if (subType !== "rpaas") {
         const helpInfo = "Please set the 'openapi-subtype:rpaas' to it."
         const subMsg = !subType ? "unset":`incorrect, expects 'rpaas', but received: ${subType}`
         const errorMsg = `For the readme:${config} , the 'openapi-subtype' is ${subMsg}.\n${helpInfo}`;
@@ -148,12 +148,12 @@ export async function runRpaasLint() {
         continue
       }
       try {
-        const resultMsgs = await getLinterResult(config);
+        const resultMsgs = await getLinterResult(config,"",false);
         const lintParser = new LintingResultParser(resultMsgs);
         if (lintParser.hasAutoRestError()) {
           store.appendAutoRestErr(lintParser.getAutoRestError());
         } else {
-          store.appendLintMsg(lintParser.getResult());
+          store.appendLintMsg(lintParser.getResult().filter(msg=> (msg as LintingResultMessage).validationCategory === "RPaasValidation"));
         }
       }
       catch(e) {
