@@ -214,7 +214,7 @@ class LinterRunner {
     if (errMsg && errMsg.length > 10) {
       errMsg = errMsg.slice(0,10)
     }
-    error.message = errMsg ? errMsg.join("") : ""
+    error.message = errMsg ? utils.cutoffMsg(errMsg.join("")) : "";
     this.errors.push(error);
   }
 }

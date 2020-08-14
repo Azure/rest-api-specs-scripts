@@ -801,3 +801,10 @@ export function blobHref(file: unknown) {
   const repoName = process.env.TRAVIS_PULL_REQUEST_SLUG !== undefined ? process.env.TRAVIS_PULL_REQUEST_SLUG : process.env.TRAVIS_REPO_SLUG;
   return `https://github.com/${repoName}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
 }
+
+export function cutoffMsg(msg: string | undefined, size: number = 1024):string {
+  if (!msg || msg.length <= size) {
+    return msg ? msg : "";
+  }
+  return msg.substr(0, size);
+}

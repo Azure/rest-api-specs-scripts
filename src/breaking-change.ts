@@ -274,7 +274,7 @@ export async function runScript() {
       extra: {
         new: it.new,
         old: it.old,
-        details: it.error.stack || "",
+        details: utils.cutoffMsg(it.error.stack) || "",
       },
     }));
 
