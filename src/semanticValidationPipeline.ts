@@ -16,11 +16,7 @@ function getDocUrl(id: string | undefined) {
 }
 
 const vsoLogIssueWrapper = (issueType: string, message: string) => {
-  if (issueType === "error" || issueType === "warning") {
-    return `##vso[task.logissue type=${issueType}]${message}`;
-  } else {
-    return `##vso[task.logissue type=${issueType}]${message}`;
-  }
+  return `##vso[task.logissue type=${issueType}]${message}`;
 }
 
 const prettyPrint = <T extends oav.NodeError<T>>(
@@ -125,16 +121,16 @@ export async function runScript() {
           const validateSpecErrors = validateSpec.errors as ValidationError[];
           const pipelineResultErrors: format.ResultMessageRecord[] = validateSpecErrors.map(function(it) {
             let pipelineResultError = constructBaseResultData("Error", it);
-            if (it.jsonUrl && it.jsonPosition) pipelineResultError.paths.push(
-              {
+            if (it.jsonUrl && it.jsonPosition) {
+              pipelineResultError.paths.push({
                 tag: "JsonUrl",
                 path: utils.blobHref(
                   utils.getGithubStyleFilePath(
                     utils.getRelativeSwaggerPathToRepo(it.jsonUrl + '#L' + String(it.jsonPosition.line) || "")
                   )
-                )
-              }
-            )
+                )}
+              )
+            }
             return pipelineResultError;
           });
           if (pipelineResultErrors.length > 0) {
@@ -146,16 +142,16 @@ export async function runScript() {
           const validateSpecWarnings = validateSpec.warnings as ValidationError[];
           const pipelineResultWarnings: format.ResultMessageRecord[] = validateSpecWarnings.map(function(it) {
             let pipelineResultWarning = constructBaseResultData("Warning", it);
-            if (it.jsonUrl && it.jsonPosition) pipelineResultWarning.paths.push(
-              {
+            if (it.jsonUrl && it.jsonPosition) {
+              pipelineResultWarning.paths.push({
                 tag: "JsonUrl",
                 path: utils.blobHref(
                   utils.getGithubStyleFilePath(
                     utils.getRelativeSwaggerPathToRepo(it.jsonUrl + '#L' + String(it.jsonPosition.line) || "")
                   )
                 )
-              }
-            )
+              })
+            }
             return pipelineResultWarning;
           });
 

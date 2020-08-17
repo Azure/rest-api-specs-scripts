@@ -15,11 +15,7 @@ function getDocUrl(id: string | undefined) {
 }
 
 const vsoLogIssueWrapper = (issueType: string, message: string) => {
-  if (issueType === "error" || issueType === "warning") {
-    return `##vso[task.logissue type=${issueType}]${message}`;
-  } else {
-    return `##vso[task.logissue type=${issueType}]${message}`;
-  }
+  return `##vso[task.logissue type=${issueType}]${message}`;
 }
 
 const prettyPrint = <T extends oav.NodeError<T>>(
@@ -87,26 +83,26 @@ export async function runScript() {
           },
           paths: []
         }
-        if (it.details!.url && it.details!.position) pipelineResultData.paths.push(
-          {
+        if (it.details!.url && it.details!.position) {
+          pipelineResultData.paths.push({
             tag: "Url",
             path: utils.blobHref(
               utils.getGithubStyleFilePath(
                 utils.getRelativeSwaggerPathToRepo(it.details!.url + '#L' + String(it.details!.position.line) || "")
               )
             )
-          }
-        )
-        if (it.details!.jsonUrl && it.details!.jsonPosition) pipelineResultData.paths.push(
-          {
+          })
+        }
+        if (it.details!.jsonUrl && it.details!.jsonPosition) {
+          pipelineResultData.paths.push({
             tag: "JsonUrl",
             path: utils.blobHref(
               utils.getGithubStyleFilePath(
                 utils.getRelativeSwaggerPathToRepo(it.details!.jsonUrl + '#L' + String(it.details!.jsonPosition.line) || "")
               )
             )
-          }
-        )
+          })
+        }
         return pipelineResultData;
       });
       if (pipelineResultDatas.length > 0) {
