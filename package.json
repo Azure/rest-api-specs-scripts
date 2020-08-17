@@ -9,6 +9,7 @@
     "src/"
   ],
   "scripts": {
+    "build": "tsc",
     "tsc": "tsc",
     "test": "tsc && mocha dist/tests/*.js",
     "prepack": "npm install && tsc"
@@ -38,7 +39,8 @@
     "mocha-typescript": "^1.0.22",
     "sinon": "^9.0.2",
     "@types/lodash": "^4.14.149",
-    "ts-node": "^8.10.2"
+    "ts-node": "^8.10.2",
+    "tslib": "^2.0.1"
   },
   "dependencies": {
     "@octokit/rest": "^16.42.0",
