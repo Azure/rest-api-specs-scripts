@@ -269,12 +269,12 @@ export async function runScript() {
     const errorResult: format.MessageLine = errors.map((it) => ({
       type: "Raw",
       level: "Error",
-      message: it.error.stack || "",
+      message: "Runtime Exception",
       time: new Date(),
       extra: {
-        role: "Breaking change",
         new: it.new,
         old: it.old,
+        details: utils.cutoffMsg(it.error.stack) || "",
       },
     }));
 
