@@ -189,7 +189,7 @@ class MomentOfTruthTest {
 
     assert.equal(errors.length, 2);
     assert.equal(
-      errors[0].message.indexOf('{  "Channel": "fatal",') !== -1,
+      errors[0].extra.details.indexOf('{  "Channel": "fatal",') !== -1,
       true
     );
   }
