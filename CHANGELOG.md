@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.2
+
+- Onboard Model Validation and Semantic Validation to unified pipeline.
+- Upgrade oav version to 0.22.3.
+
 ## 0.11.1
 
 - LintDiff only retains the first 10 lines of the autorest error due to the limitation of the github comment.
