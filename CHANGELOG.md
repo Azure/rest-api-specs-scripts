@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.0
+
+- Add Lint(RPaaS) scripts.
+
 ## 0.11.2
 
 - Onboard Model Validation and Semantic Validation to unified pipeline.
