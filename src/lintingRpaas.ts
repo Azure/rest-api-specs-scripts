@@ -89,6 +89,7 @@ class UnifiedPipeLineStore {
 
   private appendMsg(msg: string) {
     fs.appendFileSync(this.logFile, msg);
+    console.log("appendMsg" + msg)
   }
 
   public appendLintMsg(msg: LintingResultMessage[]) {
@@ -153,7 +154,15 @@ export async function runRpaasLint() {
         if (lintParser.hasAutoRestError()) {
           store.appendAutoRestErr(lintParser.getAutoRestError());
         } else {
-          store.appendLintMsg(lintParser.getResult().filter(msg => (msg as LintingResultMessage).validationCategory === "RPaaSViolation"));
+          const result = lintParser
+            .getResult()
+            .filter(
+              (msg) =>
+                (msg as LintingResultMessage).validationCategory ===
+                "RPaaSViolation"
+            );
+          console.log(lintParser.getResult());
+          store.appendLintMsg(result);
         }
       }
       catch(e) {
