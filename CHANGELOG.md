@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.1
+
+- Fix Lint(RPaaS) report issues : incorrect file name & line number. 
+
 ## 0.12.0
 
 - Add Lint(RPaaS) scripts.
