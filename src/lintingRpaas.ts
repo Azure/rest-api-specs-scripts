@@ -135,11 +135,11 @@ export async function runRpaasLint() {
         const checker = new ReadmeParser(config);
         const subType = checker.getGlobalConfigByName("openapi-subtype");
         if (subType !== "rpaas") {
-          const helpInfo = "Please set the 'openapi-subtype:rpaas' to it.";
+          const helpInfo = "Please set the 'openapi-subtype: rpaas' to it.";
           const subMsg = !subType
             ? "unset"
-            : `incorrect, expects 'rpaas', but received: ${subType}`;
-          const errorMsg = `For the readme:${config} , the 'openapi-subtype' is ${subMsg}.\n${helpInfo}`;
+            : `incorrect, expects 'rpaas' but received: ${subType}`;
+          const errorMsg = `For the ${config} , the 'openapi-subtype' is ${subMsg}.\n${helpInfo}`;
 
           console.log(errorMsg);
           store.appendReadmeErr(errorMsg);
