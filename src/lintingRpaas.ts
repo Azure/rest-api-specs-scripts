@@ -162,6 +162,10 @@ export async function runRpaasLint() {
                 "RPaaSViolation"
             );
           console.log(lintParser.getResult());
+          if (result && result.length > 0 && result.some(r => (r as LintingResultMessage).type.toLowerCase() === "error")
+          ) {
+            process.exitCode = 1;
+          }
           store.appendLintMsg(result);
         }
       }
