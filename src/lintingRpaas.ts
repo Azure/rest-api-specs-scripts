@@ -7,7 +7,7 @@ import { getLinterResult } from "./momentOfTruth";
 import * as fs from "fs-extra";
 import * as YAML from "js-yaml";
 import { LintingResultParser, LintingResultMessage, Issue } from './momentOfTruthUtils'
-import { composeLintResult,Mutable } from './momentOfTruthPostProcessing';
+import { composeLintResult,Mutable,getFile,getLine } from './momentOfTruthPostProcessing';
 /**
  * 1 run linter rpaas
  * 2 check whether the reamde has openapi-subtype
@@ -55,12 +55,21 @@ export class LintMsgTransformer {
   constructor() {}
 
   lintMsgToUnifiedMsg(msg: LintingResultMessage[]) {
-     const result = msg.map(
-      (it) => ({
-        type: "Result",
-        ...composeLintResult(it as unknown as Mutable<Issue>)
-      }))
-      return JSON.stringify(result)
+    const result = msg.map(
+    (it) => {
+      const violation = it as unknown as Mutable<Issue>
+      if (!violation.filePath) {
+        violation.filePath = getFile(violation.jsonref) || ""
+      }
+      if (!violation.lineNumber) {
+        violation.lineNumber = getLine(violation.jsonref) || 1
+      }
+      return  {
+      type: "Result",
+      ...composeLintResult(violation)
+      }
+    })    
+    return JSON.stringify(result)
   }
 
   rawErrorToUnifiedMsg(errType:string, errorMsg: string,config:string) {
@@ -89,6 +98,7 @@ class UnifiedPipeLineStore {
 
   private appendMsg(msg: string) {
     fs.appendFileSync(this.logFile, msg);
+    console.log("appendMsg:" + msg)
   }
 
   public appendLintMsg(msg: LintingResultMessage[]) {
@@ -153,7 +163,19 @@ export async function runRpaasLint() {
         if (lintParser.hasAutoRestError()) {
           store.appendAutoRestErr(lintParser.getAutoRestError());
         } else {
-          store.appendLintMsg(lintParser.getResult().filter(msg => (msg as LintingResultMessage).validationCategory === "RPaaSViolation"));
+          const result = lintParser
+            .getResult()
+            .filter(
+              (msg) =>
+                (msg as LintingResultMessage).validationCategory ===
+                "RPaaSViolation"
+            );
+          console.log(lintParser.getResult());
+          if (result && result.length && result.some(r => (r as LintingResultMessage).type.toLowerCase() === "error")
+          ) {
+            process.exitCode = 1;
+          }
+          store.appendLintMsg(result);
         }
       }
       catch(e) {

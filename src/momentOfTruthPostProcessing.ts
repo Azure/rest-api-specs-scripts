@@ -135,7 +135,7 @@ function pluralize(word: unknown, num: unknown) {
   return num !== 1 ? `${word}s` : word;
 }
 
-function getLine(jsonRef: string): number|undefined {
+export function getLine(jsonRef: string): number|undefined {
   try {
     return parseInt(jsonRef.substr(jsonRef.indexOf(".json:") + 6).split(':')[0]);
   } catch (error) {
@@ -143,7 +143,7 @@ function getLine(jsonRef: string): number|undefined {
   }
 }
 
-function getFile(jsonRef: string) {
+export function getFile(jsonRef: string) {
   try {
     const start = jsonRef.indexOf("specification");
     return jsonRef.substr(start, (jsonRef.indexOf(".json") + 5) - start);
