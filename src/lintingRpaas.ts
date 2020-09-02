@@ -61,7 +61,7 @@ export class LintMsgTransformer {
       if (!violation.filePath) {
         violation.filePath = getFile(violation.jsonref) || ""
       }
-        if (!violation.lineNumber) {
+      if (!violation.lineNumber) {
         violation.lineNumber = getLine(violation.jsonref) || 1
       }
       return  {
