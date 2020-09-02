@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.2
+
+- Lint(RPaaS) support check branch "rpsaasmaster","rpsaasdev" .  
+
 ## 0.12.1
 
 - Fix Lint(RPaaS) report issues : incorrect file name & line number. 

@@ -15,8 +15,8 @@ import { composeLintResult,Mutable,getFile,getLine } from './momentOfTruthPostPr
 
  function isRpaasBranch() {
    const targetBranch = utils.getTargetBranch();
-   const RPaaSBranches = ["RPaaSMaster", "RPaaSDev"];
-   return RPaaSBranches.some((b) => b === targetBranch)
+   const RPaaSBranches = ["rpsaasmaster", "rpsaasdev", "rpaasdev","rpaasmaster"];
+   return RPaaSBranches.some((b) => b === targetBranch.toLowerCase())
  }
  
  export class ReadmeParser {
