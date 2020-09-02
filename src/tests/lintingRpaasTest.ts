@@ -50,13 +50,15 @@ class LintingRpaasTest {
       } as unknown) as LintingResultMessage,
     ];
     const expectedMsg = {
-        type: "Result",
-        level: "Error",
-        message: "The parameter ",
-        code: "XmsParameterLocation",
-        id: "R4001",
-        docUrl:
-          "https://github.com/Azure/azure-rest-api-specs/blob/master/documentation/openapi-authoring-automated-guidelines.md#R4001",
+      type: "Result",
+      level: "Error",
+      message: "The parameter ",
+      code: "XmsParameterLocation",
+      id: "R4001",
+      docUrl:
+        "https://github.com/Azure/azure-rest-api-specs/blob/master/documentation/openapi-authoring-automated-guidelines.md#R4001",
+      filePath: "specification/test-lint/test/test-lint-a.json",
+      lineNumber: 41
     };
     const tranformedMsg = transformer.lintMsgToUnifiedMsg(testMsg)
     const MsgJson = JSON.parse(tranformedMsg)
@@ -64,6 +66,8 @@ class LintingRpaasTest {
     assert.equal(MsgJson[0].level, expectedMsg.level);
     assert.equal(MsgJson[0].code, expectedMsg.code);
     assert.equal(MsgJson[0].docUrl, expectedMsg.docUrl);
+    assert.equal(MsgJson[0].extra.filePath, expectedMsg.filePath);
+    assert.equal(MsgJson[0].extra.lineNumber, expectedMsg.lineNumber);
   }
 
   @test @timeout(100000) async TestLintingRpaas() {
