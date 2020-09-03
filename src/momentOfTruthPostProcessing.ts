@@ -411,7 +411,10 @@ export function postProcessing() {
       if(beforeErrorOrWarning.type != undefined && beforeErrorOrWarning.type.toLowerCase() == 'warning'){
         if(beforeErrorOrWarning.validationCategory.toLowerCase() == 'sdkviolation') {
           beforeWarningsSDKArray.push(beforeErrorOrWarning);
-        } else {
+        } else if (
+          beforeErrorOrWarning.validationCategory.toLowerCase() !==
+          "rpaasviolation"
+        ) {
           beforeWarningsARMArray.push(beforeErrorOrWarning);
         }
       }
@@ -419,7 +422,10 @@ export function postProcessing() {
       if(beforeErrorOrWarning.type != undefined && beforeErrorOrWarning.type.toLowerCase() == 'error'){
         if(beforeErrorOrWarning.validationCategory.toLowerCase() == 'sdkviolation') {
           beforeErrorsSDKArray.push(beforeErrorOrWarning);
-        } else {
+        } else if (
+          beforeErrorOrWarning.validationCategory.toLowerCase() !==
+          "rpaasviolation"
+        )  {
           beforeErrorsARMArray.push(beforeErrorOrWarning);
         }
       }
@@ -430,7 +436,10 @@ export function postProcessing() {
       if(afterErrorOrWarning.type != undefined && afterErrorOrWarning.type.toLowerCase() == 'warning'){
         if(afterErrorOrWarning.validationCategory.toLowerCase() == 'sdkviolation') {
           afterWarningsSDKArray.push(afterErrorOrWarning);
-        } else {
+        } else if (
+          afterErrorOrWarning.validationCategory.toLowerCase() !==
+          "rpaasviolation"
+        ) {
           afterWarningsARMArray.push(afterErrorOrWarning);
         }
       }
@@ -438,7 +447,10 @@ export function postProcessing() {
       if(afterErrorOrWarning.type != undefined && afterErrorOrWarning.type.toLowerCase() == 'error'){
         if(afterErrorOrWarning.validationCategory.toLowerCase() == 'sdkviolation') {
           afterErrorsSDKArray.push(afterErrorOrWarning);
-        } else {
+        } else if (
+          afterErrorOrWarning.validationCategory.toLowerCase() !==
+          "rpaasviolation"
+        ) {
           afterErrorsARMArray.push(afterErrorOrWarning);
         }
       }
