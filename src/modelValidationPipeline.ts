@@ -67,10 +67,16 @@ export async function runScript() {
         prettyPrint(errors, "error");
       }
       const pipelineResultDatas: format.ResultMessageRecord[] = errors.map(function(it) {
+        const mainMessage = it.details!.message || "";
+        const extraMessage = `OperationId: ${ it.operationId }. Scenario: ${ it.scenario }. Source: ${ it.source }. ResponseCode: ${ it.responseCode }`;
+        let message = extraMessage;
+        if (mainMessage !== "") {
+          message = message.concat('\n', mainMessage);
+        }
         let pipelineResultData: format.ResultMessageRecord = {
           type: "Result",
           level: "Error" as format.MessageLevel,
-          message: it.details!.message || "",
+          message: message,
           code: it.code || "",
           docUrl: getDocUrl(it.code),
           time: new Date(),
