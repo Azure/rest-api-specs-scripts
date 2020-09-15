@@ -220,7 +220,7 @@ export class SwaggerVersionManager {
     const allSwaggers = this.getAllSwaggers(folder);
     for (const swagger of allSwaggers) {
       const version = getVersionFromInputFile(swagger);
-      const fileName = path.basename(swaggerFile)
+      const fileName = path.basename(swagger);
       // Needs to consider other cases
       const versionType = swagger.includes("preview") ? "preview" : "stable";
       swaggerMetaData.push({
@@ -235,9 +235,11 @@ export class SwaggerVersionManager {
 
   getClosestVersion(swaggerFile: string, type: SwaggerVersionType) {
     const versions = this.getVersionMapping(swaggerFile);
+    const fileName = path.basename(swaggerFile)
+    const currentVersion = getVersionFromInputFile(swaggerFile)
     try {
-      const version =  versions
-        .filter((v) => v.fileName != swaggerFile && v.versionType === type)
+      const version = versions
+        .filter((v) => v.fileName === fileName && v.versionType === type && v.version !== currentVersion)
         .reduce((previous, current) =>
           previous.version > current.version ? previous : current
         );
