@@ -85,7 +85,7 @@ function blobHref(file: string) {
  *
  * @param newSpec Path to the new swagger specification file.
  */
-async function runOad(oldSpec: string, newSpec: string , isCrossAPI = false) {
+async function runOad(oldSpec: string, newSpec: string , isCrossVersion = false) {
   if (
     oldSpec === null ||
     oldSpec === undefined ||
@@ -119,7 +119,7 @@ async function runOad(oldSpec: string, newSpec: string , isCrossAPI = false) {
   const pipelineResultData: format.ResultMessageRecord[] = oadResult.map(
     (it) => ({
       type: "Result",
-      level: isCrossAPI ? "Warning" : it.type as format.MessageLevel,
+      level: isCrossVersion ? "Warning" : it.type as format.MessageLevel,
       message: it.message,
       code: it.code,
       id: it.id,
@@ -256,7 +256,7 @@ export class SwaggerVersionManager {
   }
 }
 
-export class CrossAPIBreakingDetector {
+export class CrossVersionBreakingDetector {
   swaggers :string[]= []
   pr : PullRequestProperties
   versionManager: SwaggerVersionManager = new SwaggerVersionManager()
@@ -307,7 +307,7 @@ export class CrossAPIBreakingDetector {
   }
 }
 
-export async function runCrossAPIBreakingChangeDetection(type:SwaggerVersionType) {
+export async function runCrossAPIBreakingChangeDetection(type:SwaggerVersionType = "stable") {
   const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
   console.log(`PR target branch is ${pr ? pr.targetBranch : ""}`);
 
@@ -327,7 +327,7 @@ export async function runCrossAPIBreakingChangeDetection(type:SwaggerVersionType
   console.log("Finding new swaggers...");
   console.log(newSwaggers)
   if (pr && newSwaggers.length) {
-    const detector = new CrossAPIBreakingDetector(pr, newSwaggers as string[]);
+    const detector = new CrossVersionBreakingDetector(pr, newSwaggers as string[]);
     if (type === "preview") {
       detector.getBreakingChangeBaseOnPreviewVersion()
     }

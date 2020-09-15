@@ -9,7 +9,7 @@ import * as fs from "fs-extra";
 import { MarkDownEx, parse } from "@ts-common/commonmark-to-markdown";
 import {
   SwaggerVersionManager,
-  CrossAPIBreakingDetector,
+  CrossVersionBreakingDetector,
 } from "../breaking-change";
 import { cli, devOps } from '@azure/avocado';
 import * as asyncIt from "@ts-common/async-iterator";
@@ -19,7 +19,7 @@ class BreakingChangeTest {
   cwd = process.cwd()
   before() {}
 
-  @test async TestCrossAPIBreakingDetection() {
+  @test async TestCrossVersionBreakingDetection() {
     const newSwaggers: string[] = [
       "specification/testRP/stable/2020-08-01/a.json",
     ];
@@ -44,12 +44,12 @@ class BreakingChangeTest {
     if (fs.existsSync(resultFile)) {
       fs.unlinkSync(resultFile);
     }
-    const detector = new CrossAPIBreakingDetector(pr, newSwaggers);
+    const detector = new CrossVersionBreakingDetector(pr, newSwaggers);
     await detector.getBreakingChangeBaseOnStableVersion();
     const breaking = JSON.parse(fs.readFileSync(resultFile).toString());
     assert.equal(2, breaking.length);
   }
-  
+
   after() {
       process.chdir(this.cwd)
   }
