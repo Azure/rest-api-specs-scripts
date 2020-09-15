@@ -5,7 +5,7 @@ export { runScript as breakingChange } from './breaking-change'
 export { runScript as momentOfTruth } from './momentOfTruth'
 export { runScript as modelValidationPipeline } from './modelValidationPipeline'
 export { runScript as semanticValidationPipeline } from './semanticValidationPipeline'
-export { runCrossAPIBreakingChangeDetection } from "./breaking-change";
+export { runCrossVersionBreakingChangeDetection } from "./breaking-change";
 
 import * as utils from './utils'
 import * as momentOfTruthUtils from './momentOfTruthUtils'

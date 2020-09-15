@@ -307,7 +307,7 @@ export class CrossVersionBreakingDetector {
   }
 }
 
-export async function runCrossAPIBreakingChangeDetection(type:SwaggerVersionType = "stable") {
+export async function runCrossVersionBreakingChangeDetection(type:SwaggerVersionType = "stable") {
   const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
   console.log(`PR target branch is ${pr ? pr.targetBranch : ""}`);
 
