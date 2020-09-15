@@ -8,6 +8,9 @@ import * as path from "path";
 import * as tsUtils from "./ts-utils";
 import { targetHref } from "./utils";
 import * as utils from "./utils";
+import { PullRequestProperties } from '@azure/avocado/dist/dev-ops';
+import { glob } from 'glob';
+import { getVersionFromInputFile } from './readmeUtils';
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
@@ -82,7 +85,7 @@ function blobHref(file: string) {
  *
  * @param newSpec Path to the new swagger specification file.
  */
-async function runOad(oldSpec: string, newSpec: string) {
+async function runOad(oldSpec: string, newSpec: string , isCrossAPI = false) {
   if (
     oldSpec === null ||
     oldSpec === undefined ||
@@ -116,7 +119,7 @@ async function runOad(oldSpec: string, newSpec: string) {
   const pipelineResultData: format.ResultMessageRecord[] = oadResult.map(
     (it) => ({
       type: "Result",
-      level: it.type as format.MessageLevel,
+      level: isCrossAPI ? "Warning" : it.type as format.MessageLevel,
       message: it.message,
       code: it.code,
       id: it.id,
@@ -162,13 +165,181 @@ async function runOad(oldSpec: string, newSpec: string) {
   return JSON.parse(result);
 }
 
-//main function
-export async function runScript() {
-  console.log(`ENV: ${JSON.stringify(process.env)}`);
-  // Used to enable running script outside TravisCI for debugging
-  const isRunningInTravisCI = process.env.TRAVIS === "true";
+type SwaggerVersionType = "preview" | "stable";
+type RuntimeError = { error: Error; old: string; new: string };
+type SwaggerMetaData = {
+  version: string;
+  versionType: SwaggerVersionType;
+  fileName: string;
+  folder: string;
+};
 
-  /**
+function appendException(errors: RuntimeError[]) {
+  const errorResult: format.MessageLine = errors.map((it) => ({
+    type: "Raw",
+    level: "Error",
+    message: "Runtime Exception",
+    time: new Date(),
+    extra: {
+      new: it.new,
+      old: it.old,
+      details: utils.cutoffMsg(it.error.stack) || "",
+    },
+  }));
+
+  fs.appendFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
+  console.log(`oad error log: ${JSON.stringify(errorResult)}`);
+}
+export class SwaggerVersionManager {
+  getRPFolder(swaggerFile: string) {
+    // Needs to consider other cases
+    const segments = swaggerFile.split(/\\|\//)
+    if (segments && segments.length > 3) {
+      return segments.slice(0, -3).join("/");
+    }
+    return undefined
+  }
+
+  getAllSwaggers(folder: string) {
+    const pathPattern = path.join(folder, "**/*.json");
+    return glob.sync(pathPattern, {
+      ignore: [
+        "**/examples/**/*.json",
+        "**/quickstart-templates/*.json",
+        "**/schema/*.json",
+      ],
+    });
+  }
+
+  getVersionMapping(swaggerFile: string) {
+    const swaggerMetaData: SwaggerMetaData[] = [];
+    const folder = this.getRPFolder(swaggerFile);
+    if (!folder) {
+      return swaggerMetaData
+    }
+    const allSwaggers = this.getAllSwaggers(folder);
+    for (const swagger of allSwaggers) {
+      const version = getVersionFromInputFile(swagger);
+      const fileName = path.basename(swaggerFile)
+      // Needs to consider other cases
+      const versionType = swagger.includes("preview") ? "preview" : "stable";
+      swaggerMetaData.push({
+        version,
+        versionType,
+        fileName,
+        folder,
+      });
+    }
+    return swaggerMetaData;
+  }
+
+  getClosestVersion(swaggerFile: string, type: SwaggerVersionType) {
+    const versions = this.getVersionMapping(swaggerFile);
+    try {
+      const version =  versions
+        .filter((v) => v.fileName != swaggerFile && v.versionType === type)
+        .reduce((previous, current) =>
+          previous.version > current.version ? previous : current
+        );
+        return path.join(version.folder,version.versionType,version.version,version.fileName)
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  getClosestPreview(swaggerFile: string) {
+    return this.getClosestVersion(swaggerFile, "preview");
+  }
+
+  getClosestStale(swaggerFile: string) {
+    return this.getClosestVersion(swaggerFile, "stable");
+  }
+}
+
+export class CrossAPIBreakingDetector {
+  swaggers :string[]= []
+  pr : PullRequestProperties
+  versionManager: SwaggerVersionManager = new SwaggerVersionManager()
+  constructor(pullRequest: PullRequestProperties,newSwaggers:string[]) {
+    this.swaggers = newSwaggers
+    this.pr = pullRequest
+  }
+
+  async diffOne(oldSpec: string ,newSpec : string) {
+    try {
+      await runOad(path.resolve(this.pr!.workingDir,oldSpec ), newSpec, true);
+    }
+    catch(e) {
+      const errors = []
+      errors.push({
+        error: e,
+        old: targetHref(
+          utils.getRelativeSwaggerPathToRepo(
+            path.resolve(this.pr!.workingDir, oldSpec)
+          )
+        ),
+        new: blobHref(utils.getRelativeSwaggerPathToRepo(newSpec)),
+      });
+      appendException(errors)
+    }
+  }
+
+  async getBreakingChangeBaseOnPreviewVersion() {
+    for (const swagger of this.swaggers) {
+      const previous = await utils.doOnTargetBranch(this.pr, async () => {
+        return this.versionManager.getClosestPreview(swagger)
+      })
+      if (previous) {
+        await this.diffOne(path.resolve(this.pr!.workingDir,previous), swagger);
+      }
+    }
+  }
+
+  async getBreakingChangeBaseOnStableVersion() {
+    for (const swagger of this.swaggers) {
+       const previous = await utils.doOnTargetBranch(this.pr, async () => {
+         return this.versionManager.getClosestStale(swagger);
+       });
+      if (previous) {
+        await this.diffOne(path.resolve(this.pr!.workingDir,previous), swagger);
+      }
+    }
+  }
+}
+
+export async function runCrossAPIBreakingChangeDetection(type:SwaggerVersionType) {
+  const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
+  console.log(`PR target branch is ${pr ? pr.targetBranch : ""}`);
+
+  let swaggersToProcess = await utils.getFilesChangedInPR(pr);
+
+  console.log("Processing swaggers:");
+  console.log(swaggersToProcess);
+
+  changeTargetBranch(pr)
+
+  let newSwaggers: unknown[] = [];
+  if (swaggersToProcess.length > 0 && pr !== undefined) {
+    newSwaggers = await utils.doOnTargetBranch(pr, async () => {
+      return swaggersToProcess.filter((s: string) => !fs.existsSync(s));
+    });
+  }
+  console.log("Finding new swaggers...");
+  console.log(newSwaggers)
+  if (pr && newSwaggers.length) {
+    const detector = new CrossAPIBreakingDetector(pr, newSwaggers as string[]);
+    if (type === "preview") {
+      detector.getBreakingChangeBaseOnPreviewVersion()
+    }
+    else {
+       detector.getBreakingChangeBaseOnStableVersion()
+    }
+  }
+}
+
+
+function changeTargetBranch(pr:PullRequestProperties | undefined) {
+   /**
    * NOTE: For base branch which not in targetBranches, the breaking change tool compare head branch with master branch.
    * TargetBranches is a set of branches and treat each of them like a service team master branch.
    */
@@ -185,10 +356,23 @@ export async function runScript() {
   ) {
     utils.setUpstreamBranch("master", "remotes/origin/master");
   }
+    /*
+   * always compare against master
+   * we still use the changed files got from the PR, because the master branch may quite different with the PR target branch
+   */
+  if (pr && !targetBranches.includes(pr.targetBranch)) {
+    (pr.targetBranch as string) = "master";
+    console.log("switch target branch to master");
+  }
+}
 
+//main function
+export async function runScript() {
+  console.log(`ENV: ${JSON.stringify(process.env)}`);
+  // Used to enable running script outside TravisCI for debugging
+  const isRunningInTravisCI = process.env.TRAVIS === "true";
   // create Azure DevOps PR properties.
   const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
-
   console.log(`PR target branch is ${pr ? pr.targetBranch : ""}`);
 
   let targetBranch = utils.getTargetBranch();
@@ -197,16 +381,9 @@ export async function runScript() {
   console.log("Processing swaggers:");
   console.log(swaggersToProcess);
 
-  console.log("Finding new swaggers...");
+  changeTargetBranch(pr)
 
-  /*
-   * always compare against master
-   * we still use the changed files got from the PR, because the master branch may quite different with the PR target branch
-   */
-  if (pr && !targetBranches.includes(pr.targetBranch)) {
-    (pr.targetBranch as string) = "master";
-    console.log("switch target branch to master");
-  }
+  console.log("Finding new swaggers...");
 
   let newSwaggers: unknown[] = [];
   if (swaggersToProcess.length > 0 && pr !== undefined) {
@@ -220,7 +397,7 @@ export async function runScript() {
   const diffFiles: stringMap.MutableStringMap<Diff[]> = {};
   const newFiles = [];
 
-  const errors: { error: Error; old: string; new: string }[] = [];
+  const errors: RuntimeError[] = [];
 
   for (const swagger of swaggersToProcess) {
     // If file does not exists in the previous commits then we ignore it as it's new file
@@ -266,20 +443,7 @@ export async function runScript() {
 
   if (errors.length > 0) {
     process.exitCode = 1;
-    const errorResult: format.MessageLine = errors.map((it) => ({
-      type: "Raw",
-      level: "Error",
-      message: "Runtime Exception",
-      time: new Date(),
-      extra: {
-        new: it.new,
-        old: it.old,
-        details: utils.cutoffMsg(it.error.stack) || "",
-      },
-    }));
-
-    fs.appendFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
-    console.log(`oad error log: ${JSON.stringify(errorResult)}`);
+    appendException(errors)
   }
 
   if (isRunningInTravisCI) {
