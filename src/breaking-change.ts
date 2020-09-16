@@ -269,7 +269,7 @@ export class CrossVersionBreakingDetector {
 
   async diffOne(oldSpec: string ,newSpec : string) {
     try {
-      await runOad(path.resolve(this.pr!.workingDir,oldSpec ), newSpec, true);
+      await runOad(path.resolve(this.pr!.workingDir,oldSpec ), newSpec);
     }
     catch(e) {
       const errors = []
