@@ -105,7 +105,7 @@ class LintingRpaasTest {
     console.log(
       "------------- parse validation message from[pipe.log] ------------------"
     );
-    assert.deepEqual(chunck, '[]');
+    assert.deepEqual(chunck, '[]\n');
   }
 
   after() {

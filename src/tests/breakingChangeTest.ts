@@ -2,18 +2,15 @@ import { cleanUp } from "./helper";
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
 
-import { suite, test, slow, timeout, skip, only } from "mocha-typescript";
+import { suite, test } from "mocha-typescript";
 import * as assert from "assert";
-import { utils } from "../index";
 import * as fs from "fs-extra";
-import { MarkDownEx, parse } from "@ts-common/commonmark-to-markdown";
 import {
   SwaggerVersionManager,
   CrossVersionBreakingDetector,
 } from "../breaking-change";
-import { cli, devOps } from '@azure/avocado';
 import * as asyncIt from "@ts-common/async-iterator";
-import { PullRequestProperties, FileChange } from '@azure/avocado/dist/dev-ops';
+import { FileChange } from '@azure/avocado/dist/dev-ops';
 @suite
 class BreakingChangeTest {
   cwd = process.cwd()
