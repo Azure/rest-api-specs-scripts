@@ -68,10 +68,10 @@ export async function runScript() {
       }
       const pipelineResultDatas: format.ResultMessageRecord[] = errors.map(function(it) {
         const mainMessage = it.details!.message || "";
-        const extraMessage = `OperationId: ${ it.operationId }. Scenario: ${ it.scenario }. Source: ${ it.source }. ResponseCode: ${ it.responseCode }`;
+        const extraMessage = `OperationId: ${ it.operationId }\n Scenario: ${ it.scenario }\n Source: ${ it.source }\n ResponseCode: ${ it.responseCode }`;
         let message = extraMessage;
         if (mainMessage !== "") {
-          message = message.concat('\n', mainMessage);
+          message = message.concat("\nMessage: ", mainMessage);
         }
         let pipelineResultData: format.ResultMessageRecord = {
           type: "Result",
