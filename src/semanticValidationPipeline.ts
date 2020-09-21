@@ -82,6 +82,20 @@ function constructBaseResultData(level: string, error: ValidationError | Validat
   return pipelineResultData;
 }
 
+function constructBaseResultDataForError(level: string, error: oav.SemanticValidationError): format.ResultMessageRecord {
+  let pipelineResultData: format.ResultMessageRecord = {
+    type: "Result",
+    level: level as format.MessageLevel,
+    message: error.details!.message || "",
+    code: error.details!.code || error.code || "",
+    docUrl: getDocUrl(error.code),
+    time: new Date(),
+    extra: { },
+    paths:[]
+  }
+  return pipelineResultData;
+}
+
 export async function runScript() {
   const pr = await devOps.createPullRequestProperties(cli.defaultConfig())
   let swaggersToProcess = await utils.getFilesChangedInPR(pr);
@@ -118,15 +132,15 @@ export async function runScript() {
         const validateSpec = validator.specValidationResult.validateSpec;
         if (!validateSpec.isValid) {
 
-          const validateSpecErrors = validateSpec.errors as ValidationError[];
+          const validateSpecErrors = oav.getErrorsFromSemanticValidationForUnifiedPipeline(validator.specValidationResult as any);
           const pipelineResultErrors: format.ResultMessageRecord[] = validateSpecErrors.map(function(it) {
-            let pipelineResultError = constructBaseResultData("Error", it);
-            if (it.jsonUrl && it.jsonPosition) {
+            let pipelineResultError = constructBaseResultDataForError("Error", it);
+            if (it.details!.jsonUrl && it.details!.jsonPosition) {
               pipelineResultError.paths.push({
                 tag: "JsonUrl",
                 path: utils.blobHref(
                   utils.getGithubStyleFilePath(
-                    utils.getRelativeSwaggerPathToRepo(it.jsonUrl + '#L' + String(it.jsonPosition.line) || "")
+                    utils.getRelativeSwaggerPathToRepo(it.details!.jsonUrl + '#L' + String(it.details!.jsonPosition.line) || "")
                   )
                 )}
               )
@@ -135,7 +149,7 @@ export async function runScript() {
           });
           if (pipelineResultErrors.length > 0) {
             console.log(vsoLogIssueWrapper("error", `Semantically validating  ${swagger}:\n`));
-            prettyPrint(validateSpec.errors as ValidationEntry[], "error");
+            prettyPrint(validateSpecErrors as any, "error");
             fs.appendFileSync("pipe.log", JSON.stringify(pipelineResultErrors) + "\n");
           }
 

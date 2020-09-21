@@ -4,6 +4,10 @@
 
 - Support cross API version breaking change.
 
+## 0.12.3
+
+- Improve the error message shows on unified pipeline for semantic validation. 
+
 ## 0.12.2
 
 - Lint(RPaaS) support check branch "rpsaasmaster","rpsaasdev" .  
