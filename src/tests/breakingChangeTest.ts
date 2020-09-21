@@ -42,7 +42,7 @@ class BreakingChangeTest {
       fs.unlinkSync(resultFile);
     }
     const detector = new CrossVersionBreakingDetector(pr, newSwaggers);
-    await detector.getBreakingChangeBaseOnStableVersion();
+    await detector.checkBreakingChangeBaseOnStableVersion();
     const breaking = JSON.parse(fs.readFileSync(resultFile).toString());
     assert.equal(2, breaking.length);
   }
