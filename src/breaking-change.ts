@@ -192,7 +192,6 @@ function appendException(errors: RuntimeError[]) {
 }
 export class SwaggerVersionManager {
   getRPFolder(swaggerFile: string) {
-    // Needs to consider other cases
     const segments = swaggerFile.split(/\\|\//)
     if (segments && segments.length > 3) {
       return segments.slice(0, -3).join("/");
@@ -220,9 +219,11 @@ export class SwaggerVersionManager {
     const allSwaggers = this.getAllSwaggers(folder);
     for (const swagger of allSwaggers) {
       const version = getVersionFromInputFile(swagger);
+      if (!version) {
+        continue
+      }
       const fileName = path.basename(swagger);
-      // Needs to consider other cases
-      const versionType = swagger.includes("preview") ? "preview" : "stable";
+      const versionType = version.includes("preview") ? "preview" : "stable";
       swaggerMetaData.push({
         version,
         versionType,
