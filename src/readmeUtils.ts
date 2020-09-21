@@ -7,7 +7,7 @@ import {
 
 import { MarkDownEx, parse } from "@ts-common/commonmark-to-markdown";
 
-export function getVersionFromInputFile(filePath: string): string {
+export function getVersionFromInputFile(filePath: string): string | undefined {
   const apiVersionRegex = /^\d{4}-\d{2}-\d{2}(|-preview)$/;
   const segments = filePath.split("/").slice(0,-1)
   if (segments && segments.length > 1) {
@@ -17,7 +17,7 @@ export function getVersionFromInputFile(filePath: string): string {
       }
     }
   }
-  return ""
+  return undefined
 }
 
 export class ReadmeParser {

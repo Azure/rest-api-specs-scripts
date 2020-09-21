@@ -190,6 +190,10 @@ function appendException(errors: RuntimeError[]) {
   fs.appendFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
   console.log(`oad error log: ${JSON.stringify(errorResult)}`);
 }
+
+/**
+ * Input a swagger file in spec repo, analyze its history versions.
+ */
 export class SwaggerVersionManager {
   getRPFolder(swaggerFile: string) {
     const segments = swaggerFile.split(/\\|\//)
@@ -270,7 +274,7 @@ export class CrossVersionBreakingDetector {
 
   async diffOne(oldSpec: string ,newSpec : string) {
     try {
-      await runOad(path.resolve(this.pr!.workingDir,oldSpec ), newSpec);
+      await runOad(path.resolve(this.pr!.workingDir, oldSpec), newSpec);
     }
     catch(e) {
       const errors = []
@@ -287,7 +291,7 @@ export class CrossVersionBreakingDetector {
     }
   }
 
-  async getBreakingChangeBaseOnPreviewVersion() {
+  async checkBreakingChangeBaseOnPreviewVersion() {
     for (const swagger of this.swaggers) {
       const previous = await utils.doOnTargetBranch(this.pr, async () => {
         return this.versionManager.getClosestPreview(swagger)
@@ -298,7 +302,7 @@ export class CrossVersionBreakingDetector {
     }
   }
 
-  async getBreakingChangeBaseOnStableVersion() {
+  async checkBreakingChangeBaseOnStableVersion() {
     for (const swagger of this.swaggers) {
        const previous = await utils.doOnTargetBranch(this.pr, async () => {
          return this.versionManager.getClosestStale(swagger);
@@ -332,10 +336,10 @@ export async function runCrossVersionBreakingChangeDetection(type:SwaggerVersion
   if (pr && newSwaggers.length) {
     const detector = new CrossVersionBreakingDetector(pr, newSwaggers as string[]);
     if (type === "preview") {
-      detector.getBreakingChangeBaseOnPreviewVersion()
+      detector.checkBreakingChangeBaseOnPreviewVersion()
     }
     else {
-       detector.getBreakingChangeBaseOnStableVersion()
+      detector.checkBreakingChangeBaseOnStableVersion()
     }
   }
 }

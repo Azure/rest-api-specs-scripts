@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.0
+
+- Support cross API version breaking change.
+
 ## 0.12.2
 
 - Lint(RPaaS) support check branch "rpsaasmaster","rpsaasdev" .  
