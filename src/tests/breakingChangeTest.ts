@@ -2,7 +2,7 @@ import { cleanUp } from "./helper";
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
 
-import { suite, test } from "mocha-typescript";
+import { suite, test, timeout } from "mocha-typescript";
 import * as assert from "assert";
 import * as fs from "fs-extra";
 import {
@@ -16,7 +16,7 @@ class BreakingChangeTest {
   cwd = process.cwd()
   before() {}
 
-  @test async TestCrossVersionBreakingDetection() {
+  @test  @timeout(100000) async TestCrossVersionBreakingDetection() {
     const newSwaggers: string[] = [
       "specification/testRP/stable/2020-08-01/a.json",
     ];
