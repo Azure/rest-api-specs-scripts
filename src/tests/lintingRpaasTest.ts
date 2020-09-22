@@ -8,9 +8,10 @@ import { utils } from "..";
 import { devOps } from "@azure/avocado";
 import * as fs from "fs";
 import * as asyncIt from "@ts-common/async-iterator";
-import { ResultMessageRecord, MessageLine } from '@azure/swagger-validation-common';
 import _ from 'lodash';
 import { LintingResultMessage } from '../momentOfTruthUtils';
+import { ReadmeParser } from "../readmeUtils"
+import { LintMsgTransformer } from "../unifiedPipelineHelper";
 
 const sinon = require("sinon");
 let cwd = process.cwd();
@@ -23,13 +24,13 @@ class LintingRpaasTest {
   }
   @test TestReadmeParser() {
     process.chdir("./src/tests/Resource/lintingRpaas");
-    const parser = new Rpaas.ReadmeParser("specification/test-lint/readme.md");
+    const parser = new ReadmeParser("specification/test-lint/readme.md");
     assert.equal(parser.getGlobalConfigByName("openapi-type"), "arm");
   }
 
   @test TestLintMsgTransformer() {
     process.chdir("./src/tests/Resource/lintingRpaas");
-    const transformer = new Rpaas.LintMsgTransformer();
+    const transformer = new LintMsgTransformer();
     const testMsg = [
       ({
         type: "Error",
@@ -104,7 +105,7 @@ class LintingRpaasTest {
     console.log(
       "------------- parse validation message from[pipe.log] ------------------"
     );
-    assert.deepEqual(chunck, '[]');
+    assert.deepEqual(chunck, '[]\n');
   }
 
   after() {

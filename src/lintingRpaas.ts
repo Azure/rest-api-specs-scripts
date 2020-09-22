@@ -4,10 +4,11 @@
 import { devOps, cli } from '@azure/avocado';
 import * as utils from './utils';
 import { getLinterResult } from "./momentOfTruth";
-import * as fs from "fs-extra";
-import * as YAML from "js-yaml";
-import { LintingResultParser, LintingResultMessage, Issue } from './momentOfTruthUtils'
-import { composeLintResult,Mutable,getFile,getLine } from './momentOfTruthPostProcessing';
+
+import { LintingResultParser, LintingResultMessage} from './momentOfTruthUtils'
+import { UnifiedPipeLineStore } from "./unifiedPipelineHelper"
+import { ReadmeParser } from "./readmeUtils"
+
 /**
  * 1 run linter rpaas
  * 2 check whether the reamde has openapi-subtype
@@ -18,123 +19,6 @@ import { composeLintResult,Mutable,getFile,getLine } from './momentOfTruthPostPr
    const RPaaSBranches = ["rpsaasmaster", "rpsaasdev", "rpaasdev","rpaasmaster"];
    return RPaaSBranches.some((b) => b === targetBranch.toLowerCase())
  }
- 
- export class ReadmeParser {
-   readmeFile : string 
-   markDownContent: string
-   constructor(readmePath: string) {
-      this.readmeFile = readmePath
-      this.markDownContent = fs.readFileSync(this.readmeFile, "utf8");
-   }
-
-   public getGlobalConfigByName(Name:string) {
-       let rawMarkdown = this.markDownContent;
-       for (const codeBlock of utils.parseCodeblocks(rawMarkdown)) {
-         if (
-           !codeBlock.info ||
-           codeBlock.info.trim().toLocaleLowerCase() !== "yaml" ||
-           !codeBlock.literal
-         ) {
-           continue;
-         }
-         try {
-            const configs = YAML.safeLoad(codeBlock.literal) as any
-            if (configs && configs[Name]) {
-              return configs[Name];
-            }
-         }
-         catch(e) {
-            console.log(e)
-         }
-      }
-   }
-
- }
-
-export class LintMsgTransformer {
-  constructor() {}
-
-  lintMsgToUnifiedMsg(msg: LintingResultMessage[]) {
-    const result = msg.map(
-    (it) => {
-      const violation = it as unknown as Mutable<Issue>
-      if (!violation.filePath) {
-        violation.filePath = getFile(violation.jsonref) || ""
-      }
-      if (!violation.lineNumber) {
-        violation.lineNumber = getLine(violation.jsonref) || 1
-      }
-      return  {
-      type: "Result",
-      ...composeLintResult(violation)
-      }
-    })    
-    return JSON.stringify(result)
-  }
-
-  rawErrorToUnifiedMsg(errType:string, errorMsg: string,config:string) {
-      const result = {
-        type: "Raw",
-        level: "Error",
-        message: errType,
-        time: new Date(),
-        extra: {
-          new: utils.targetHref(utils.getRelativeSwaggerPathToRepo(config)),
-          details: errorMsg,
-        },
-      };
-      return JSON.stringify(result);
-  }
-} 
-
-class UnifiedPipeLineStore {
-  logFile = "pipe.log";
-  readme: string;
-  transformer: LintMsgTransformer;
-  constructor(readme: string) {
-    this.transformer = new LintMsgTransformer();
-    this.readme = readme;
-  }
-
-  private appendMsg(msg: string) {
-    fs.appendFileSync(this.logFile, msg);
-    console.log("appendMsg:" + msg)
-  }
-
-  public appendLintMsg(msg: LintingResultMessage[]) {
-    this.appendMsg(this.transformer.lintMsgToUnifiedMsg(msg));
-  }
-
-  public appendAutoRestErr(msg: string) {
-    this.appendMsg(
-      this.transformer.rawErrorToUnifiedMsg(
-        "AutoRest exception",
-        msg,
-        this.readme
-      )
-    );
-  }
-
-  public appendRunTimeErr(msg: string) {
-    this.appendMsg(
-      this.transformer.rawErrorToUnifiedMsg(
-        "Runtime exception",
-        msg,
-        this.readme
-      )
-    );
-  }
-
-  public appendReadmeErr(msg: string) {
-    this.appendMsg(
-      this.transformer.rawErrorToUnifiedMsg(
-        "Readme exception",
-        msg,
-        this.readme
-      )
-    );
-  }
-}
 
 export async function runRpaasLint() {
     const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
