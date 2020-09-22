@@ -8,7 +8,6 @@ import * as path from "path";
 import * as tsUtils from "./ts-utils";
 import { targetHref } from "./utils";
 import * as utils from "./utils";
-import { PullRequestProperties } from '@azure/avocado/dist/dev-ops';
 import { glob } from 'glob';
 import { getVersionFromInputFile } from './readmeUtils';
 
@@ -195,6 +194,12 @@ function appendException(errors: RuntimeError[]) {
  * Input a swagger file in spec repo, analyze its history versions.
  */
 export class SwaggerVersionManager {
+
+  /**
+   * Example:
+   * input: specification/network/resource-manager/Microsoft.Network/stable/2019-11-01/network.json
+   * returns: specification/network/resource-manager/Microsoft.Network
+   */
   getRPFolder(swaggerFile: string) {
     const segments = swaggerFile.split(/\\|\//)
     if (segments && segments.length > 3) {
@@ -265,9 +270,9 @@ export class SwaggerVersionManager {
 
 export class CrossVersionBreakingDetector {
   swaggers :string[]= []
-  pr : PullRequestProperties
+  pr : devOps.PullRequestProperties
   versionManager: SwaggerVersionManager = new SwaggerVersionManager()
-  constructor(pullRequest: PullRequestProperties,newSwaggers:string[]) {
+  constructor(pullRequest: devOps.PullRequestProperties,newSwaggers:string[]) {
     this.swaggers = newSwaggers
     this.pr = pullRequest
   }
@@ -345,7 +350,7 @@ export async function runCrossVersionBreakingChangeDetection(type:SwaggerVersion
 }
 
 
-function changeTargetBranch(pr:PullRequestProperties | undefined) {
+function changeTargetBranch(pr: devOps.PullRequestProperties | undefined) {
    /**
    * NOTE: For base branch which not in targetBranches, the breaking change tool compare head branch with master branch.
    * TargetBranches is a set of branches and treat each of them like a service team master branch.
