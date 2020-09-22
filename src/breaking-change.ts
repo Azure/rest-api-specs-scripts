@@ -171,6 +171,7 @@ type SwaggerMetaData = {
   versionType: SwaggerVersionType;
   fileName: string;
   folder: string;
+  fullPath: string;
 };
 
 function appendException(errors: RuntimeError[]) {
@@ -203,7 +204,15 @@ export class SwaggerVersionManager {
   getRPFolder(swaggerFile: string) {
     const segments = swaggerFile.split(/\\|\//)
     if (segments && segments.length > 3) {
-      return segments.slice(0, -3).join("/");
+      let rpIndex = -3;
+      segments.some((v, idx) => {
+        if (v.startsWith('Microsoft.')) {
+          rpIndex = idx + 1
+          return true
+        }
+        return false
+      })
+      return segments.slice(0, rpIndex).join("/");
     }
     return undefined
   }
@@ -238,6 +247,7 @@ export class SwaggerVersionManager {
         versionType,
         fileName,
         folder,
+        fullPath:swagger,
       });
     }
     return swaggerMetaData;
@@ -253,7 +263,7 @@ export class SwaggerVersionManager {
         .reduce((previous, current) =>
           previous.version > current.version ? previous : current
         );
-        return path.join(version.folder,version.versionType,version.version,version.fileName)
+        return version.fullPath
     } catch (e) {
       return undefined;
     }
