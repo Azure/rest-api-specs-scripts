@@ -232,7 +232,7 @@ export class SwaggerVersionManager {
         continue
       }
       const fileName = path.basename(swagger);
-      const versionType = version.includes("preview") ? "preview" : "stable";
+      const versionType = path.dirname(swagger).includes("/preview/") ? "preview" : "stable";
       swaggerMetaData.push({
         version,
         versionType,
