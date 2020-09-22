@@ -16,6 +16,12 @@ class BreakingChangeTest {
   cwd = process.cwd()
   before() {}
 
+  @test testSwaggerVesionManager() {
+    const manager = new SwaggerVersionManager()
+    assert.equal(manager.getRPFolder('specification/testRP/stable/2020-08-01/a.json'),"specification/testRP")
+    assert.equal(manager.getRPFolder('specification/Microsoft.Test/stable/2020-08-01/subfoler/a.json'), "specification/Microsoft.Test")
+  }
+
   @test  @timeout(100000) async TestCrossVersionBreakingDetection() {
     const newSwaggers: string[] = [
       "specification/testRP/stable/2020-08-01/a.json",
