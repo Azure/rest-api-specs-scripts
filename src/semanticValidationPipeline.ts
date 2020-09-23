@@ -131,16 +131,16 @@ export async function runScript() {
       } else if (validator.specValidationResult.validateSpec) {
         const validateSpec = validator.specValidationResult.validateSpec;
         if (!validateSpec.isValid) {
-
           const validateSpecErrors = oav.getErrorsFromSemanticValidationForUnifiedPipeline(validator.specValidationResult as any);
           const pipelineResultErrors: format.ResultMessageRecord[] = validateSpecErrors.map(function(it) {
             let pipelineResultError = constructBaseResultDataForError("Error", it);
-            if (it.details!.jsonUrl && it.details!.jsonPosition) {
+            if (it.details!.jsonUrl) {
+              let url = it.details!.jsonPosition? it.details!.jsonUrl + '#L' + String(it.details!.jsonPosition.line) || "": it.details!.jsonUrl;
               pipelineResultError.paths.push({
                 tag: "JsonUrl",
                 path: utils.blobHref(
                   utils.getGithubStyleFilePath(
-                    utils.getRelativeSwaggerPathToRepo(it.details!.jsonUrl + '#L' + String(it.details!.jsonPosition.line) || "")
+                    utils.getRelativeSwaggerPathToRepo(url)
                   )
                 )}
               )
@@ -156,15 +156,16 @@ export async function runScript() {
           const validateSpecWarnings = validateSpec.warnings as ValidationError[];
           const pipelineResultWarnings: format.ResultMessageRecord[] = validateSpecWarnings.map(function(it) {
             let pipelineResultWarning = constructBaseResultData("Warning", it);
-            if (it.jsonUrl && it.jsonPosition) {
+            if (it.jsonUrl) {
+              let url = it.jsonPosition? it.jsonUrl + '#L' + String(it.jsonPosition.line) || "": it.jsonUrl;
               pipelineResultWarning.paths.push({
                 tag: "JsonUrl",
                 path: utils.blobHref(
                   utils.getGithubStyleFilePath(
-                    utils.getRelativeSwaggerPathToRepo(it.jsonUrl + '#L' + String(it.jsonPosition.line) || "")
+                    utils.getRelativeSwaggerPathToRepo(url)
                   )
-                )
-              })
+                )}
+              )
             }
             return pipelineResultWarning;
           });
