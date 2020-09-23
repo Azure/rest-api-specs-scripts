@@ -83,22 +83,24 @@ export async function runScript() {
           },
           paths: []
         }
-        if (it.details!.url && it.details!.position) {
+        if (it.details!.url) {
+          let url = it.details!.position? it.details!.url + '#L' + String(it.details!.position.line) || "" : it.details!.url;
           pipelineResultData.paths.push({
             tag: "Url",
             path: utils.blobHref(
               utils.getGithubStyleFilePath(
-                utils.getRelativeSwaggerPathToRepo(it.details!.url + '#L' + String(it.details!.position.line) || "")
+                utils.getRelativeSwaggerPathToRepo(url)
               )
             )
           })
         }
-        if (it.details!.jsonUrl && it.details!.jsonPosition) {
+        if (it.details!.jsonUrl) {
+          let url = it.details!.jsonPosition? it.details!.jsonUrl + '#L' + String(it.details!.jsonPosition.line) || "" : it.details!.jsonUrl;
           pipelineResultData.paths.push({
             tag: "JsonUrl",
             path: utils.blobHref(
               utils.getGithubStyleFilePath(
-                utils.getRelativeSwaggerPathToRepo(it.details!.jsonUrl + '#L' + String(it.details!.jsonPosition.line) || "")
+                utils.getRelativeSwaggerPathToRepo(url)
               )
             )
           })
