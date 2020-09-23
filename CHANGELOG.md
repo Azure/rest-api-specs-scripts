@@ -3,6 +3,7 @@
 ## 0.13.0
 
 - Support cross API version breaking change.
+- Fix unified pipeline url show error of model validation and semantic validation.
 
 ## 0.12.3
 
