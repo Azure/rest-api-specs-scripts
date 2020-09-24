@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.1
+
+- Upgrade oav to 0.22.7 with a fix on parsing error yaml object.
+
 ## 0.13.0
 
 - Support cross API version breaking change.
