@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.2
+
+- Let unified pipeline show message of catched error for model validation and semantic validation.
+
 ## 0.13.1
 
 - Upgrade oav to 0.22.7 with a fix on parsing error yaml object.
