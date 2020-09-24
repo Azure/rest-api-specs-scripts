@@ -108,7 +108,6 @@ export async function runScript() {
 
   let exitCode: number = 0;
   const catchedErrors: { error: Error; url: string }[] = [];
-
   for (const swagger of swaggersToProcess) {
     try {
       const validator = new oav.SemanticValidator(swagger, null,
@@ -175,7 +174,6 @@ export async function runScript() {
             prettyPrint(validateSpec.warnings as ValidationEntry[], "warning");
             fs.appendFileSync("pipe.log", JSON.stringify(pipelineResultWarnings) + "\n");
           }
-
           exitCode = 1;
         }
       }
@@ -198,7 +196,7 @@ export async function runScript() {
     const errorResult: format.MessageLine = catchedErrors.map((it) => ({
       type: "Raw",
       level: "Error",
-      message: it.error.stack || "",
+      message: it.error.message || "",
       time: new Date(),
       extra: {
         role: "Semantic Validation",

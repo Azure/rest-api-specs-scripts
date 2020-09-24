@@ -114,7 +114,6 @@ export async function runScript() {
     } catch (e) {
       console.error("error: ");
       console.error(e);
-      //console.log(e)
       catchedErrors.push({
         error: e,
         url: utils.blobHref(
@@ -128,7 +127,7 @@ export async function runScript() {
     const errorResult: format.MessageLine = catchedErrors.map((it) => ({
       type: "Raw",
       level: "Error",
-      message: it.error.stack || "",
+      message: it.error.message || "",
       time: new Date(),
       extra: {
         role: "Model Validation",
