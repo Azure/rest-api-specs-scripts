@@ -31,7 +31,7 @@ export const createDevOpsEnv = async (rootName: string, repoName: string): Promi
 
   // Create '"${tmp}/remote"' folder.
   const remote = path.join(tmp, "remote");
-  await pfs.mkdir(remote);
+  await pfs.mkdir(remote, { recursive :true});
 
   const gitRemote = git.repository(remote);
 
@@ -129,3 +129,9 @@ export const createDevOpsEnv = async (rootName: string, repoName: string): Promi
     }
   };
 };
+
+export async function cleanUpDir(dir:string) {
+  if (await pfs.exists(dir)) {
+    await pfs.recursiveRmdir(dir);
+  }
+}

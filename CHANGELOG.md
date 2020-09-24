@@ -1,5 +1,103 @@
 # Changelog
 
+## 0.13.0
+
+- Support cross API version breaking change.
+- Fix unified pipeline url show error of model validation and semantic validation.
+
+## 0.12.3
+
+- Improve the error message shows on unified pipeline for semantic validation. 
+
+## 0.12.2
+
+- Lint(RPaaS) support check branch "rpsaasmaster","rpsaasdev" .  
+
+## 0.12.1
+
+- Fix Lint(RPaaS) report issues : incorrect file name & line number. 
+
+## 0.12.0
+
+- Add Lint(RPaaS) scripts.
+
+## 0.11.2
+
+- Onboard Model Validation and Semantic Validation to unified pipeline.
+- Upgrade oav version to 0.22.3.
+
+## 0.11.1
+
+- LintDiff only retains the first 10 lines of the autorest error due to the limitation of the github comment.
+- Fix bug: LintDiff post-processing fail when no swagger changes in PR.
+
+## 0.11.0
+
+- Improve error handling for Lint Diff - separate autorest error from the whole error output & refactor the code.
+- Change the method to find related tags through changed files , let tags with 'schema','profile','only' have low prior.
+- If no swagger file changed and only readme file changed, the LintDiff would be skipped .
+
+## 0.10.6
+
+- Fix bug: LintDiff does not report error when before-lint-errors-count is bigger or equal than after-lint-errors-count.
+
+## 0.10.5
+
+- Remove old tag for Lint Diff.
+
+## 0.10.4
+
+- LintDiff support unified pipeline log format.
+
+## 0.10.3
+
+- Breaking change print error log
+- swagger file filter regex fix
+
+## 0.10.2
+
+- Set breaking change target branch whitelist [RPSaaSMaster, RPSaaSDev, master]. If target branch not in this whitelist,
+  the breaking change will compare against master.
+
+## 0.10.1
+
+- Set exitCode for semantic validation when process normally.
+
+## 0.10.0
+
+- Breaking change support unified pipeline log format
+
+## 0.9.2
+
+- Upgrade oav version to 0.21.6.
+- Upgrade @azure/oad version to 0.8.1.
+
+## 0.9.1
+
+- Fixed the bug:The LintDiff exit with code 1 when new RP is being added .It caused by an unhandled error:
+  read non-existing readme file .
+- Upgrade @azure/oad version to 0.8.0.
+
+## 0.9.0
+
+- The LintDiff will check the changed files which are not belong to default tag.
+
+## 0.8.0
+
+- The breaking change checking will always aganist master branch .
+
+## 0.7.3
+
+- Upgrade oav version to 0.21.5 with exception info output to console when pretty switch is on.
+
+## 0.7.2
+
+- Upgrade oav version to 0.21.4.
+
+## 0.7.1
+
+- Upgrade oav version to 0.21.3 with the change on global parameters validation in request.
+
 ## 0.7.0
 
 - Upgrade oav version to 0.21.1.

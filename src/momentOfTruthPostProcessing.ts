@@ -9,21 +9,25 @@ import * as gitHubPost from './postToGitHub'
 import * as fs from 'fs'
 import * as path from 'path'
 
-let githubTemplate = (title: unknown, contact_message: unknown, file_summaries: unknown) =>
+import * as format from "@azure/swagger-validation-common"
+
+import {getFile, getLine, composeLintResult ,MutableIssue } from "./momentOfTruthUtils"
+
+const githubTemplate = (title: unknown, contact_message: unknown, file_summaries: unknown) =>
   `# AutoRest linter results for ${title}\n${contact_message}\n\n${file_summaries}`;
 
-let fileSummaryHeader = (file_name: unknown, file_href: unknown) => `## Config file: [${file_name}](${file_href})\n`;
-let fileSummaryNewTemplate = (issue_type: string, issue_count: unknown, issue_table: unknown) =>
+const fileSummaryHeader = (file_name: unknown, file_href: unknown) => `## Config file: [${file_name}](${file_href})\n`;
+const fileSummaryNewTemplate = (issue_type: string, issue_count: unknown, issue_table: unknown) =>
   `<details><summary><h3 style="display: inline"><a name="${issue_type.replace(/\s/g, "-")}s"></a>${iconFor(issue_type)} ${issue_count} new ${pluralize(issue_type, issue_count)}</h3></summary><br>\n\n${issue_table}\n</details>`;
-let fileSummaryExistingTemplate = (issue_type: string, issue_count: unknown, issue_table: unknown) =>
+const fileSummaryExistingTemplate = (issue_type: string, issue_count: unknown, issue_table: unknown) =>
   `<details><summary>${iconFor(issue_type)} ${issue_count} existing ${pluralize(issue_type, issue_count)}</summary><br>\n\n${issue_table}\n</details>\n\n`;
 
-let potentialNewWarningErrorSummaryHeader = `
+const potentialNewWarningErrorSummaryHeader = `
 | | Rule | Location | Message |
 |-|------|----------|---------|
 `;
 
-let potentialNewWarningErrorSummaryMarkdown = (
+const potentialNewWarningErrorSummaryMarkdown = (
   count: unknown,
   warning_error_id: unknown,
   warning_error_code: unknown,
@@ -32,10 +36,10 @@ let potentialNewWarningErrorSummaryMarkdown = (
   warning_error_message: unknown
 ) =>
   `|${count}|[${warning_error_id} - ${warning_error_code}](https://github.com/Azure/azure-rest-api-specs/blob/master/documentation/openapi-authoring-automated-guidelines.md#${warning_error_id})|` +
-  `[${shortName(warning_error_file)}:${warning_error_line}](${blobHref(warning_error_file)}#L${warning_error_line} "${warning_error_file}")|` +
+  `[${shortName(warning_error_file)}:${warning_error_line}](${utils.blobHref(warning_error_file)}#L${warning_error_line} "${warning_error_file}")|` +
   `${warning_error_message}|\n`;
 
-let potentialNewWarningErrorSummaryPlain = (
+const potentialNewWarningErrorSummaryPlain = (
   _count: unknown,
   warning_error_id: unknown,
   warning_error_code: unknown,
@@ -47,8 +51,8 @@ let potentialNewWarningErrorSummaryPlain = (
   `${warning_error_message}\n` +
   `  at ${warning_error_file}:${warning_error_line}\n\n`;
 
-let sdkContactMessage = "These errors are reported by the SDK team's validation tools, reach out to [ADX Swagger Reviewers](mailto:adxsr@microsoft.com) directly for any questions or concerns.";
-let armContactMessage = "These errors are reported by the ARM team's validation tools, reach out to [ARM RP API Review](mailto:armrpapireview@microsoft.com) directly for any questions or concerns.";
+const sdkContactMessage = "These errors are reported by the SDK team's validation tools, reach out to [ADX Swagger Reviewers](mailto:adxsr@microsoft.com) directly for any questions or concerns.";
+const armContactMessage = "These errors are reported by the ARM team's validation tools, reach out to [ARM RP API Review](mailto:armrpapireview@microsoft.com) directly for any questions or concerns.";
 let sdkFileSummaries = '', armFileSummaries = '';
 
 function compareJsonRef(beforeJsonRef: string, afterJsonRef: string) {
@@ -79,43 +83,36 @@ function getSummaryBlock(summaryTitle: unknown, fileSummaries: unknown, contactM
   );
 }
 
-type Mutable<T extends object> = {
-  -readonly [K in keyof T]: T[K]
-}
-
-type MutableIssue = Mutable<momentOfTruthUtils.Issue>
-
 function compareBeforeAfterArrays(
   afterArray: readonly momentOfTruthUtils.Issue[],
   beforeArray: readonly momentOfTruthUtils.Issue[],
   existingArray: unknown[],
   newArray: unknown[]
 ) {
-  if(afterArray.length > beforeArray.length){
-    afterArray.forEach(afterValue => {
-      let errorFound = false;
-      beforeArray.forEach(beforeValue => {
-        if(
-          beforeValue.type               == afterValue.type &&
-          beforeValue.code               == afterValue.code &&
-          beforeValue.message            == afterValue.message &&
-          beforeValue.id                 == afterValue.id &&
-          beforeValue.validationCategory == afterValue.validationCategory &&
-          beforeValue.providerNamespace  == afterValue.providerNamespace &&
-          beforeValue.resourceType       == afterValue.resourceType &&
-          beforeValue.sources.length     == afterValue.sources.length &&
-          compareJsonRef(beforeValue.jsonref, afterValue.jsonref)
-        ) {
-          errorFound = true;
-        }
-      });
-      if(errorFound) {
-        existingArray.push(afterValue);
-      } else {
-        newArray.push(afterValue);
+  afterArray.forEach(afterValue => {
+    let errorFound = false;
+    beforeArray.some(beforeValue => {
+      if(
+        beforeValue.type               == afterValue.type &&
+        beforeValue.code               == afterValue.code &&
+        beforeValue.message            == afterValue.message &&
+        beforeValue.id                 == afterValue.id &&
+        beforeValue.validationCategory == afterValue.validationCategory &&
+        beforeValue.providerNamespace  == afterValue.providerNamespace &&
+        beforeValue.resourceType       == afterValue.resourceType &&
+        beforeValue.sources.length     == afterValue.sources.length &&
+        compareJsonRef(beforeValue.jsonref, afterValue.jsonref)
+      ) {
+        errorFound = true;
+        return true
       }
     });
-  }
+    if(errorFound) {
+      existingArray.push(afterValue);
+    } else {
+      newArray.push(afterValue);
+    }
+  });
 }
 
 function iconFor(type: string, num: unknown = undefined) {
@@ -134,30 +131,10 @@ function pluralize(word: unknown, num: unknown) {
   return num !== 1 ? `${word}s` : word;
 }
 
-function getLine(jsonRef: string): number|undefined {
-  try {
-    return parseInt(jsonRef.substr(jsonRef.indexOf(".json:") + 6).split(':')[0]);
-  } catch (error) {
-    return undefined;
-  }
-}
-
-function getFile(jsonRef: string) {
-  try {
-    const start = jsonRef.indexOf("specification");
-    return jsonRef.substr(start, (jsonRef.indexOf(".json") + 5) - start);
-  } catch (error) {
-    return undefined;
-  }
-}
-
 function shortName(filePath: string) {
   return `${path.basename(path.dirname(filePath))}/&#8203;<strong>${path.basename(filePath)}</strong>`;
 }
 
-function blobHref(file: unknown) {
-  return `https://github.com/${process.env.TRAVIS_PULL_REQUEST_SLUG}/blob/${process.env.TRAVIS_PULL_REQUEST_SHA}/${file}`;
-}
 
 type Formatter = (
   count: unknown,
@@ -246,7 +223,7 @@ function getFileSummary(
   }
 
   if (fileSummary !== "") {
-    return fileSummaryHeader(fileName, blobHref(fileName)) + fileSummary;
+    return fileSummaryHeader(fileName, utils.blobHref(fileName)) + fileSummary;
   } else {
     return "";
   }
@@ -345,29 +322,29 @@ export function postProcessing() {
   configFiles.sort();
 
   for (const fileName of configFiles) {
-    let beforeErrorsSDKArray: momentOfTruthUtils.Issue[] = []
-    let beforeWarningsSDKArray: momentOfTruthUtils.Issue[] = []
-    let beforeErrorsARMArray: momentOfTruthUtils.Issue[] = []
-    let beforeWarningsARMArray: momentOfTruthUtils.Issue[] = []
-    let afterErrorsSDKArray: momentOfTruthUtils.Issue[] = []
-    let afterWarningsSDKArray: momentOfTruthUtils.Issue[] = []
-    let afterErrorsARMArray: momentOfTruthUtils.Issue[] = []
-    let afterWarningsARMArray: momentOfTruthUtils.Issue[] = [];
-    let newSDKErrors: MutableIssue[] = []
-    let newSDKWarnings: MutableIssue[] = []
-    let newARMErrors: MutableIssue[] = []
-    let newARMWarnings: MutableIssue[] = []
-    let existingSDKErrors: MutableIssue[] = []
-    let existingSDKWarnings: MutableIssue[] = []
-    let existingARMErrors: MutableIssue[] = []
-    let existingARMWarnings: MutableIssue[] = []
+    const beforeErrorsSDKArray: momentOfTruthUtils.Issue[] = []
+    const beforeWarningsSDKArray: momentOfTruthUtils.Issue[] = []
+    const beforeErrorsARMArray: momentOfTruthUtils.Issue[] = []
+    const beforeWarningsARMArray: momentOfTruthUtils.Issue[] = []
+    const afterErrorsSDKArray: momentOfTruthUtils.Issue[] = []
+    const afterWarningsSDKArray: momentOfTruthUtils.Issue[] = []
+    const afterErrorsARMArray: momentOfTruthUtils.Issue[] = []
+    const afterWarningsARMArray: momentOfTruthUtils.Issue[] = [];
+    const newSDKErrors: MutableIssue[] = []
+    const newSDKWarnings: MutableIssue[] = []
+    const newARMErrors: MutableIssue[] = []
+    const newARMWarnings: MutableIssue[] = []
+    const existingSDKErrors: MutableIssue[] = []
+    const existingSDKWarnings: MutableIssue[] = []
+    const existingARMErrors: MutableIssue[] = []
+    const existingARMWarnings: MutableIssue[] = []
 
-    let beforeErrorsAndWarningsArray = tsUtils.asNonUndefined(jsonData.files[fileName]).before;
+    const beforeErrorsAndWarningsArray = tsUtils.asNonUndefined(jsonData.files[fileName]).before;
     beforeErrorsAndWarningsArray.forEach(beforeErrorOrWarning => {
       if(beforeErrorOrWarning.type != undefined && beforeErrorOrWarning.type.toLowerCase() == 'warning'){
         if(beforeErrorOrWarning.validationCategory.toLowerCase() == 'sdkviolation') {
           beforeWarningsSDKArray.push(beforeErrorOrWarning);
-        } else {
+         } else if (beforeErrorOrWarning.validationCategory.toLowerCase() !=="rpaasviolation")  {
           beforeWarningsARMArray.push(beforeErrorOrWarning);
         }
       }
@@ -375,18 +352,18 @@ export function postProcessing() {
       if(beforeErrorOrWarning.type != undefined && beforeErrorOrWarning.type.toLowerCase() == 'error'){
         if(beforeErrorOrWarning.validationCategory.toLowerCase() == 'sdkviolation') {
           beforeErrorsSDKArray.push(beforeErrorOrWarning);
-        } else {
+        } else if (beforeErrorOrWarning.validationCategory.toLowerCase() !=="rpaasviolation")  {
           beforeErrorsARMArray.push(beforeErrorOrWarning);
         }
       }
     });
 
-    let afterErrorsAndWarningsArray = tsUtils.asNonUndefined(jsonData.files[fileName]).after;
+    const afterErrorsAndWarningsArray = tsUtils.asNonUndefined(jsonData.files[fileName]).after;
     afterErrorsAndWarningsArray.forEach(afterErrorOrWarning => {
       if(afterErrorOrWarning.type != undefined && afterErrorOrWarning.type.toLowerCase() == 'warning'){
         if(afterErrorOrWarning.validationCategory.toLowerCase() == 'sdkviolation') {
           afterWarningsSDKArray.push(afterErrorOrWarning);
-        } else {
+        } else if (afterErrorOrWarning.validationCategory.toLowerCase() !== "rpaasviolation") {
           afterWarningsARMArray.push(afterErrorOrWarning);
         }
       }
@@ -394,11 +371,13 @@ export function postProcessing() {
       if(afterErrorOrWarning.type != undefined && afterErrorOrWarning.type.toLowerCase() == 'error'){
         if(afterErrorOrWarning.validationCategory.toLowerCase() == 'sdkviolation') {
           afterErrorsSDKArray.push(afterErrorOrWarning);
-        } else {
+        } else if (afterErrorOrWarning.validationCategory.toLowerCase() !== "rpaasviolation") {
           afterErrorsARMArray.push(afterErrorOrWarning);
         }
       }
     });
+
+
 
     compareBeforeAfterArrays(afterErrorsARMArray, beforeErrorsARMArray, existingARMErrors, newARMErrors);
     compareBeforeAfterArrays(afterErrorsSDKArray, beforeErrorsSDKArray, existingSDKErrors, newSDKErrors);
@@ -452,6 +431,24 @@ export function postProcessing() {
     newARMErrorsCount += newARMErrors.length;
     newSDKWarningsCount += newSDKWarnings.length;
     newARMWarningsCount += newARMWarnings.length;
+
+    console.log("-------- Compose Lint Diff Final Result --------\n");
+    const pipelineResultData: format.ResultMessageRecord[] = newSDKErrors
+    .concat(newARMErrors)
+    .concat(newSDKWarnings)
+    .concat(newARMWarnings)
+    .map(
+      (it) => ({
+        type: "Result",
+        ...composeLintResult(it)
+      })
+    );
+  const pipelineResult: format.MessageLine = pipelineResultData;
+
+  console.log("---------------- Write to pipe.log -------------------");
+  console.log(JSON.stringify(pipelineResult));
+  fs.appendFileSync("pipe.log", JSON.stringify(pipelineResult) + "\n");
+  console.log("---------");
 
     sdkFileSummaries += getFileSummary("SDK", fileName, existingSDKWarnings, existingSDKErrors, newSDKWarnings, newSDKErrors);
     armFileSummaries += getFileSummary("ARM", fileName, existingARMWarnings, existingARMErrors, newARMWarnings, newARMErrors);
