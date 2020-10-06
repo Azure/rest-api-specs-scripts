@@ -338,7 +338,7 @@ export async function runCrossVersionBreakingChangeDetection(type:SwaggerVersion
   console.log("Processing swaggers:");
   console.log(swaggersToProcess);
 
-  changeTargetBranch(pr)
+  await changeTargetBranch(pr)
 
   let newSwaggers: unknown[] = [];
   if (swaggersToProcess.length > 0 && pr !== undefined) {
@@ -360,7 +360,7 @@ export async function runCrossVersionBreakingChangeDetection(type:SwaggerVersion
 }
 
 
-function changeTargetBranch(pr: devOps.PullRequestProperties | undefined) {
+async function changeTargetBranch(pr: devOps.PullRequestProperties | undefined) {
    /**
    * NOTE: For base branch which not in targetBranches, the breaking change tool compare head branch with master branch.
    * TargetBranches is a set of branches and treat each of them like a service team master branch.
@@ -371,12 +371,14 @@ function changeTargetBranch(pr: devOps.PullRequestProperties | undefined) {
    * For PR target branch not in `targetBranches`. prepare for switch to master branch,
    * if not the switching to master below would failed
    */
-  if (
+  if (pr && 
     !targetBranches.includes(
       cli.defaultConfig().env.SYSTEM_PULLREQUEST_TARGETBRANCH!
     )
   ) {
-    utils.setUpstreamBranch("master", "remotes/origin/master");
+    await utils.doOnTargetBranch(pr, async () => {
+      utils.setUpstreamBranch("master", "remotes/origin/master");
+    });
   }
     /*
    * always compare against master
@@ -403,7 +405,7 @@ export async function runScript() {
   console.log("Processing swaggers:");
   console.log(swaggersToProcess);
 
-  changeTargetBranch(pr)
+  await changeTargetBranch(pr)
 
   console.log("Finding new swaggers...");
 
