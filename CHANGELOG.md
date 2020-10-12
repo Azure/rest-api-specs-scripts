@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.3
+
+- Fix bug: breaking change script will fail to run when target branch is not master branch , it's casued by the version of cross api version breaking change .
+
 ## 0.13.2
 
 - Let unified pipeline show message of catched error for model validation and semantic validation.

@@ -330,7 +330,7 @@ export class CrossVersionBreakingDetector {
 }
 
 export async function runCrossVersionBreakingChangeDetection(type:SwaggerVersionType = "stable") {
-  const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
+  const pr = await buildPRObject();;
   console.log(`PR target branch is ${pr ? pr.targetBranch : ""}`);
 
   let swaggersToProcess = await utils.getFilesChangedInPR(pr);
@@ -359,25 +359,27 @@ export async function runCrossVersionBreakingChangeDetection(type:SwaggerVersion
   }
 }
 
+/**
+* NOTE: For base branch which not in targetBranches, the breaking change tool compare head branch with master branch.
+* TargetBranches is a set of branches and treat each of them like a service team master branch.
+*/
+const targetBranches = ["master", "RPSaaSDev", "RPSaaSMaster"];
 
-function changeTargetBranch(pr: devOps.PullRequestProperties | undefined) {
-   /**
-   * NOTE: For base branch which not in targetBranches, the breaking change tool compare head branch with master branch.
-   * TargetBranches is a set of branches and treat each of them like a service team master branch.
-   */
-  const targetBranches = ["master", "RPSaaSDev", "RPSaaSMaster"];
-
+const buildPRObject = async ()=> {
   /**
-   * For PR target branch not in `targetBranches`. prepare for switch to master branch,
-   * if not the switching to master below would failed
-   */
-  if (
-    !targetBranches.includes(
+     * For PR target branch not in `targetBranches`. prepare for switch to master branch,
+     * if not the switching to master below would failed
+     */
+  if (!targetBranches.includes(
       cli.defaultConfig().env.SYSTEM_PULLREQUEST_TARGETBRANCH!
     )
   ) {
     utils.setUpstreamBranch("master", "remotes/origin/master");
   }
+  return await devOps.createPullRequestProperties(cli.defaultConfig());
+}
+
+function changeTargetBranch(pr: devOps.PullRequestProperties | undefined) {
     /*
    * always compare against master
    * we still use the changed files got from the PR, because the master branch may quite different with the PR target branch
@@ -394,7 +396,7 @@ export async function runScript() {
   // Used to enable running script outside TravisCI for debugging
   const isRunningInTravisCI = process.env.TRAVIS === "true";
   // create Azure DevOps PR properties.
-  const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
+  const pr = await buildPRObject();
   console.log(`PR target branch is ${pr ? pr.targetBranch : ""}`);
 
   let targetBranch = utils.getTargetBranch();
