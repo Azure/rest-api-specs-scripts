@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.4
+
+- Upgrade oav to 0.22.9 with rule change in response in case of both x-ms-secret and required are annotated.
+
 ## 0.13.3
 
 - Fix bug: breaking change script will fail to run when target branch is not master branch , it's casued by the version of cross api version breaking change .
