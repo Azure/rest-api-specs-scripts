@@ -6,8 +6,10 @@ import * as fs from "fs-extra";
 import * as path from "path";
 
 import * as tsUtils from "./ts-utils";
-import { getTargetBranch } from "./utils";
+import { targetHref } from "./utils";
 import * as utils from "./utils";
+import { glob } from 'glob';
+import { getVersionFromInputFile } from './readmeUtils';
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
@@ -75,14 +77,6 @@ function blobHref(file: string) {
     : "";
 }
 
-function targetHref(file: string) {
-  return file
-    ? `https://github.com/${
-        process.env.TRAVIS_REPO_SLUG
-      }/blob/${getTargetBranch()}/${file}`
-    : "";
-}
-
 /**
  * Compares old and new specifications for breaking change detection.
  *
@@ -90,7 +84,7 @@ function targetHref(file: string) {
  *
  * @param newSpec Path to the new swagger specification file.
  */
-async function runOad(oldSpec: string, newSpec: string) {
+async function runOad(oldSpec: string, newSpec: string , isCrossVersion = false) {
   if (
     oldSpec === null ||
     oldSpec === undefined ||
@@ -124,7 +118,7 @@ async function runOad(oldSpec: string, newSpec: string) {
   const pipelineResultData: format.ResultMessageRecord[] = oadResult.map(
     (it) => ({
       type: "Result",
-      level: it.type as format.MessageLevel,
+      level: isCrossVersion ? "Warning" : it.type as format.MessageLevel,
       message: it.message,
       code: it.code,
       id: it.id,
@@ -170,26 +164,239 @@ async function runOad(oldSpec: string, newSpec: string) {
   return JSON.parse(result);
 }
 
+type SwaggerVersionType = "preview" | "stable";
+type RuntimeError = { error: Error; old: string; new: string };
+type SwaggerMetaData = {
+  version: string;
+  versionType: SwaggerVersionType;
+  fileName: string;
+  folder: string;
+  fullPath: string;
+};
+
+function appendException(errors: RuntimeError[]) {
+  const errorResult: format.MessageLine = errors.map((it) => ({
+    type: "Raw",
+    level: "Error",
+    message: "Runtime Exception",
+    time: new Date(),
+    extra: {
+      new: it.new,
+      old: it.old,
+      details: utils.cutoffMsg(it.error.stack) || "",
+    },
+  }));
+
+  fs.appendFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
+  console.log(`oad error log: ${JSON.stringify(errorResult)}`);
+}
+
+/**
+ * Input a swagger file in spec repo, analyze its history versions.
+ */
+export class SwaggerVersionManager {
+
+  /**
+   * Example:
+   * input: specification/network/resource-manager/Microsoft.Network/stable/2019-11-01/network.json
+   * returns: specification/network/resource-manager/Microsoft.Network
+   */
+  getRPFolder(swaggerFile: string) {
+    const segments = swaggerFile.split(/\\|\//)
+    if (segments && segments.length > 3) {
+      let rpIndex = -3;
+      segments.some((v, idx) => {
+        if (v.startsWith('Microsoft.')) {
+          rpIndex = idx + 1
+          return true
+        }
+        return false
+      })
+      return segments.slice(0, rpIndex).join("/");
+    }
+    return undefined
+  }
+
+  getAllSwaggers(folder: string) {
+    const pathPattern = path.join(folder, "**/*.json");
+    return glob.sync(pathPattern, {
+      ignore: [
+        "**/examples/**/*.json",
+        "**/quickstart-templates/*.json",
+        "**/schema/*.json",
+      ],
+    });
+  }
+
+  getVersionMapping(swaggerFile: string) {
+    const swaggerMetaData: SwaggerMetaData[] = [];
+    const folder = this.getRPFolder(swaggerFile);
+    if (!folder) {
+      return swaggerMetaData
+    }
+    const allSwaggers = this.getAllSwaggers(folder);
+    for (const swagger of allSwaggers) {
+      const version = getVersionFromInputFile(swagger);
+      if (!version) {
+        continue
+      }
+      const fileName = path.basename(swagger);
+      const versionType = path.dirname(swagger).includes("/preview/") ? "preview" : "stable";
+      swaggerMetaData.push({
+        version,
+        versionType,
+        fileName,
+        folder,
+        fullPath:swagger,
+      });
+    }
+    return swaggerMetaData;
+  }
+
+  getClosestVersion(swaggerFile: string, type: SwaggerVersionType) {
+    const versions = this.getVersionMapping(swaggerFile);
+    const fileName = path.basename(swaggerFile)
+    const currentVersion = getVersionFromInputFile(swaggerFile)
+    try {
+      const version = versions
+        .filter((v) => v.fileName === fileName && v.versionType === type && v.version !== currentVersion)
+        .reduce((previous, current) =>
+          previous.version > current.version ? previous : current
+        );
+        return version.fullPath
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  getClosestPreview(swaggerFile: string) {
+    return this.getClosestVersion(swaggerFile, "preview");
+  }
+
+  getClosestStale(swaggerFile: string) {
+    return this.getClosestVersion(swaggerFile, "stable");
+  }
+}
+
+export class CrossVersionBreakingDetector {
+  swaggers :string[]= []
+  pr : devOps.PullRequestProperties
+  versionManager: SwaggerVersionManager = new SwaggerVersionManager()
+  constructor(pullRequest: devOps.PullRequestProperties,newSwaggers:string[]) {
+    this.swaggers = newSwaggers
+    this.pr = pullRequest
+  }
+
+  async diffOne(oldSpec: string ,newSpec : string) {
+    try {
+      await runOad(path.resolve(this.pr!.workingDir, oldSpec), newSpec);
+    }
+    catch(e) {
+      const errors = []
+      errors.push({
+        error: e,
+        old: targetHref(
+          utils.getRelativeSwaggerPathToRepo(
+            path.resolve(this.pr!.workingDir, oldSpec)
+          )
+        ),
+        new: blobHref(utils.getRelativeSwaggerPathToRepo(newSpec)),
+      });
+      appendException(errors)
+    }
+  }
+
+  async checkBreakingChangeBaseOnPreviewVersion() {
+    for (const swagger of this.swaggers) {
+      const previous = await utils.doOnTargetBranch(this.pr, async () => {
+        return this.versionManager.getClosestPreview(swagger)
+      })
+      if (previous) {
+        await this.diffOne(path.resolve(this.pr!.workingDir,previous), swagger);
+      }
+    }
+  }
+
+  async checkBreakingChangeBaseOnStableVersion() {
+    for (const swagger of this.swaggers) {
+       const previous = await utils.doOnTargetBranch(this.pr, async () => {
+         return this.versionManager.getClosestStale(swagger);
+       });
+      if (previous) {
+        await this.diffOne(path.resolve(this.pr!.workingDir,previous), swagger);
+      }
+    }
+  }
+}
+
+export async function runCrossVersionBreakingChangeDetection(type:SwaggerVersionType = "stable") {
+  const pr = await buildPRObject();;
+  console.log(`PR target branch is ${pr ? pr.targetBranch : ""}`);
+
+  let swaggersToProcess = await utils.getFilesChangedInPR(pr);
+
+  console.log("Processing swaggers:");
+  console.log(swaggersToProcess);
+
+  changeTargetBranch(pr)
+
+  let newSwaggers: unknown[] = [];
+  if (swaggersToProcess.length > 0 && pr !== undefined) {
+    newSwaggers = await utils.doOnTargetBranch(pr, async () => {
+      return swaggersToProcess.filter((s: string) => !fs.existsSync(s));
+    });
+  }
+  console.log("Finding new swaggers...");
+  console.log(newSwaggers)
+  if (pr && newSwaggers.length) {
+    const detector = new CrossVersionBreakingDetector(pr, newSwaggers as string[]);
+    if (type === "preview") {
+      detector.checkBreakingChangeBaseOnPreviewVersion()
+    }
+    else {
+      detector.checkBreakingChangeBaseOnStableVersion()
+    }
+  }
+}
+
+/**
+* NOTE: For base branch which not in targetBranches, the breaking change tool compare head branch with master branch.
+* TargetBranches is a set of branches and treat each of them like a service team master branch.
+*/
+const targetBranches = ["master", "RPSaaSDev", "RPSaaSMaster"];
+
+const buildPRObject = async ()=> {
+  /**
+     * For PR target branch not in `targetBranches`. prepare for switch to master branch,
+     * if not the switching to master below would failed
+     */
+  if (!targetBranches.includes(
+      cli.defaultConfig().env.SYSTEM_PULLREQUEST_TARGETBRANCH!
+    )
+  ) {
+    utils.setUpstreamBranch("master", "remotes/origin/master");
+  }
+  return await devOps.createPullRequestProperties(cli.defaultConfig());
+}
+
+function changeTargetBranch(pr: devOps.PullRequestProperties | undefined) {
+    /*
+   * always compare against master
+   * we still use the changed files got from the PR, because the master branch may quite different with the PR target branch
+   */
+  if (pr && !targetBranches.includes(pr.targetBranch)) {
+    (pr.targetBranch as string) = "master";
+    console.log("switch target branch to master");
+  }
+}
+
 //main function
 export async function runScript() {
   console.log(`ENV: ${JSON.stringify(process.env)}`);
   // Used to enable running script outside TravisCI for debugging
   const isRunningInTravisCI = process.env.TRAVIS === "true";
-
-  /**
-   * prepare for switch to master branch,
-   * if not the switching to master below would failed
-   */
-  if (cli.defaultConfig().env.SYSTEM_PULLREQUEST_TARGETBRANCH !== "master") {
-    utils.setUpstreamBranch("master", "remotes/origin/master");
-  }
-
   // create Azure DevOps PR properties.
-  const pr = await devOps.createPullRequestProperties(cli.defaultConfig());
-
-  // See whether script is in Travis CI context
-  console.log(`isRunningInTravisCI: ${isRunningInTravisCI}`);
-
+  const pr = await buildPRObject();
   console.log(`PR target branch is ${pr ? pr.targetBranch : ""}`);
 
   let targetBranch = utils.getTargetBranch();
@@ -198,16 +405,9 @@ export async function runScript() {
   console.log("Processing swaggers:");
   console.log(swaggersToProcess);
 
-  console.log("Finding new swaggers...");
+  changeTargetBranch(pr)
 
-  /*
-   * always compare against master
-   * we still use the changed files got from the PR, because the master branch may quite different with the PR target branch
-   */
-  if (pr && pr.targetBranch !== "master") {
-    (pr.targetBranch as string) = "master";
-    console.log("switch target branch to master");
-  }
+  console.log("Finding new swaggers...");
 
   let newSwaggers: unknown[] = [];
   if (swaggersToProcess.length > 0 && pr !== undefined) {
@@ -221,7 +421,7 @@ export async function runScript() {
   const diffFiles: stringMap.MutableStringMap<Diff[]> = {};
   const newFiles = [];
 
-  const errors: { error: Error; old: string; new: string }[] = [];
+  const errors: RuntimeError[] = [];
 
   for (const swagger of swaggersToProcess) {
     // If file does not exists in the previous commits then we ignore it as it's new file
@@ -267,20 +467,7 @@ export async function runScript() {
 
   if (errors.length > 0) {
     process.exitCode = 1;
-    console.log(`oad error log: ${errors}`);
-    const errorResult: format.MessageLine = errors.map((it) => ({
-      type: "Raw",
-      level: "Error",
-      message: it.error.stack || "",
-      time: new Date(),
-      extra: {
-        role: "Breaking change",
-        new: it.new,
-        old: it.old,
-      },
-    }));
-
-    fs.appendFileSync("pipe.log", JSON.stringify(errorResult) + "\n");
+    appendException(errors)
   }
 
   if (isRunningInTravisCI) {

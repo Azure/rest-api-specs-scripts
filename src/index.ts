@@ -3,6 +3,9 @@
 
 export { runScript as breakingChange } from './breaking-change'
 export { runScript as momentOfTruth } from './momentOfTruth'
+export { runScript as modelValidationPipeline } from './modelValidationPipeline'
+export { runScript as semanticValidationPipeline } from './semanticValidationPipeline'
+export { runCrossVersionBreakingChangeDetection } from "./breaking-change";
 
 import * as utils from './utils'
 import * as momentOfTruthUtils from './momentOfTruthUtils'
@@ -11,6 +14,7 @@ import * as modelValidation from './modelValidation'
 import * as postToGitHub from './postToGitHub'
 import * as momentOfTruthPostProcessing from './momentOfTruthPostProcessing'
 import * as semanticValidation from './semanticValidation'
+import * as lintingRpaas from "./lintingRpaas";
 
 export {
   utils,
@@ -19,5 +23,6 @@ export {
   modelValidation,
   postToGitHub,
   momentOfTruthPostProcessing,
-  semanticValidation
-}
+  semanticValidation,
+  lintingRpaas
+};

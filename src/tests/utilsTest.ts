@@ -8,14 +8,39 @@ import * as assert from "assert";
 import { utils } from "../index";
 import { createDevOpsEnv } from "./helper";
 import * as fs from "fs-extra";
+import { MarkDownEx, parse } from "@ts-common/commonmark-to-markdown";
 import {
   getTagsFromChangedFile,
   isTagExisting,
   getChangeFilesReadmeMap,
+  tagLess,
+  getDefaultTag,
 } from "../utils";
 
 @suite
 class UtilsTest {
+  @test TestTagLess() {
+    const toBeSort: [string, number][] = [
+      ["package-2019-01", 5],
+      ["package-2020-01-schema", 7],
+      ["package-2018-01", 6],
+      ["other-package-2020-01", 7],
+      ["package-2020-01-only", 7],
+      ["package-2017-01", 6],
+      ["package-2020-01-profile", 7],
+    ];
+    toBeSort.sort(utils.tagLess);
+    assert.deepEqual(toBeSort, [
+      ["package-2018-01", 6],
+      ["package-2017-01", 6],
+      ["package-2019-01", 5],
+      ["other-package-2020-01", 7],
+      ["package-2020-01-only", 7],
+      ["package-2020-01-schema", 7],
+      ["package-2020-01-profile", 7],
+    ]);
+  }
+
   @test async TestGetOpenapiTypeDataplane() {
     let openapiType = await utils.getOpenapiType(
       "./src/tests/Resource/openapi-type-data-plane-readme.md"
@@ -158,6 +183,16 @@ class UtilsTest {
       "package-2020-06"
     );
     assert.equal(result, false);
+    process.chdir(cwd);
+  }
+
+  @test TestGetDefaultTag() {
+    let cwd = process.cwd();
+    process.chdir("./src/tests/Resource");
+    const content = fs.readFileSync("specification/network/resource-manager/readme.md", { encoding: "utf8" });
+    const readme = parse(content);
+    let result = getDefaultTag(readme.markDown);
+    assert.equal(result, "package-2020-03");
     process.chdir(cwd);
   }
 

@@ -1,5 +1,80 @@
 # Changelog
 
+## 0.13.3
+
+- Fix bug: breaking change script will fail to run when target branch is not master branch , it's casued by the version of cross api version breaking change .
+
+## 0.13.2
+
+- Let unified pipeline show message of catched error for model validation and semantic validation.
+
+## 0.13.1
+
+- Upgrade oav to 0.22.7 with a fix on parsing error yaml object.
+
+## 0.13.0
+
+- Support cross API version breaking change.
+- Fix unified pipeline url show error of model validation and semantic validation.
+
+## 0.12.3
+
+- Improve the error message shows on unified pipeline for semantic validation. 
+
+## 0.12.2
+
+- Lint(RPaaS) support check branch "rpsaasmaster","rpsaasdev" .  
+
+## 0.12.1
+
+- Fix Lint(RPaaS) report issues : incorrect file name & line number. 
+
+## 0.12.0
+
+- Add Lint(RPaaS) scripts.
+
+## 0.11.2
+
+- Onboard Model Validation and Semantic Validation to unified pipeline.
+- Upgrade oav version to 0.22.3.
+
+## 0.11.1
+
+- LintDiff only retains the first 10 lines of the autorest error due to the limitation of the github comment.
+- Fix bug: LintDiff post-processing fail when no swagger changes in PR.
+
+## 0.11.0
+
+- Improve error handling for Lint Diff - separate autorest error from the whole error output & refactor the code.
+- Change the method to find related tags through changed files , let tags with 'schema','profile','only' have low prior.
+- If no swagger file changed and only readme file changed, the LintDiff would be skipped .
+
+## 0.10.6
+
+- Fix bug: LintDiff does not report error when before-lint-errors-count is bigger or equal than after-lint-errors-count.
+
+## 0.10.5
+
+- Remove old tag for Lint Diff.
+
+## 0.10.4
+
+- LintDiff support unified pipeline log format.
+
+## 0.10.3
+
+- Breaking change print error log
+- swagger file filter regex fix
+
+## 0.10.2
+
+- Set breaking change target branch whitelist [RPSaaSMaster, RPSaaSDev, master]. If target branch not in this whitelist,
+  the breaking change will compare against master.
+
+## 0.10.1
+
+- Set exitCode for semantic validation when process normally.
+
 ## 0.10.0
 
 - Breaking change support unified pipeline log format
