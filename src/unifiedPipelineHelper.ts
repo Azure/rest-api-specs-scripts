@@ -2,6 +2,9 @@
 import { LintingResultMessage , Mutable , Issue, getFile, getLine,getDocUrl, composeLintResult} from "./momentOfTruthUtils"
 import * as utils from "./utils";
 import * as fs from "fs-extra";
+import { OadMessage } from './breaking-change';
+import { crossApiVersionFilter, sameApiVersionFilter } from './breakingChangeFilter';
+import * as format from "@azure/swagger-validation-common";
 
 export class LintMsgTransformer {
   constructor() {}
@@ -21,6 +24,42 @@ export class LintMsgTransformer {
       };
     });
     return JSON.stringify(result);
+  }
+
+  OadMsgToUnifiedMsg(messages:OadMessage[]) {
+    const pipelineResultData: format.ResultMessageRecord[] = messages.map(
+      (it) => ({
+        type: "Result",
+        level: it.type as format.MessageLevel,
+        message: it.message,
+        code: it.code,
+        id: it.id,
+        docUrl: it.docUrl,
+        time: new Date(),
+        extra: {
+          mode: it.mode,
+        },
+        paths: [
+          {
+            tag: "New",
+            path: utils.blobHref(
+              utils.getGithubStyleFilePath(
+                utils.getRelativeSwaggerPathToRepo(it.new.location || "")
+              )
+            ),
+          },
+          {
+            tag: "Old",
+            path: utils.targetHref(
+              utils.getGithubStyleFilePath(
+                utils.getRelativeSwaggerPathToRepo(it.old.location || "")
+              )
+            ),
+          },
+        ],
+      })
+    );
+    return JSON.stringify(pipelineResultData);
   }
 
   rawErrorToUnifiedMsg(
@@ -102,5 +141,9 @@ export class UnifiedPipeLineStore {
         "Warning"
       )
     );
+  }
+
+  public appendOadViolation(oadResult: OadMessage[]) {
+    this.appendMsg(this.transformer.OadMsgToUnifiedMsg(oadResult))
   }
 }

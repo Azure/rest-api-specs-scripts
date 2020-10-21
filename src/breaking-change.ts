@@ -10,6 +10,8 @@ import { targetHref } from "./utils";
 import * as utils from "./utils";
 import { glob } from 'glob';
 import { getVersionFromInputFile } from './readmeUtils';
+import { crossApiVersionFilter,sameApiVersionFilter } from './breakingChangeFilter'
+import { UnifiedPipeLineStore } from './unifiedPipelineHelper';
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
@@ -34,6 +36,7 @@ export type OadMessage = {
   readonly type: string;
   readonly new: ChangeProperties;
   readonly old: ChangeProperties;
+  readonly comments?:string;
 };
 
 function iconFor(type: unknown) {
@@ -113,56 +116,15 @@ async function runOad(oldSpec: string, newSpec: string , isCrossVersion = false)
   console.log(`>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`);
 
   let result = await oad.compare(oldSpec, newSpec, { consoleLogLevel: "warn" });
-  let oadResult = JSON.parse(result) as OadMessage[];
-
-  const pipelineResultData: format.ResultMessageRecord[] = oadResult.map(
-    (it) => ({
-      type: "Result",
-      level: isCrossVersion ? "Warning" : it.type as format.MessageLevel,
-      message: it.message,
-      code: it.code,
-      id: it.id,
-      docUrl: it.docUrl,
-      time: new Date(),
-      extra: {
-        mode: it.mode,
-      },
-      paths: [
-        {
-          tag: "New",
-          path: blobHref(
-            utils.getGithubStyleFilePath(
-              utils.getRelativeSwaggerPathToRepo(it.new.location || "")
-            )
-          ),
-        },
-        {
-          tag: "Old",
-          path: targetHref(
-            utils.getGithubStyleFilePath(
-              utils.getRelativeSwaggerPathToRepo(it.old.location || "")
-            )
-          ),
-        },
-      ],
-    })
-  );
-  const pipelineResult: format.MessageLine = pipelineResultData;
-
-  console.log("Write to pipe.log");
-  fs.appendFileSync("pipe.log", JSON.stringify(pipelineResult) + "\n");
-
-  console.log(JSON.parse(result));
-
-  if (!result) {
-    return;
-  }
-
   // fix up output from OAD, it does not output valid JSON
   result = result.replace(/}\s+{/gi, "},{");
 
-  return JSON.parse(result);
+  let oadResult = JSON.parse(result) as OadMessage[];
+
+  console.log(JSON.parse(result));
+  return oadResult
 }
+
 
 type SwaggerVersionType = "preview" | "stable";
 type RuntimeError = { error: Error; old: string; new: string };
@@ -279,20 +241,30 @@ export class SwaggerVersionManager {
 }
 
 export class CrossVersionBreakingDetector {
-  swaggers :string[]= []
-  pr : devOps.PullRequestProperties
-  versionManager: SwaggerVersionManager = new SwaggerVersionManager()
-  constructor(pullRequest: devOps.PullRequestProperties,newSwaggers:string[]) {
-    this.swaggers = newSwaggers
-    this.pr = pullRequest
+  swaggers: string[] = [];
+  pr: devOps.PullRequestProperties;
+  versionManager: SwaggerVersionManager = new SwaggerVersionManager();
+  unifiedStore = new UnifiedPipeLineStore("");
+  constructor(
+    pullRequest: devOps.PullRequestProperties,
+    newSwaggers: string[]
+  ) {
+    this.swaggers = newSwaggers;
+    this.pr = pullRequest;
   }
 
-  async diffOne(oldSpec: string ,newSpec : string) {
+  async diffOne(oldSpec: string, newSpec: string) {
     try {
-      await runOad(path.resolve(this.pr!.workingDir, oldSpec), newSpec);
-    }
-    catch(e) {
-      const errors = []
+      const oadResult = await runOad(
+        path.resolve(this.pr!.workingDir, oldSpec),
+        newSpec
+      );
+      const filterResult = crossApiVersionFilter(
+        getBreakingChangeConfigPath(this.pr),oadResult
+      );
+      this.unifiedStore.appendOadViolation(filterResult);
+    } catch (e) {
+      const errors = [];
       errors.push({
         error: e,
         old: targetHref(
@@ -302,28 +274,34 @@ export class CrossVersionBreakingDetector {
         ),
         new: blobHref(utils.getRelativeSwaggerPathToRepo(newSpec)),
       });
-      appendException(errors)
+      appendException(errors);
     }
   }
 
   async checkBreakingChangeBaseOnPreviewVersion() {
     for (const swagger of this.swaggers) {
       const previous = await utils.doOnTargetBranch(this.pr, async () => {
-        return this.versionManager.getClosestPreview(swagger)
-      })
+        return this.versionManager.getClosestPreview(swagger);
+      });
       if (previous) {
-        await this.diffOne(path.resolve(this.pr!.workingDir,previous), swagger);
+        await this.diffOne(
+          path.resolve(this.pr!.workingDir, previous),
+          swagger
+        );
       }
     }
   }
 
   async checkBreakingChangeBaseOnStableVersion() {
     for (const swagger of this.swaggers) {
-       const previous = await utils.doOnTargetBranch(this.pr, async () => {
-         return this.versionManager.getClosestStale(swagger);
-       });
+      const previous = await utils.doOnTargetBranch(this.pr, async () => {
+        return this.versionManager.getClosestStale(swagger);
+      });
       if (previous) {
-        await this.diffOne(path.resolve(this.pr!.workingDir,previous), swagger);
+        await this.diffOne(
+          path.resolve(this.pr!.workingDir, previous),
+          swagger
+        );
       }
     }
   }
@@ -390,6 +368,18 @@ function changeTargetBranch(pr: devOps.PullRequestProperties | undefined) {
   }
 }
 
+function getBreakingChangeConfigPath(
+  pr: devOps.PullRequestProperties | undefined
+){
+  const breakingChangeRulesConfigPath = ".github/breakingChangeRules.yaml";
+  if (pr && pr.targetBranch === "master") {
+    return  path.resolve(pr!.workingDir, breakingChangeRulesConfigPath)
+  }
+  else {
+    return breakingChangeRulesConfigPath
+  }
+}
+
 //main function
 export async function runScript() {
   console.log(`ENV: ${JSON.stringify(process.env)}`);
@@ -422,7 +412,7 @@ export async function runScript() {
   const newFiles = [];
 
   const errors: RuntimeError[] = [];
-
+  const unifiedStore = new UnifiedPipeLineStore("")
   for (const swagger of swaggersToProcess) {
     // If file does not exists in the previous commits then we ignore it as it's new file
     if (newSwaggers.includes(swagger)) {
@@ -437,6 +427,10 @@ export async function runScript() {
         swagger // Since the swagger resolving  will be done at the oad , here to ensure the position output is consistent with the origin swagger,do not use the resolved swagger
       );
       if (diffs) {
+        if (pr && pr.targetBranch === "master") {
+          const filterResult = sameApiVersionFilter(getBreakingChangeConfigPath(pr),diffs);
+          unifiedStore.appendOadViolation(filterResult);
+        }
         diffFiles[swagger] = diffs;
         for (const diff of diffs) {
           if (diff["type"] === "Error") {
