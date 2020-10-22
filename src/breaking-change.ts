@@ -125,7 +125,6 @@ async function runOad(oldSpec: string, newSpec: string , isCrossVersion = false)
   return oadResult
 }
 
-
 type SwaggerVersionType = "preview" | "stable";
 type RuntimeError = { error: Error; old: string; new: string };
 type SwaggerMetaData = {
@@ -431,12 +430,10 @@ export async function runScript() {
         swagger // Since the swagger resolving  will be done at the oad , here to ensure the position output is consistent with the origin swagger,do not use the resolved swagger
       );
       if (diffs) {
-        if (pr && pr.targetBranch === "master") {
-          const filterResult = sameApiVersionFilter(getBreakingChangeConfigPath(pr),diffs);
-          unifiedStore.appendOadViolation(filterResult);
-        }
-        diffFiles[swagger] = diffs;
-        for (const diff of diffs) {
+        const filterDiffs = sameApiVersionFilter(getBreakingChangeConfigPath(pr),diffs);
+        unifiedStore.appendOadViolation(filterDiffs);
+        diffFiles[swagger] = filterDiffs;
+        for (const diff of filterDiffs) {
           if (diff["type"] === "Error") {
             if (errorCnt === 0) {
               console.log(

@@ -34,7 +34,7 @@ class LocalRuleConfig implements RuleConfig<BreakingChangeRule> {
       }
   }
   getConfig(sectionName: string): Map<string, BreakingChangeRule> | undefined {
-    if (this.AllConfig ) {
+    if (this.AllConfig) {
       try {
         const sectionConfig = new Map<string, BreakingChangeRule>();
         const rulesIndex = this.AllConfig.findIndex(v => v.Scenario === sectionName);
@@ -118,7 +118,7 @@ class BreakingChangeFilter {
     if (!ruleMap) {
         return messages
     }
-    console.log("begin breaking change filter")
+    console.log("---- begin breaking change filter ----")
     const result: OadMessage[] = [];
     for (const message of messages) {
       const ruleId = message.id.toLowerCase();
@@ -135,6 +135,7 @@ class BreakingChangeFilter {
         }
       }
     }
+    console.log("----- end breaking change filter ----");
     console.log(result)
     return result;
   }
@@ -156,13 +157,13 @@ export const crossApiVersionFilter = function (
   configPath: string,
   messages: OadMessage[]
 ) {
-  const ruleConfig = buildRuleConfig(configPath) 
-  if (!ruleConfig) {
-      return messages
-  }
+    const ruleConfig = buildRuleConfig(configPath) 
+    if (!ruleConfig) {
+        return messages
+    }
     return new BreakingChangeFilter(ruleConfig)
-      .setSection("CrossVersion")
-      .filter(messages);
+        .setSection("CrossVersion")
+        .filter(messages);
 };
 
 export const sameApiVersionFilter = function (
@@ -173,7 +174,6 @@ export const sameApiVersionFilter = function (
  if (!ruleConfig) {
    return messages;
  }
-
   return new BreakingChangeFilter(ruleConfig)
     .setSection("SameVersion")
     .filter(messages);
