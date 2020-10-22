@@ -125,9 +125,9 @@ class BreakingChangeFilter {
       if (ruleMap && ruleMap.has(ruleId)) {
         const rule = ruleMap.get(ruleId);
         let postMessage : OadMessage | undefined = message
-        for (const key of this.HandlersMap.keys()) {
+        for (const [key,handler] of this.HandlersMap.entries()) {
           if (rule && Object.keys(rule).includes(key) && postMessage) {
-            postMessage = this.HandlersMap.get(key)?.process(postMessage, rule);
+            postMessage = handler.process(postMessage, rule);
           }
         }
         if (postMessage) {
