@@ -371,7 +371,11 @@ function changeTargetBranch(pr: devOps.PullRequestProperties | undefined) {
 function getBreakingChangeConfigPath(
   pr: devOps.PullRequestProperties | undefined
 ){
-  const breakingChangeRulesConfigPath = ".github/breakingChangeRules.yaml";
+  let breakingChangeRulesConfigPath = ".github/breakingChangeRules.yaml";
+  if (process.env.BREAKING_CHANGE_RULE_CONFIG_PATH) {
+    breakingChangeRulesConfigPath =
+      process.env.BREAKING_CHANGE_RULE_CONFIG_PATH;
+  }
   if (pr && pr.targetBranch === "master") {
     return  path.resolve(pr!.workingDir, breakingChangeRulesConfigPath)
   }

@@ -68,7 +68,7 @@ class BreakingChangeFilterTest {
         comments: "Add some comments here ",
       },
     ];
-    const result = filterCrossApiVersion(
+    const result = crossApiVersionFilter(
       "./breakingChangeRules.yaml",
       messages
     );

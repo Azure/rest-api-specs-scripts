@@ -1,5 +1,5 @@
 ---
-- Scenario: "CrossVersion(Preview)"
+- Scenario: "CrossVersion"
   rules:
     - id: "1034"
       name: "AddedRequiredProperty"
