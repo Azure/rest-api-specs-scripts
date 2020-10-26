@@ -3,10 +3,11 @@ import { LintingResultMessage , Mutable , Issue, getFile, getLine,getDocUrl, com
 import * as utils from "./utils";
 import * as fs from "fs-extra";
 import { OadMessage } from './breaking-change';
-import { crossApiVersionFilter, sameApiVersionFilter } from './breakingChangeFilter';
 import * as format from "@azure/swagger-validation-common";
+import { devOps } from '@azure/avocado';
+import { PullRequestProperties } from '@azure/avocado/dist/dev-ops';
 
-export class LintMsgTransformer {
+export class MsgTransformer {
   constructor() {}
 
   lintMsgToUnifiedMsg(msg: LintingResultMessage[]) {
@@ -86,9 +87,9 @@ export class LintMsgTransformer {
 export class UnifiedPipeLineStore {
   logFile = "pipe.log";
   readme: string;
-  transformer: LintMsgTransformer;
+  transformer: MsgTransformer;
   constructor(readme: string) {
-    this.transformer = new LintMsgTransformer();
+    this.transformer = new MsgTransformer();
     this.readme = readme;
   }
 
@@ -144,6 +145,87 @@ export class UnifiedPipeLineStore {
   }
 
   public appendOadViolation(oadResult: OadMessage[]) {
-    this.appendMsg(this.transformer.OadMsgToUnifiedMsg(oadResult))
+    this.appendMsg(this.transformer.OadMsgToUnifiedMsg(oadResult));
+  }
+
+  public appendMarkDown(markDown: string) {
+    this.appendMsg(markDown);
+  }
+}
+
+
+
+/**
+ * 
+ *  - Linting on []source branch
+ *   readme - tag
+ *  - linting on target branch
+ *   readme - tag
+ */
+
+
+class LintTrace {
+  private traces = {
+    source: new Map<string, string[]>(),
+    target: new Map<string, string[]>(),
+  };
+  add(readmeRelatedPath: string, tag: string, before: boolean) {
+    const targetMap = before ? this.traces.source : this.traces.target;
+
+    if (targetMap.has(readmeRelatedPath)) {
+      const tags = targetMap.get(readmeRelatedPath);
+      if (tags) {
+        tags.push(tag);
+      }
+    } else {
+      targetMap.set(readmeRelatedPath, [tag]);
+    }
+  }
+
+  genMarkDown(pr: PullRequestProperties) {
+    let content = "- Lint(merge branch)";
+    for (const [key, value] of this.traces.source.entries()) {
+      content += "</br>";
+      content += `${key}, tags:${value.join(",")}`;
+      content += "</br>";
+    }
+    content += `- Lint (${pr.targetBranch} branch)`;
+    for (const [key, value] of this.traces.source.entries()) {
+      content += "</br>";
+      content += `[${key
+        .split("/")
+        .slice(-3)
+        .join("/")}](${key}), tags:${value.join(",")}`;
+      content += "</br>";
+    }
+    return content;
+  }
+
+  save(pr: PullRequestProperties) {
+    
+  }
+}
+
+
+export class OadTrace {
+  private traces : { old:string, new:string} []  = [];
+  add(oldSwagger : string, newSwagger : string) {
+    this.traces.push({ old:oldSwagger, new :newSwagger });
+    return this
+  }
+
+  genMarkDown() {
+    let content = "- Lint(merge branch)";
+    content += "```"
+    for (const value of this.traces.values()) {
+      content += "</br>";
+      content += `[${value.old}]() <---> [${value.new}]()`;
+      content += "</br>";
+    }
+    content += "```";
+    return content;
+  }
+  save() {
+    return new UnifiedPipeLineStore("").appendMarkDown(this.genMarkDown())
   }
 }

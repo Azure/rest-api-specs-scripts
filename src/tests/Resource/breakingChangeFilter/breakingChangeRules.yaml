@@ -1,9 +1,0 @@
----
-- Scenario: "CrossVersion"
-  rules:
-    - id: "1034"
-      name: "AddedRequiredProperty"
-      severity:
-        original: "info|error" 
-        new: "info"
-      comments: "Add some comments here "

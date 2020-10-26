@@ -10,8 +10,8 @@ import { targetHref } from "./utils";
 import * as utils from "./utils";
 import { glob } from 'glob';
 import { getVersionFromInputFile } from './readmeUtils';
-import { crossApiVersionFilter,sameApiVersionFilter } from './breakingChangeFilter'
-import { UnifiedPipeLineStore } from './unifiedPipelineHelper';
+import { ruleManager } from './breakingChangeRuleManager'
+import { UnifiedPipeLineStore, OadTrace } from './unifiedPipelineHelper';
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
@@ -36,7 +36,6 @@ export type OadMessage = {
   readonly type: string;
   readonly new: ChangeProperties;
   readonly old: ChangeProperties;
-  readonly comments?:string;
 };
 
 function iconFor(type: unknown) {
@@ -87,7 +86,7 @@ function blobHref(file: string) {
  *
  * @param newSpec Path to the new swagger specification file.
  */
-async function runOad(oldSpec: string, newSpec: string , isCrossVersion = false) {
+async function runOad(oldSpec: string, newSpec: string) {
   if (
     oldSpec === null ||
     oldSpec === undefined ||
@@ -120,6 +119,8 @@ async function runOad(oldSpec: string, newSpec: string , isCrossVersion = false)
   result = result.replace(/}\s+{/gi, "},{");
 
   let oadResult = JSON.parse(result) as OadMessage[];
+  const oadTrace = new OadTrace()
+  oadTrace.add(oldSpec,newSpec).save()
 
   console.log(JSON.parse(result));
   return oadResult
@@ -258,8 +259,9 @@ export class CrossVersionBreakingDetector {
         path.resolve(this.pr!.workingDir, oldSpec),
         newSpec
       );
-      const filterResult = crossApiVersionFilter(
-        getBreakingChangeConfigPath(this.pr),oadResult
+      const filterResult = ruleManager.handleCrossApiVersion(
+        ruleManager.getBreakingChangeConfigPath(this.pr),
+        oadResult
       );
       this.unifiedStore.appendOadViolation(filterResult);
     } catch (e) {
@@ -333,6 +335,7 @@ export async function runCrossVersionBreakingChangeDetection(type:SwaggerVersion
     else {
       detector.checkBreakingChangeBaseOnStableVersion()
     }
+    ruleManager.addBreakingChangeLabels()
   }
 }
 
@@ -367,21 +370,6 @@ function changeTargetBranch(pr: devOps.PullRequestProperties | undefined) {
   }
 }
 
-function getBreakingChangeConfigPath(
-  pr: devOps.PullRequestProperties | undefined
-){
-  let breakingChangeRulesConfigPath = ".github/breakingChangeRules.yaml";
-  if (process.env.BREAKING_CHANGE_RULE_CONFIG_PATH) {
-    breakingChangeRulesConfigPath =
-      process.env.BREAKING_CHANGE_RULE_CONFIG_PATH;
-  }
-  if (pr && pr.targetBranch === "master") {
-    return  path.resolve(pr!.workingDir, breakingChangeRulesConfigPath)
-  }
-  else {
-    return breakingChangeRulesConfigPath
-  }
-}
 
 //main function
 export async function runScript() {
@@ -430,7 +418,7 @@ export async function runScript() {
         swagger // Since the swagger resolving  will be done at the oad , here to ensure the position output is consistent with the origin swagger,do not use the resolved swagger
       );
       if (diffs) {
-        const filterDiffs = sameApiVersionFilter(getBreakingChangeConfigPath(pr),diffs);
+        const filterDiffs = ruleManager.handleSameApiVersion(ruleManager.getBreakingChangeConfigPath(pr),diffs);
         unifiedStore.appendOadViolation(filterDiffs);
         diffFiles[swagger] = filterDiffs;
         for (const diff of filterDiffs) {

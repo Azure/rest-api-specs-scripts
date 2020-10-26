@@ -45,7 +45,7 @@
     "@azure/avocado": "^0.4.1",
     "@azure/oad": "^0.8.1",
     "@ts-common/string-map": "^0.3.0",
-    "@azure/swagger-validation-common": "^0.0.3",
+    "@azure/swagger-validation-common": "^0.1.2",
     "commonmark": "0.27.0",
     "fs-extra": "^7.0.1",
     "glob": "^7.1.3",

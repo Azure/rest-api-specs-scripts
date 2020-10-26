@@ -1,0 +1,15 @@
+---
+- Scenario: "CrossVersion"
+  description: "this rule is a mapping between oad rules and breaking change rules"
+  rules:
+    - appliedTo: "1034"
+      override:
+        code: "Added Required Property"
+        type:
+          - from: "Error" 
+            to: "info"
+        message: "override message"
+
+      directive:
+        addingLabels:
+          - NewApiVersionRequired

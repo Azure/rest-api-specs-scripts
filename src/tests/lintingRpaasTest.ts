@@ -11,7 +11,7 @@ import * as asyncIt from "@ts-common/async-iterator";
 import _ from 'lodash';
 import { LintingResultMessage } from '../momentOfTruthUtils';
 import { ReadmeParser } from "../readmeUtils"
-import { LintMsgTransformer } from "../unifiedPipelineHelper";
+import { MsgTransformer } from "../unifiedPipelineHelper";
 
 const sinon = require("sinon");
 let cwd = process.cwd();
@@ -30,7 +30,7 @@ class LintingRpaasTest {
 
   @test TestLintMsgTransformer() {
     process.chdir("./src/tests/Resource/lintingRpaas");
-    const transformer = new LintMsgTransformer();
+    const transformer = new MsgTransformer();
     const testMsg = [
       ({
         type: "Error",
