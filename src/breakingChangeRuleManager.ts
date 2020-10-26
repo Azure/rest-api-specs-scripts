@@ -147,6 +147,9 @@ class OadMessageEngine {
           result.push(postMessage)
         }
       }
+      else {
+        result.push(message);
+      }
     }
     console.log("----- end breaking change filter ----");
     console.log(result)
