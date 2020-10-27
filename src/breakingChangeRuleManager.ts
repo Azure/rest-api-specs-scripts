@@ -135,7 +135,8 @@ class OadMessageEngine {
     const result: OadMessage[] = [];
     for (const message of messages) {
       const ruleId = message.id.toLowerCase();
-      if (ruleMap && ruleMap.has(ruleId)) {
+      const ruleCode = message.code.toLowerCase();
+      if (ruleMap && (ruleMap.has(ruleId) || ruleMap.has(ruleCode))) {
         const rule = ruleMap.get(ruleId);
         let postMessage : OadMessage | undefined = message
         for (const [key,handler] of this.HandlersMap.entries()) {
