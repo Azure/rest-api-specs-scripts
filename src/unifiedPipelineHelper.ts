@@ -28,7 +28,7 @@ export class MsgTransformer {
     return JSON.stringify(result);
   }
 
-  OadMsgToUnifiedMsg(messages:OadMessage[]) {
+  OadMsgToUnifiedMsg(messages: OadMessage[]) {
     const pipelineResultData: format.ResultMessageRecord[] = messages.map(
       (it) => ({
         type: "Result",
@@ -80,6 +80,20 @@ export class MsgTransformer {
         details: errorMsg,
       },
     };
+    return JSON.stringify(result);
+  }
+
+  toMarkDownMsg(
+    errorMsg: string,
+    levelType = "Error"
+  ) {
+    const result = {
+      type: "Markdown",
+      mode:"append",
+      level: levelType,
+      message: errorMsg,
+      time: new Date(),
+    } as format.MarkdownMessageRecord;
     return JSON.stringify(result);
   }
 } 
@@ -150,7 +164,7 @@ export class UnifiedPipeLineStore {
   }
 
   public appendMarkDown(markDown: string) {
-    this.appendMsg(markDown);
+    this.appendMsg(this.transformer.toMarkDownMsg(markDown));
   }
 }
 
