@@ -119,7 +119,7 @@ async function runOad(oldSpec: string, newSpec: string) {
   result = result.replace(/}\s+{/gi, "},{");
 
   let oadResult = JSON.parse(result) as OadMessage[];
-  oadTracer.add(oldSpec,newSpec)
+  oadTracer.add(utils.getRelativeSwaggerPathToRepo(oldSpec),newSpec)
 
   console.log(JSON.parse(result));
   return oadResult
@@ -331,6 +331,7 @@ export async function runCrossVersionBreakingChangeDetection(type:SwaggerVersion
     else {
       detector.checkBreakingChangeBaseOnStableVersion()
     }
+    oadTracer.save()
     ruleManager.addBreakingChangeLabels()
   }
 }
