@@ -162,7 +162,7 @@ class BreakingChangeRuleManager {
 
     private getBreakingChangeConfigPath(
   ){
-    let breakingChangeRulesConfigPath = ".azure-pipelines/BreakingChangeRules.yml";
+    let breakingChangeRulesConfigPath = "config/BreakingChangeRules.yml";
     if (process.env.BREAKING_CHANGE_RULE_CONFIG_PATH) {
       breakingChangeRulesConfigPath =
         process.env.BREAKING_CHANGE_RULE_CONFIG_PATH;
