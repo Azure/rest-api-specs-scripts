@@ -6,6 +6,7 @@ import { OadMessage } from './breaking-change';
 import * as format from "@azure/swagger-validation-common";
 import { devOps } from '@azure/avocado';
 import { PullRequestProperties } from '@azure/avocado/dist/dev-ops';
+const packageJson = require("../package.json");
 
 export class MsgTransformer {
   constructor() {}
@@ -202,30 +203,36 @@ class LintTrace {
   }
 
   save(pr: PullRequestProperties) {
-    
+
   }
 }
 
 
-export class OadTrace {
-  private traces : { old:string, new:string} []  = [];
-  add(oldSwagger : string, newSwagger : string) {
-    this.traces.push({ old:oldSwagger, new :newSwagger });
-    return this
+class OadTrace {
+  private traces: { old: string; new: string }[] = [];
+  add(oldSwagger: string, newSwagger: string) {
+    this.traces.push({ old: oldSwagger, new: newSwagger });
+    return this;
   }
 
   genMarkDown() {
-    let content = "- Lint(merge branch)";
-    content += "```"
+    const oadVersion = packageJson.dependencies["@azure/oad"].replace(
+      /[\^~]/,
+      ""
+    );
+    let content = `<ul><li>Compared Swaggers (Based on Oad <a href="https://www.npmjs.com/package/@azure/oad/v/${oadVersion}" target="_blank">v${oadVersion}</a>)<ul>`;
     for (const value of this.traces.values()) {
-      content += "</br>";
-      content += `[${value.old}]() <---> [${value.new}]()`;
-      content += "</br>";
+      content += "<li>";
+      content += `original:[${value.old.split("/").slice(-3).join("/")}](${utils.targetHref(value.old)
+      }) <---> new:[${value.new.split("/").slice(-3).join("/")}](${utils.blobHref(value.new)})`;
+      content += "</li>";
     }
-    content += "```";
+    content += `</lu></li></ul>`;
     return content;
   }
   save() {
-    return new UnifiedPipeLineStore("").appendMarkDown(this.genMarkDown())
+    return new UnifiedPipeLineStore("").appendMarkDown(this.genMarkDown());
   }
 }
+
+export const oadTracer = new OadTrace()

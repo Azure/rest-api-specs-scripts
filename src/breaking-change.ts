@@ -11,7 +11,7 @@ import * as utils from "./utils";
 import { glob } from 'glob';
 import { getVersionFromInputFile } from './readmeUtils';
 import { ruleManager } from './breakingChangeRuleManager'
-import { UnifiedPipeLineStore, OadTrace } from './unifiedPipelineHelper';
+import { UnifiedPipeLineStore, oadTracer } from './unifiedPipelineHelper';
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
@@ -119,8 +119,7 @@ async function runOad(oldSpec: string, newSpec: string) {
   result = result.replace(/}\s+{/gi, "},{");
 
   let oadResult = JSON.parse(result) as OadMessage[];
-  const oadTrace = new OadTrace()
-  oadTrace.add(oldSpec,newSpec).save()
+  oadTracer.add(oldSpec,newSpec)
 
   console.log(JSON.parse(result));
   return oadResult
@@ -446,6 +445,7 @@ export async function runScript() {
         new: blobHref(utils.getRelativeSwaggerPathToRepo(swagger)),
       });
     }
+    oadTracer.save()
   }
 
   if (errors.length > 0) {
