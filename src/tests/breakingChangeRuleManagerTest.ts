@@ -9,7 +9,9 @@ import {
 @suite
 class BreakingChangeRuleTest {
   cwd = process.cwd();
-  before() {}
+  before() {
+    process.env.BREAKING_CHANGE_RULE_CONFIG_PATH = "./breakingChangeRules.yaml";
+  }
 
   @test testcrossApiVersion() {
     process.chdir("./src/tests/Resource/breakingChangeRule");
@@ -64,10 +66,7 @@ class BreakingChangeRuleTest {
         mode: "Addition",
       },
     ];
-    const result = ruleManager.handleCrossApiVersion(
-      "./breakingChangeRules.yaml",
-      messages
-    );
+    const result = ruleManager.handleCrossApiVersion(messages);
     assert.deepEqual(result, expected);
   }
 

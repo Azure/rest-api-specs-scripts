@@ -160,24 +160,19 @@ class OadMessageEngine {
 
 class BreakingChangeRuleManager {
 
-    public getBreakingChangeConfigPath(
-    pr: devOps.PullRequestProperties | undefined
+    private getBreakingChangeConfigPath(
   ){
     let breakingChangeRulesConfigPath = ".azure-pipelines/BreakingChangeRules.yml";
     if (process.env.BREAKING_CHANGE_RULE_CONFIG_PATH) {
       breakingChangeRulesConfigPath =
         process.env.BREAKING_CHANGE_RULE_CONFIG_PATH;
     }
-    if (pr && pr.targetBranch === "master") {
-      return  path.resolve(pr!.workingDir, breakingChangeRulesConfigPath)
-    }
-    else {
-      return breakingChangeRulesConfigPath
-    }
+    return breakingChangeRulesConfigPath
   }
 
 
-  private buildRuleConfig(configPath: string) {
+  private buildRuleConfig() {
+    const configPath = this.getBreakingChangeConfigPath()
     if (!fs.existsSync(configPath)) {
       console.log(`Config file:${configPath} was not existing.`);
       return undefined;
@@ -189,8 +184,8 @@ class BreakingChangeRuleManager {
     return config;
   }
 
-  public handleCrossApiVersion(configPath: string, messages: OadMessage[]) {
-    const ruleConfig = this.buildRuleConfig(configPath);
+  public handleCrossApiVersion(messages: OadMessage[]) {
+    const ruleConfig = this.buildRuleConfig();
     if (!ruleConfig) {
       return messages;
     }
@@ -200,10 +195,9 @@ class BreakingChangeRuleManager {
   }
 
   public handleSameApiVersion (
-    configPath: string,
     messages: OadMessage[]
   ) {
-    const ruleConfig = this.buildRuleConfig(configPath);
+    const ruleConfig = this.buildRuleConfig();
     if (!ruleConfig) {
       return messages;
     }

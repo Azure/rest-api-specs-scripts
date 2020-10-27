@@ -258,10 +258,7 @@ export class CrossVersionBreakingDetector {
         path.resolve(this.pr!.workingDir, oldSpec),
         newSpec
       );
-      const filterResult = ruleManager.handleCrossApiVersion(
-        ruleManager.getBreakingChangeConfigPath(this.pr),
-        oadResult
-      );
+      const filterResult = ruleManager.handleCrossApiVersion(oadResult);
       this.unifiedStore.appendOadViolation(filterResult);
     } catch (e) {
       const errors = [];
@@ -417,7 +414,7 @@ export async function runScript() {
         swagger // Since the swagger resolving  will be done at the oad , here to ensure the position output is consistent with the origin swagger,do not use the resolved swagger
       );
       if (diffs) {
-        const filterDiffs = ruleManager.handleSameApiVersion(ruleManager.getBreakingChangeConfigPath(pr),diffs);
+        const filterDiffs = ruleManager.handleSameApiVersion(diffs);
         unifiedStore.appendOadViolation(filterDiffs);
         diffFiles[swagger] = filterDiffs;
         for (const diff of filterDiffs) {
