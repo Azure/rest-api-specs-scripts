@@ -10,8 +10,8 @@ type OverrideBody = string | {from:string,to:string}[]
 
 interface BreakingChangeRule {
   appliedTo: string;
-  override: { code?: OverrideBody , message?:OverrideBody , type?:OverrideBody};
-  directive: {addingLabels:string[]}
+  override?: { code?: OverrideBody , message?:OverrideBody , type?:OverrideBody};
+  directive?: {addingLabels:string[]}
 }
 
 interface BreakingChangeScenario {
@@ -162,7 +162,7 @@ class BreakingChangeRuleManager {
     public getBreakingChangeConfigPath(
     pr: devOps.PullRequestProperties | undefined
   ){
-    let breakingChangeRulesConfigPath = ".github/breakingChangeRules.yaml";
+    let breakingChangeRulesConfigPath = ".azure-pipelines/BreakingChangeRules.yaml";
     if (process.env.BREAKING_CHANGE_RULE_CONFIG_PATH) {
       breakingChangeRulesConfigPath =
         process.env.BREAKING_CHANGE_RULE_CONFIG_PATH;
