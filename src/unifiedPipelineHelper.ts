@@ -169,6 +169,15 @@ export class UnifiedPipeLineStore {
 }
 
 
+class AbstractToolTrace {
+  genMarkDown() {
+    return ""
+  }
+  save() {
+    return new UnifiedPipeLineStore("").appendMarkDown(this.genMarkDown());
+  }
+}
+
 
 /**
  * 
@@ -179,13 +188,13 @@ export class UnifiedPipeLineStore {
  */
 
 
-class LintTrace {
+class LintTrace extends AbstractToolTrace {
   private traces = {
     source: new Map<string, string[]>(),
     target: new Map<string, string[]>(),
   };
-  add(readmeRelatedPath: string, tag: string, before: boolean) {
-    const targetMap = before ? this.traces.source : this.traces.target;
+  add(readmeRelatedPath: string, tag: string, isBefore: boolean) {
+    const targetMap = isBefore ? this.traces.source : this.traces.target;
 
     if (targetMap.has(readmeRelatedPath)) {
       const tags = targetMap.get(readmeRelatedPath);
@@ -197,32 +206,45 @@ class LintTrace {
     }
   }
 
-  genMarkDown(pr: PullRequestProperties) {
-    let content = "- Lint(merge branch)";
-    for (const [key, value] of this.traces.source.entries()) {
-      content += "</br>";
-      content += `${key}, tags:${value.join(",")}`;
-      content += "</br>";
+  genMarkDown() {
+    const classicLintVersion = process.env["CLASSIC_LINT_VERSION"];
+    const lintVersion = process.env["LINT_VERSION"];
+    let content = "<ul>";
+    for (const [beforeAfter, readmeTags] of Object.entries(this.traces)) {
+      content += `<li>
+        Linted configuring files (Based on ${
+          beforeAfter === "before" ? "source" : "target"
+        } branch, 
+        openapi-validator <a href="https://www.npmjs.com/package/@microsoft.azure/openapi-validator/v/${lintVersion}"
+        target="_blank"> v${lintVersion} </a>, classic-openapi-validator <a href="https://www.npmjs.com/package/@microsoft.azure/openapi-validator/v/${classicLintVersion}"
+        target="_blank"> v${classicLintVersion} </a>)
+        <ul> `;
+      for (const [readme, tags] of readmeTags.entries()) {
+        const url =
+          beforeAfter === "before"
+            ? utils.targetHref(readme)
+            : utils.blobHref(readme);
+        const showReadme = readme
+          .split(/[/|\\]/)
+          .slice(-3)
+          .join("/");
+        for (const tag of tags) {
+          content += "<li>";
+          content += `<a href="${url}"
+          target="_blank">${showReadme}</a> tag:<a href="${url}${tag ? "#tag-":""}${tag}"
+          target="_blank">${tag ? tag : "default"}</a>`;
+          content += "</li>";
+        }
+      }
+      content += `</lu></li>`;
     }
-    content += `- Lint (${pr.targetBranch} branch)`;
-    for (const [key, value] of this.traces.source.entries()) {
-      content += "</br>";
-      content += `[${key
-        .split("/")
-        .slice(-3)
-        .join("/")}](${key}), tags:${value.join(",")}`;
-      content += "</br>";
-    }
+    content += "</ul>";
     return content;
-  }
-
-  save(pr: PullRequestProperties) {
-
   }
 }
 
 
-class OadTrace {
+class OadTrace extends AbstractToolTrace {
   private traces: { old: string; new: string }[] = [];
   add(oldSwagger: string, newSwagger: string) {
     this.traces.push({ old: oldSwagger, new: newSwagger });
@@ -244,9 +266,8 @@ class OadTrace {
     content += `</lu></li></ul>`;
     return content;
   }
-  save() {
-    return new UnifiedPipeLineStore("").appendMarkDown(this.genMarkDown());
-  }
+ 
 }
 
-export const oadTracer = new OadTrace()
+export const oadTracer = new OadTrace();
+export const lintTracer = new LintTrace();
