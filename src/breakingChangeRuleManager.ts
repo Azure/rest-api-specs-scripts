@@ -163,7 +163,7 @@ class BreakingChangeRuleManager {
     public getBreakingChangeConfigPath(
     pr: devOps.PullRequestProperties | undefined
   ){
-    let breakingChangeRulesConfigPath = ".azure-pipelines/BreakingChangeRules.yaml";
+    let breakingChangeRulesConfigPath = ".azure-pipelines/BreakingChangeRules.yml";
     if (process.env.BREAKING_CHANGE_RULE_CONFIG_PATH) {
       breakingChangeRulesConfigPath =
         process.env.BREAKING_CHANGE_RULE_CONFIG_PATH;
