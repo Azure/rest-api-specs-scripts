@@ -179,15 +179,7 @@ class AbstractToolTrace {
 }
 
 
-/**
- * 
- *  - Linting on []source branch
- *   readme - tag
- *  - linting on target branch
- *   readme - tag
- */
-
-
+// record lint invoking trace
 class LintTrace extends AbstractToolTrace {
   private traces = {
     source: new Map<string, string[]>(),
@@ -207,21 +199,16 @@ class LintTrace extends AbstractToolTrace {
   }
 
   genMarkDown() {
-    const classicLintVersion = process.env["CLASSIC_LINT_VERSION"];
-    const lintVersion = process.env["LINT_VERSION"];
+    const classicLintVersion = process.env["CLASSIC_LINT_VERSION"] ? process.env["CLASSIC_LINT_VERSION"] : "1.0.14";
+    const lintVersion = process.env["LINT_VERSION"] ?process.env["LINT_VERSION"] : "1.0.4";
     let content = "<ul>";
     for (const [beforeAfter, readmeTags] of Object.entries(this.traces)) {
-      content += `<li>
-        Linted configuring files (Based on ${
-          beforeAfter === "before" ? "source" : "target"
-        } branch, 
-        openapi-validator <a href="https://www.npmjs.com/package/@microsoft.azure/openapi-validator/v/${lintVersion}"
-        target="_blank"> v${lintVersion} </a>, classic-openapi-validator <a href="https://www.npmjs.com/package/@microsoft.azure/openapi-validator/v/${classicLintVersion}"
-        target="_blank"> v${classicLintVersion} </a>)
-        <ul> `;
+      content += `<li>`
+      content += `Linted configuring files (Based on ${beforeAfter === "source" ? "source" : "target"} branch, openapi-validator <a href="https://www.npmjs.com/package/@microsoft.azure/openapi-validator/v/${lintVersion}" target="_blank"> v${lintVersion} </a>, classic-openapi-validator <a href="https://www.npmjs.com/package/@microsoft.azure/openapi-validator/v/${classicLintVersion}" target="_blank"> v${classicLintVersion} </a>)`
+      content += `<ul> `;
       for (const [readme, tags] of readmeTags.entries()) {
         const url =
-          beforeAfter === "before"
+          beforeAfter === "source"
             ? utils.targetHref(readme)
             : utils.blobHref(readme);
         const showReadme = readme
@@ -230,20 +217,18 @@ class LintTrace extends AbstractToolTrace {
           .join("/");
         for (const tag of tags) {
           content += "<li>";
-          content += `<a href="${url}"
-          target="_blank">${showReadme}</a> tag:<a href="${url}${tag ? "#tag-":""}${tag}"
-          target="_blank">${tag ? tag : "default"}</a>`;
+          content += `<a href="${url}"target="_blank">${showReadme}</a> tag:<a href="${url}${tag ? "#tag-":""}${tag}" target="_blank">${tag ? tag : "default"}</a>`;
           content += "</li>";
         }
       }
-      content += `</lu></li>`;
+      content += `</ul></li>`;
     }
     content += "</ul>";
     return content;
   }
 }
 
-
+// record oad invoking trace
 class OadTrace extends AbstractToolTrace {
   private traces: { old: string; new: string }[] = [];
   add(oldSwagger: string, newSwagger: string) {
@@ -259,11 +244,17 @@ class OadTrace extends AbstractToolTrace {
     let content = `<ul><li>Compared Swaggers (Based on Oad <a href="https://www.npmjs.com/package/@azure/oad/v/${oadVersion}" target="_blank">v${oadVersion}</a>)<ul>`;
     for (const value of this.traces.values()) {
       content += "<li>";
-      content += `original:[${value.old.split("/").slice(-3).join("/")}](${utils.targetHref(value.old)
-      }) <---> new:[${value.new.split("/").slice(-3).join("/")}](${utils.blobHref(value.new)})`;
+      content += `original: <a href="${utils.targetHref(
+        value.old
+      )}" target="_blank">${value.old
+        .split("/")
+        .slice(-3)
+        .join("/")} </a> <---> new: <a href="${utils.blobHref(
+        value.new
+      )} " target="_blank"> ${value.new.split("/").slice(-3).join("/")} </a>`;
       content += "</li>";
     }
-    content += `</lu></li></ul>`;
+    content += `</ul></li></ul>`;
     return content;
   }
  

@@ -6,6 +6,8 @@ import * as assert from "assert";
 import {
   ruleManager,
 } from "../breakingChangeRuleManager";
+import { lintTracer } from '../unifiedPipelineHelper';
+import * as fs from "fs-extra";
 @suite
 class BreakingChangeRuleTest {
   cwd = process.cwd();
@@ -68,6 +70,28 @@ class BreakingChangeRuleTest {
     ];
     const result = ruleManager.handleCrossApiVersion(messages);
     assert.deepEqual(result, expected);
+  }
+
+
+  @test TestLintTrace() {
+    lintTracer.add("specification/apimanagement/resource-manager/readme.md","package-2020-08",true);
+    lintTracer.add(
+       "specification/apimanagement/resource-manager/readme.md",
+       "package-2020-08",
+       false
+     );
+      lintTracer.add(
+        "specification/apimanagement/resource-manager/readme.md",
+        "",
+        false
+      );
+    const resultFile = "pipe.log";
+    if (fs.existsSync(resultFile)) {
+      fs.unlinkSync(resultFile);
+    }
+    lintTracer.save()
+    const lintTraceInfo = JSON.parse(fs.readFileSync(resultFile).toString());
+    assert.notEqual(undefined, lintTraceInfo);
   }
 
   after() {
