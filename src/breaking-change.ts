@@ -419,7 +419,7 @@ export async function runScript() {
         unifiedStore.appendOadViolation(filterDiffs);
         diffFiles[swagger] = filterDiffs;
         for (const diff of filterDiffs) {
-          if (diff["type"] === "Error") {
+          if (diff["type"].toLowerCase() === "error") {
             if (errorCnt === 0) {
               console.log(
                 `There are potential breaking changes in this PR. Please review before moving forward. Thanks!`
@@ -443,8 +443,9 @@ export async function runScript() {
         new: blobHref(utils.getRelativeSwaggerPathToRepo(swagger)),
       });
     }
-    oadTracer.save()
   }
+  oadTracer.save();
+  ruleManager.addBreakingChangeLabels();
 
   if (errors.length > 0) {
     process.exitCode = 1;

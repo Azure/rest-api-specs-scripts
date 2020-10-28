@@ -68,7 +68,6 @@ const BreakingChangeLabels = new Set<string>()
 
 interface ruleHandler {
    process(message: OadMessage,rule: BreakingChangeRule): OadMessage
-   postProcess?():void
 }
 
 const overrideHandler = {
