@@ -185,8 +185,12 @@ class LintTrace extends AbstractToolTrace {
     source: new Map<string, string[]>(),
     target: new Map<string, string[]>(),
   };
-  add(readmeRelatedPath: string, tag: string, isBefore: boolean) {
-    const targetMap = isBefore ? this.traces.source : this.traces.target;
+
+  // isFromTargetBranch indicates whether it's from target branch
+  add(readmeRelatedPath: string, tag: string, isFromTargetBranch: boolean) {
+    const targetMap = isFromTargetBranch
+      ? this.traces.target
+      : this.traces.source;
 
     if (targetMap.has(readmeRelatedPath)) {
       const tags = targetMap.get(readmeRelatedPath);
@@ -199,16 +203,22 @@ class LintTrace extends AbstractToolTrace {
   }
 
   genMarkDown() {
-    const classicLintVersion = process.env["CLASSIC_LINT_VERSION"] ? process.env["CLASSIC_LINT_VERSION"] : "1.0.14";
-    const lintVersion = process.env["LINT_VERSION"] ?process.env["LINT_VERSION"] : "1.0.4";
+    const classicLintVersion = process.env["CLASSIC_LINT_VERSION"]
+      ? process.env["CLASSIC_LINT_VERSION"]
+      : "1.0.14";
+    const lintVersion = process.env["LINT_VERSION"]
+      ? process.env["LINT_VERSION"]
+      : "1.0.4";
     let content = "<ul>";
     for (const [beforeAfter, readmeTags] of Object.entries(this.traces)) {
-      content += `<li>`
-      content += `Linted configuring files (Based on ${beforeAfter === "source" ? "source" : "target"} branch, openapi-validator <a href="https://www.npmjs.com/package/@microsoft.azure/openapi-validator/v/${lintVersion}" target="_blank"> v${lintVersion} </a>, classic-openapi-validator <a href="https://www.npmjs.com/package/@microsoft.azure/openapi-validator/v/${classicLintVersion}" target="_blank"> v${classicLintVersion} </a>)`
+      content += `<li>`;
+      content += `Linted configuring files (Based on ${
+        beforeAfter === "source" ? "source" : "target"
+      } branch, openapi-validator <a href="https://www.npmjs.com/package/@microsoft.azure/openapi-validator/v/${lintVersion}" target="_blank"> v${lintVersion} </a>, classic-openapi-validator <a href="https://www.npmjs.com/package/@microsoft.azure/classic-openapi-validator/v/${classicLintVersion}" target="_blank"> v${classicLintVersion} </a>)`;
       content += `<ul> `;
       for (const [readme, tags] of readmeTags.entries()) {
         const url =
-          beforeAfter === "source"
+          beforeAfter === "target"
             ? utils.targetHref(readme)
             : utils.blobHref(readme);
         const showReadme = readme
@@ -217,7 +227,9 @@ class LintTrace extends AbstractToolTrace {
           .join("/");
         for (const tag of tags) {
           content += "<li>";
-          content += `<a href="${url}"target="_blank">${showReadme}</a> tag:<a href="${url}${tag ? "#tag-":""}${tag}" target="_blank">${tag ? tag : "default"}</a>`;
+          content += `<a href="${url}"target="_blank">${showReadme}</a> tag:<a href="${url}${
+            tag ? "#tag-" : ""
+          }${tag}" target="_blank">${tag ? tag : "default"}</a>`;
           content += "</li>";
         }
       }
