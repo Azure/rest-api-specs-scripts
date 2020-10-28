@@ -47,6 +47,10 @@ class MomentOfTruthPostProcessingTest {
     let stub5 = sinon.stub(utils, "getTargetBranch").callsFake(() => "master");
 
     await cleanUpDir("./output");
+    const pipeFile = "./pipe.log";
+    if (fs.existsSync(pipeFile)) {
+      fs.unlinkSync(pipeFile);
+    }
     await lintDiff(utils, devOps);
     await postProcessing();
 
@@ -63,7 +67,7 @@ class MomentOfTruthPostProcessingTest {
     const logFile = "./output/1001.json";
     const result = JSON.parse(fs.readFileSync(logFile, { encoding: "utf8" }));
     const resultFiles = result.files;
-assert.deepEqual(Object.keys(resultFiles), [
+    assert.deepEqual(Object.keys(resultFiles), [
       "specification/test-lint/readme.md",
     ]);
 
@@ -77,15 +81,15 @@ assert.deepEqual(Object.keys(resultFiles), [
       .after as Array<any>).map((error) => error.id).sort();
     assert.deepEqual(errorIds, ["D5001","R2054", "R3023"]);
     
-    const pipeFile = "./pipe.log";
+   
     console.log("------------- read from pipe.log -----------------");
-    const chunck = fs.readFileSync(pipeFile, { encoding: "utf8" })
-    console.log(chunck);
-    const messages = chunck.split(/[\r\n]+/)
+    const chunk = fs.readFileSync(pipeFile, { encoding: "utf8" })
+    console.log(chunk);
+    const messages = chunk.split(/[\r\n]+/)
       .filter(l => l) // filter out empty lines
-      .map(l => JSON.parse(l.trim()) as MessageLine)
+      .map(l => JSON.parse(l.trim()) as MessageLine).filter(m => m)
       .map(l => Array.isArray(l) ? l : [l]);
-    const res: ResultMessageRecord[] = _.flatMap(messages, m => m).map(m => <ResultMessageRecord>m);
+    const res: ResultMessageRecord[] = _.flatMap(messages, m => m).map(m => <ResultMessageRecord>m).filter(m => m.type === "Result");
     const resIds = res.map(m => m.id).sort();
     console.log("------------- parse validation message from[pipe.log] ------------------");
     console.log(JSON.stringify(res));

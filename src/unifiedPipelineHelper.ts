@@ -174,7 +174,10 @@ class AbstractToolTrace {
     return ""
   }
   save() {
-    return new UnifiedPipeLineStore("").appendMarkDown(this.genMarkDown());
+    const markDown = this.genMarkDown();
+    if (markDown) {
+      return new UnifiedPipeLineStore("").appendMarkDown(markDown);
+    }
   }
 }
 
@@ -210,6 +213,7 @@ class LintTrace extends AbstractToolTrace {
       ? process.env["LINT_VERSION"]
       : "1.0.4";
     let content = "<ul>";
+    let impactedTags = 0;
     for (const [beforeAfter, readmeTags] of Object.entries(this.traces)) {
       content += `<li>`;
       content += `Linted configuring files (Based on ${
@@ -231,9 +235,13 @@ class LintTrace extends AbstractToolTrace {
             tag ? "#tag-" : ""
           }${tag}" target="_blank">${tag ? tag : "default"}</a>`;
           content += "</li>";
+          impactedTags ++
         }
       }
       content += `</ul></li>`;
+    }
+    if (impactedTags === 0) {
+      return ""
     }
     content += "</ul>";
     return content;
@@ -253,6 +261,9 @@ class OadTrace extends AbstractToolTrace {
       /[\^~]/,
       ""
     );
+    if (this.traces.length === 0 ) {
+      return ""
+    }
     let content = `<ul><li>Compared Swaggers (Based on Oad <a href="https://www.npmjs.com/package/@azure/oad/v/${oadVersion}" target="_blank">v${oadVersion}</a>)<ul>`;
     for (const value of this.traces.values()) {
       content += "<li>";
