@@ -212,7 +212,7 @@ class LintTrace extends AbstractToolTrace {
     const lintVersion = process.env["LINT_VERSION"]
       ? process.env["LINT_VERSION"]
       : "1.0.4";
-    let content = "<ul>";
+    let content = "<br><ul>";
     let impactedTags = 0;
     for (const [beforeAfter, readmeTags] of Object.entries(this.traces)) {
       content += `<li>`;
@@ -264,7 +264,7 @@ class OadTrace extends AbstractToolTrace {
     if (this.traces.length === 0 ) {
       return ""
     }
-    let content = `<ul><li>Compared Swaggers (Based on Oad <a href="https://www.npmjs.com/package/@azure/oad/v/${oadVersion}" target="_blank">v${oadVersion}</a>)<ul>`;
+    let content = `<br><ul><li>Compared Swaggers (Based on Oad <a href="https://www.npmjs.com/package/@azure/oad/v/${oadVersion}" target="_blank">v${oadVersion}</a>)<ul>`;
     for (const value of this.traces.values()) {
       content += "<li>";
       content += `original: <a href="${utils.targetHref(
