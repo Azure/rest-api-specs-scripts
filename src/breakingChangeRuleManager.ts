@@ -97,7 +97,7 @@ const overrideHandler = {
 
 const directiveHandler = {
   process(message: OadMessage, rule: BreakingChangeRule): OadMessage {
-    if (rule.directive && rule.directive.addingLabels) {
+    if (rule.directive && rule.directive.addingLabels && message.type.toLowerCase() === "error") {
       for (const label of rule.directive.addingLabels){
         BreakingChangeLabels.add(label)
       } 
