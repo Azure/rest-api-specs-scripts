@@ -15,7 +15,7 @@ class BreakingChangeRuleTest {
     process.env.BREAKING_CHANGE_RULE_CONFIG_PATH = "./breakingChangeRules.yaml";
   }
 
-  @test testcrossApiVersion() {
+  @test testCrossApiVersion() {
     process.chdir("./src/tests/Resource/breakingChangeRule");
     const messages = [
       {
@@ -72,24 +72,85 @@ class BreakingChangeRuleTest {
     assert.deepEqual(result, expected);
   }
 
+  @test testSameApiVersion() {
+    process.chdir("./src/tests/Resource/breakingChangeRule");
+    process.env.BREAKING_CHANGE_RULE_CONFIG_PATH =
+      "./breakingChangeRules-1.yaml";
+    const messages = [
+      {
+        id: "1034",
+        code: "AddedRequiredProperty",
+        message:
+          "The new version has new required property 'capacity' that was not found in the old version.",
+        type: "Warning",
+        new: {},
+        old: {},
+        docUrl:
+          "https://github.com/Azure/openapi-diff/tree/master/docs/rules/1034.md",
+        mode: "Addition",
+      },
+      {
+        id: "1005",
+        code: "RemovedPath",
+        message:
+          "The new version is missing a path that was found in the old version. Was path '/providers/Microsoft.Devices/operations' removed or restructured?",
+        type: "Waring",
+        new: {},
+        old: {},
+        docUrl:
+          "https://github.com/Azure/openapi-diff/tree/master/docs/rules/1005.md",
+        mode: "Removal",
+      },
+    ];
+    const expected = [
+      {
+        id: "1034",
+        code: "Added Required Property",
+        message: "override message",
+        type: "error",
+        new: {},
+        old: {},
+        docUrl:
+          "https://github.com/Azure/openapi-diff/tree/master/docs/rules/1034.md",
+        mode: "Addition",
+      },
+      {
+        id: "1005",
+        code: "Removed path",
+        message: "override message",
+        type: "error",
+        new: {},
+        old: {},
+        docUrl:
+          "https://github.com/Azure/openapi-diff/tree/master/docs/rules/1005.md",
+        mode: "Removal",
+      },
+    ];
+    const result = ruleManager.handleSameApiVersion(messages);
+    assert.deepEqual(result, expected);
+  }
 
   @test TestLintTrace() {
-    lintTracer.add("specification/apimanagement/resource-manager/readme.md","package-2020-08",true);
     lintTracer.add(
-       "specification/apimanagement/resource-manager/readme.md",
-       "package-2020-08",
-       false
-     );
-      lintTracer.add(
-        "specification/apimanagement/resource-manager/readme.md",
-        "",
-        false
-      );
+      "specification/apimanagement/resource-manager/readme.md",
+      "package-2020-08",
+      true
+    );
+    lintTracer.add(
+      "specification/apimanagement/resource-manager/readme.md",
+      "package-2020-08",
+      false
+    );
+    lintTracer.add(
+      "specification/apimanagement/resource-manager/readme.md",
+      "",
+      false
+    );
     const resultFile = "pipe.log";
     if (fs.existsSync(resultFile)) {
       fs.unlinkSync(resultFile);
     }
-    lintTracer.save()
+    lintTracer.save();
     const lintTraceInfo = JSON.parse(fs.readFileSync(resultFile).toString());
     assert.notEqual(undefined, lintTraceInfo);
   }
