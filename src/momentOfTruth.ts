@@ -9,6 +9,7 @@ import * as utils from "./utils";
 import * as fs from "fs";
 import { devOps, cli } from "@azure/avocado";
 import * as format from "@azure/swagger-validation-common";
+import { lintTracer } from './unifiedPipelineHelper';
 
 type TypeUtils = typeof utils;
 type TypeDevOps = typeof devOps;
@@ -58,6 +59,7 @@ export async function getLinterResult(
     tagCmd +
     swaggerPath;
   console.log(`Executing: ${cmd}`);
+
   const { err, stdout, stderr } = await new Promise((res) =>
     exec(
       cmd,
@@ -159,6 +161,7 @@ class LinterRunner {
         if (tags) {
           for (const tag of tags) {
             if (utils.isTagExisting(swagger, tag)) {
+              lintTracer.add(swagger,tag,beforeOrAfter === "before")
               const linterErrors = await getLinterResult(swagger, tag);
               console.log(linterErrors);
               await this.updateResult(swagger, linterErrors, beforeOrAfter);
@@ -168,6 +171,7 @@ class LinterRunner {
         }
         /* to ensure lint ran at least once */
         if (runCnt == 0) {
+          lintTracer.add(swagger, "", beforeOrAfter === "before");
           const linterErrors = await getLinterResult(swagger);
           console.log(linterErrors);
           await this.updateResult(swagger, linterErrors, beforeOrAfter);
@@ -261,7 +265,8 @@ export async function lintDiff(utils: TypeUtils, devOps: TypeDevOps) {
       await linter.runTools("before");
     });
   }
-
+  lintTracer.save()
+  
   store.writeContent(JSON.stringify(linter.getResult(), null, 2));
 
   console.log("--- Lint Violation Result ----\n");

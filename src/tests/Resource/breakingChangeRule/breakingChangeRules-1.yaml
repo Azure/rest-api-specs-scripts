@@ -1,0 +1,21 @@
+---
+- Scenario: "SameVersion"
+  description: "this rule is a mapping between oad rules and breaking change rules"
+  rules:
+    - appliedTo: "1034"
+      override:
+        code: "Added Required Property"
+        type:
+          - from: "warning" 
+            to: "error"
+        message: "override message"
+
+    - appliedTo: "RemovedPath"
+      override:
+        code: "Removed path"
+        type: "error"
+        message: "override message"
+
+      directive:
+        addingLabels:
+          - NewApiVersionRequired
