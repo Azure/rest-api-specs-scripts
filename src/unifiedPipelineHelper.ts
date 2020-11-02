@@ -253,6 +253,7 @@ class OadTrace extends AbstractToolTrace {
   private traces: { old: string; new: string }[] = [];
   add(oldSwagger: string, newSwagger: string) {
     this.traces.push({ old: oldSwagger, new: newSwagger });
+    console.log(`Adding Trace: new ${newSwagger}, old ${oldSwagger}` )
     return this;
   }
 
@@ -262,6 +263,7 @@ class OadTrace extends AbstractToolTrace {
       ""
     );
     if (this.traces.length === 0 ) {
+      console.log("trace is empty!")
       return ""
     }
     let content = `<br><ul><li>Compared Swaggers (Based on Oad <a href="https://www.npmjs.com/package/@azure/oad/v/${oadVersion}" target="_blank">v${oadVersion}</a>)<ul>`;
