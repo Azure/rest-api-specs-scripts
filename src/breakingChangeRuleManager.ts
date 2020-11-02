@@ -26,32 +26,33 @@ interface RuleConfig<T> {
 
 class LocalRuleConfig implements RuleConfig<BreakingChangeRule> {
   private AllConfig: BreakingChangeScenario[] | undefined;
-  load(configPath: string) :boolean{
-      try {
-         const config = fs.readFileSync(configPath).toString();
-         this.AllConfig = yaml.safeLoad(config) as BreakingChangeScenario[];
-         return !!this.AllConfig
-      }
-      catch(e) {
-          console.log(e)
-          return false
-      }
+  load(configPath: string): boolean {
+    try {
+      const config = fs.readFileSync(configPath).toString();
+      this.AllConfig = yaml.safeLoad(config) as BreakingChangeScenario[];
+      return !!this.AllConfig;
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
   }
-  getConfig(sectionName: string): Map<string, BreakingChangeRule> | undefined {
+  getConfig(scenarioName: string): Map<string, BreakingChangeRule> | undefined {
     if (this.AllConfig) {
       try {
         const sectionConfig = new Map<string, BreakingChangeRule>();
-        const rulesIndex = this.AllConfig.findIndex(v => v.Scenario === sectionName);
+        const rulesIndex = this.AllConfig.findIndex(
+          (v) => v.Scenario === scenarioName
+        );
         if (rulesIndex === -1) {
-           return undefined
+          return undefined;
         }
-        const rules = this.AllConfig[rulesIndex].rules
+        const rules = this.AllConfig[rulesIndex].rules;
         for (const key in Object.keys(rules)) {
           const ruleContent = rules[key];
           const rule = ruleContent as BreakingChangeRule;
 
           if (!rule) {
-            throw exception("invalid config")
+            throw exception("invalid config");
           }
           sectionConfig.set(rule.appliedTo.toLowerCase(), rule);
         }
@@ -63,9 +64,7 @@ class LocalRuleConfig implements RuleConfig<BreakingChangeRule> {
   }
 }
 
-
 const BreakingChangeLabels = new Set<string>()
-
 interface ruleHandler {
    process(message: OadMessage,rule: BreakingChangeRule): OadMessage
 }
@@ -109,7 +108,7 @@ const directiveHandler = {
 class OadMessageEngine {
   private config: LocalRuleConfig;
   private HandlersMap = new Map<string, ruleHandler>();
-  private configSection = "default";
+  private scenario = "default";
   constructor(config: LocalRuleConfig) {
     this.config = config;
     this.initHandlerMap();
@@ -118,12 +117,12 @@ class OadMessageEngine {
     this.HandlersMap.set("override", overrideHandler);
     this.HandlersMap.set("directive", directiveHandler);
   }
-  public setConfigSection(sectionName: string) {
-    this.configSection = sectionName;
+  public setScenario(scenarioName: string) {
+    this.scenario = scenarioName;
     return this
   }
   getRulesMap() {
-    return this.config.getConfig(this.configSection);
+    return this.config.getConfig(this.scenario);
   }
   handle(messages: OadMessage[]): OadMessage[] {
     const ruleMap = this.getRulesMap();
@@ -158,9 +157,7 @@ class OadMessageEngine {
 }
 
 class BreakingChangeRuleManager {
-
-    private getBreakingChangeConfigPath(
-  ){
+    private getBreakingChangeConfigPath(){
     let breakingChangeRulesConfigPath = "config/BreakingChangeRules.yml";
     if (process.env.BREAKING_CHANGE_RULE_CONFIG_PATH) {
       breakingChangeRulesConfigPath =
@@ -168,7 +165,6 @@ class BreakingChangeRuleManager {
     }
     return breakingChangeRulesConfigPath
   }
-
 
   private buildRuleConfig() {
     const configPath = this.getBreakingChangeConfigPath()
@@ -189,19 +185,17 @@ class BreakingChangeRuleManager {
       return messages;
     }
     return new OadMessageEngine(ruleConfig)
-      .setConfigSection("CrossVersion")
+      .setScenario("CrossVersion")
       .handle(messages);
   }
 
-  public handleSameApiVersion (
-    messages: OadMessage[]
-  ) {
+  public handleSameApiVersion (messages: OadMessage[]) {
     const ruleConfig = this.buildRuleConfig();
     if (!ruleConfig) {
       return messages;
     }
     return new OadMessageEngine(ruleConfig)
-      .setConfigSection("SameVersion")
+      .setScenario("SameVersion")
       .handle(messages);
   };
 

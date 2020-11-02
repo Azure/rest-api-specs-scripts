@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.0
+
+- Support configuring breaking change rules base on config.
+- Adding details for lintDiff & oad details in unified pipeline report. 
+
 ## 0.13.4
 
 - Upgrade oav to 0.22.9 with rule change in response in case of both x-ms-secret and required are annotated.
