@@ -326,10 +326,10 @@ export async function runCrossVersionBreakingChangeDetection(type:SwaggerVersion
   if (pr && newSwaggers.length) {
     const detector = new CrossVersionBreakingDetector(pr, newSwaggers as string[]);
     if (type === "preview") {
-      detector.checkBreakingChangeBaseOnPreviewVersion()
+      await detector.checkBreakingChangeBaseOnPreviewVersion()
     }
     else {
-      detector.checkBreakingChangeBaseOnStableVersion()
+      await detector.checkBreakingChangeBaseOnStableVersion()
     }
     oadTracer.save()
     ruleManager.addBreakingChangeLabels()
