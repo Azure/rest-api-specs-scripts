@@ -1,3 +1,7 @@
+# :exclamation: DEPRECATION NOTICE :exclamation: 
+
+This repository is no longer maintained. The newest package `@azure/rest-api-specs-scripts` version published from this repo is `0.14.0`. For version `0.15.0` and further development, go [here](https://devdiv.visualstudio.com/DevDiv/_git/openapi-alps?path=%2Fpublic%2Frest-api-specs-scripts%2Fpackage.json&_a=contents&version=GBmain).
+
 [![Build Status](https://dev.azure.com/azure-sdk/public/_apis/build/status/tools/public.rest-api-specs-scripts?branchName=master)](https://dev.azure.com/azure-sdk/public/_build/latest?definitionId=221&branchName=master)
 
 # Contributing
